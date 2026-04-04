@@ -1,19 +1,26 @@
 #!/usr/bin/env python3
 """
-AI Investment Analyst — CLI entrypoint
+AI Strategy & Investment Analyst — CLI entrypoint
+
+Frameworks: 7 Powers · Aggregation Theory · Moat Taxonomy · TPS ·
+            22 Immutable Laws of Marketing · 15 Commitments ·
+            Munger Mental Models · Quantitative PMF · Acquired Podcast RAG
 
 Commands:
   build-kb   Scrape Acquired transcripts and build the vector knowledge base
-  chat       Launch the interactive investment analyst chat
+  chat       Launch the interactive strategy analyst chat
   ask        Ask a single question (non-interactive)
   status     Show knowledge base stats
 
 Usage examples:
-  python main.py build-kb                          # full scrape + index
-  python main.py build-kb --max-episodes 20        # quick test with 20 episodes
-  python main.py chat                              # interactive REPL
-  python main.py ask "Analyse Nvidia's moat"       # single question
-  python main.py status                            # KB info
+  python main.py build-kb                                    # full scrape + index
+  python main.py build-kb --max-episodes 20                  # quick test
+  python main.py chat                                        # interactive REPL
+  python main.py ask "Analyse Nvidia's moat"                 # 7 Powers analysis
+  python main.py ask "Apply aggregation theory to Uber"
+  python main.py ask "Score Apple on the 22 Laws of Marketing"
+  python main.py ask "Is Shopify above or below the line on leadership?"
+  python main.py status                                      # KB info
 """
 
 import argparse
@@ -137,9 +144,11 @@ def cmd_chat(_args):
 
     console.print(
         Panel(
-            "[bold cyan]Acquired Investment Analyst[/bold cyan]\n\n"
-            "Ask me about any company, investment thesis, competitive moat, "
-            "or business model. I'm trained on all Acquired podcast episodes.\n\n"
+            "[bold cyan]AI Strategy & Investment Analyst[/bold cyan]\n\n"
+            "Ask me about any company, moat, business model, marketing strategy, "
+            "leadership health, or investment thesis.\n"
+            "Frameworks: 7 Powers · Aggregation Theory · Moat Taxonomy · TPS · "
+            "22 Laws of Marketing · 15 Commitments · Munger · Quantitative PMF\n\n"
             "[dim]Commands: 'reset' to clear history, 'quit' / 'exit' to leave.[/dim]",
             border_style="cyan",
             expand=False,

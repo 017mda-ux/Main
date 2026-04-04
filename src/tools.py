@@ -1,14 +1,21 @@
 """
 Agent Tools — definitions (JSON schema) + Python implementations.
 
-Tools available to the investment analyst agent:
-  1. search_acquired_transcripts  — RAG search over all Acquired episodes
-  2. list_acquired_episodes        — List indexed episodes
-  3. analyze_seven_powers          — Hamilton Helmer's 7 Powers framework
-  4. analyze_unit_economics        — Unit economics / LTV:CAC analysis
-  5. compare_companies             — Side-by-side competitive comparison
-  6. build_bear_bull_case          — Structured bear / bull thesis
-  7. calculate_rule_of_40          — SaaS Rule of 40 / growth-adjusted metrics
+Tools available to the strategy & investment analyst agent:
+  1.  search_acquired_transcripts  — RAG search over all Acquired episodes
+  2.  list_acquired_episodes        — List indexed episodes
+  3.  analyze_seven_powers          — Hamilton Helmer's 7 Powers framework
+  4.  analyze_unit_economics        — Unit economics / LTV:CAC analysis
+  5.  compare_companies             — Side-by-side competitive comparison
+  6.  build_bear_bull_case          — Structured bear / bull thesis
+  7.  calculate_rule_of_40          — SaaS Rule of 40 / growth-adjusted metrics
+  8.  analyze_moat_taxonomy         — Reaction Wheel taxonomy of moats
+  9.  analyze_aggregation_theory    — Ben Thompson's Aggregation Theory assessment
+  10. analyze_marketing_laws        — 22 Immutable Laws of Marketing audit
+  11. assess_leadership_health      — 15 Commitments of Conscious Leadership scorecard
+  12. analyze_tps_excellence        — Toyota Production System / Process Power audit
+  13. apply_munger_models           — Munger mental models cross-check
+  14. assess_pmf_quantitative       — Tribe Capital quantitative PMF framework
 """
 
 from __future__ import annotations
@@ -221,6 +228,214 @@ TOOL_DEFINITIONS = [
             "required": ["company", "revenue_growth_pct", "fcf_margin_pct"],
         },
     },
+    # ── New framework tools ────────────────────────────────────────────
+    {
+        "name": "analyze_moat_taxonomy",
+        "description": (
+            "Assess a company's competitive moats using the Reaction Wheel "
+            "Taxonomy of Moats — a richer classification than 7 Powers alone. "
+            "Covers Process/Knowledge, Cultural, Network Effect (direct/indirect/data/protocol), "
+            "Switching Cost (financial/procedural/relational/risk), Cost (scale/supply/geographic), "
+            "and Risk/Uncertainty moats. Returns a structured breadth-and-depth assessment."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "company": {"type": "string", "description": "Company name to analyse."},
+                "evidence": {
+                    "type": "string",
+                    "description": "Relevant evidence / context — paste in transcript excerpts or research notes.",
+                },
+                "industry": {
+                    "type": "string",
+                    "description": "Optional: industry context to calibrate benchmarks (e.g. 'cloud software', 'consumer marketplace').",
+                },
+            },
+            "required": ["company", "evidence"],
+        },
+    },
+    {
+        "name": "analyze_aggregation_theory",
+        "description": (
+            "Apply Ben Thompson's Aggregation Theory to assess whether a company "
+            "is an Aggregator (owns the demand relationship, commoditises suppliers) "
+            "or a Supplier (at risk of commoditisation). Classifies the tier "
+            "(Tier 1: own supply; Tier 2: some supply ownership; Tier 3: pure aggregator), "
+            "identifies the demand relationship, and assesses long-term value capture dynamics."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "company": {"type": "string"},
+                "business_model_description": {
+                    "type": "string",
+                    "description": "Brief description of how the business works — who are the suppliers, who are the end users, and how does the company sit between them?",
+                },
+                "evidence": {
+                    "type": "string",
+                    "description": "Evidence from transcripts or research about platform dynamics, supplier relationships, and demand-side network effects.",
+                },
+            },
+            "required": ["company", "business_model_description"],
+        },
+    },
+    {
+        "name": "analyze_marketing_laws",
+        "description": (
+            "Audit a company's marketing strategy against Al Ries & Jack Trout's "
+            "22 Immutable Laws of Marketing. Identifies which laws the company is "
+            "mastering (building lasting position) and which it is violating "
+            "(eroding its positioning). Returns a laws-by-category analysis with "
+            "strategic implications and recommendations."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "company": {"type": "string"},
+                "brand_and_products": {
+                    "type": "string",
+                    "description": "Description of the company's main brands, product lines, and current market positioning.",
+                },
+                "evidence": {
+                    "type": "string",
+                    "description": "Evidence about the company's marketing strategy, brand history, and competitive positioning.",
+                },
+                "focus_laws": {
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Optional: specific law names to focus on, e.g. ['Law of Line Extension', 'Law of Focus'].",
+                },
+            },
+            "required": ["company", "brand_and_products"],
+        },
+    },
+    {
+        "name": "assess_leadership_health",
+        "description": (
+            "Assess the organisational leadership health of a company using "
+            "the 15 Commitments of Conscious Leadership framework. "
+            "Identifies signals of Above-the-Line leadership (radical responsibility, "
+            "curiosity, candor, integrity) vs. Below-the-Line patterns (blame culture, "
+            "defensiveness, gossip, scarcity mindset). Scores the C-suite and "
+            "surfaces the investment implications."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "company": {"type": "string"},
+                "leadership_evidence": {
+                    "type": "string",
+                    "description": "Evidence about leadership culture — earnings call tone, CEO interviews, Glassdoor signals, employee reviews, management turnover, public statements.",
+                },
+                "key_leaders": {
+                    "type": "string",
+                    "description": "Optional: names and roles of key leaders to assess (CEO, CFO, founders, etc.).",
+                },
+            },
+            "required": ["company", "leadership_evidence"],
+        },
+    },
+    {
+        "name": "analyze_tps_excellence",
+        "description": (
+            "Evaluate a company's operational excellence through the lens of the "
+            "Toyota Production System (TPS) — the canonical model of Process Power. "
+            "Assesses evidence of Just-In-Time, Jidoka (built-in quality), Kaizen "
+            "culture, waste elimination (7 Muda), Heijunka (levelling), and visual "
+            "management. Surfaces whether the company has durable Process Power "
+            "or accumulated operational waste."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "company": {"type": "string"},
+                "operational_evidence": {
+                    "type": "string",
+                    "description": "Evidence about operations — supply chain design, manufacturing/engineering culture, incident response, deployment practices, inventory management, defect rates, continuous improvement programs.",
+                },
+                "industry": {
+                    "type": "string",
+                    "description": "Industry context to calibrate TPS analogues (e.g. 'automotive', 'cloud software', 'e-commerce fulfilment', 'semiconductor fab').",
+                },
+            },
+            "required": ["company", "operational_evidence"],
+        },
+    },
+    {
+        "name": "apply_munger_models",
+        "description": (
+            "Apply Charlie Munger's Worldly Wisdom mental model latticework to a "
+            "company or investment question. Runs through key models: incentive analysis, "
+            "inversion, opportunity cost, compounding dynamics, psychological biases at play, "
+            "circle of competence check, and margin of safety assessment. "
+            "Forces multi-disciplinary thinking before forming a final view."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "subject": {
+                    "type": "string",
+                    "description": "Company, investment thesis, or strategic question to analyse.",
+                },
+                "context": {
+                    "type": "string",
+                    "description": "Relevant facts, evidence, and preliminary views about the subject.",
+                },
+                "primary_question": {
+                    "type": "string",
+                    "description": "The core question you are trying to answer (e.g. 'Is this a durable business?', 'Should we invest at this valuation?', 'What destroys this business?').",
+                },
+                "models_to_emphasise": {
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Optional: specific Munger models to apply with extra rigour, e.g. ['inversion', 'incentive analysis', 'compounding'].",
+                },
+            },
+            "required": ["subject", "context", "primary_question"],
+        },
+    },
+    {
+        "name": "assess_pmf_quantitative",
+        "description": (
+            "Evaluate product-market fit using Tribe Capital's quantitative PMF "
+            "framework. Analyses retention curves, engagement metrics (DAU/MAU), "
+            "Quick Ratio, NRR, payback period, and organic growth share. "
+            "Classifies the company on the PMF spectrum: "
+            "Pre-PMF → Early PMF → Strong PMF → Escape Velocity. "
+            "Works with whatever metrics are available — estimates benchmarks where data is missing."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "company": {"type": "string"},
+                "product_type": {
+                    "type": "string",
+                    "enum": ["consumer_social", "saas_b2b", "marketplace", "fintech", "ecommerce", "other"],
+                    "description": "Product type to calibrate PMF benchmarks correctly.",
+                },
+                "retention_metrics": {
+                    "type": "object",
+                    "description": "Known retention data as key-value pairs, e.g. {'d1': 60, 'd7': 40, 'd30': 25, 'd90': 18, 'd365': 12, 'logo_retention_12m': 85}.",
+                    "additionalProperties": True,
+                },
+                "engagement_metrics": {
+                    "type": "object",
+                    "description": "Engagement data, e.g. {'dau_mau_ratio': 0.45, 'sessions_per_day': 3.2, 'nps': 52}.",
+                    "additionalProperties": True,
+                },
+                "growth_metrics": {
+                    "type": "object",
+                    "description": "Growth quality data, e.g. {'quick_ratio': 3.8, 'nrr_pct': 118, 'payback_months': 16, 'organic_pct': 40, 'viral_coefficient': 0.3}.",
+                    "additionalProperties": True,
+                },
+                "context": {
+                    "type": "string",
+                    "description": "Qualitative context about the product and its market.",
+                },
+            },
+            "required": ["company", "product_type"],
+        },
+    },
 ]
 
 
@@ -238,6 +453,14 @@ def execute_tool(name: str, tool_input: dict, vector_store: "VectorStore") -> st
         "compare_companies": _compare_companies,
         "build_bear_bull_case": _build_bear_bull_case,
         "calculate_rule_of_40": _calculate_rule_of_40,
+        # New framework tools
+        "analyze_moat_taxonomy": _analyze_moat_taxonomy,
+        "analyze_aggregation_theory": _analyze_aggregation_theory,
+        "analyze_marketing_laws": _analyze_marketing_laws,
+        "assess_leadership_health": _assess_leadership_health,
+        "analyze_tps_excellence": _analyze_tps_excellence,
+        "apply_munger_models": _apply_munger_models,
+        "assess_pmf_quantitative": _assess_pmf_quantitative,
     }
     fn = dispatch.get(name)
     if fn is None:
@@ -460,7 +683,7 @@ def _build_bear_bull_case(inp: dict, _vs: "VectorStore") -> str:
     )
 
 
-def _calculate_rule_of_40(inp: dict, _vs: "VectorStore") -> str:
+def _calculate_rule_of_40(inp: dict, _vs: "VectorStore") -> str:  # noqa: C901
     company = inp["company"]
     growth = float(inp["revenue_growth_pct"])
     fcf_margin = float(inp["fcf_margin_pct"])
@@ -512,3 +735,406 @@ def _calculate_rule_of_40(inp: dict, _vs: "VectorStore") -> str:
         ),
     }
     return json.dumps(result, indent=2)
+
+
+# ──────────────────────────────────────────────────────────────────────
+#  New framework tool implementations
+# ──────────────────────────────────────────────────────────────────────
+
+def _analyze_moat_taxonomy(inp: dict, _vs: "VectorStore") -> str:
+    company = inp["company"]
+    evidence = inp.get("evidence", "")
+    industry = inp.get("industry", "general")
+
+    scaffold = {
+        "company": company,
+        "industry": industry,
+        "framework": "Reaction Wheel Taxonomy of Moats",
+        "moat_categories": {
+            "process_knowledge": {
+                "description": "Superior operational systems and tacit organisational know-how that compounds over time",
+                "sub_types": ["Documented process advantage", "Tacit knowledge / organisational memory", "R&D compounding"],
+                "score": None,
+            },
+            "cultural": {
+                "description": "Mission-driven talent density and values alignment attracting best people",
+                "sub_types": ["Mission clarity", "Values-driven hiring", "Retention and engagement"],
+                "score": None,
+            },
+            "network_effects": {
+                "description": "Value increases as more participants join",
+                "sub_types": ["Direct (same-side)", "Indirect (cross-side platform)", "Data (ML flywheel)", "Protocol (interoperability standard)"],
+                "score": None,
+            },
+            "switching_costs": {
+                "description": "Pain a customer endures to leave",
+                "sub_types": ["Financial (hard cost to switch)", "Procedural (relearning / retraining)", "Relational (relationship loss)", "Risk-based (fear of failure)"],
+                "score": None,
+            },
+            "cost_advantages": {
+                "description": "Structural cost advantages vs. competitors",
+                "sub_types": ["Scale economies", "Proprietary supply access", "Geographic density / last-mile advantage"],
+                "score": None,
+            },
+            "risk_uncertainty": {
+                "description": "Barriers rooted in regulatory, compliance, or certification complexity",
+                "sub_types": ["Regulatory licenses", "Compliance moats", "Certification requirements", "Safety / liability barriers"],
+                "score": None,
+            },
+        },
+        "scoring_guide": "Score each category 0 (absent) → 3 (strong). Assess both BREADTH (how many categories) and DEPTH (how hard each is to replicate).",
+        "instruction": (
+            f"Using the evidence below, complete the moat taxonomy for {company}. "
+            f"For each category: score it 0-3, cite specific evidence, name the primary sub-type, "
+            f"and assess durability (years to replicate by a well-funded competitor). "
+            f"Conclude with: (1) the single strongest moat, (2) the most vulnerable moat, "
+            f"and (3) an overall moat breadth rating (Wide / Narrow / No Moat).\n\nEvidence:\n{evidence}"
+        ),
+    }
+    return json.dumps(scaffold, indent=2)
+
+
+def _analyze_aggregation_theory(inp: dict, _vs: "VectorStore") -> str:
+    company = inp["company"]
+    description = inp["business_model_description"]
+    evidence = inp.get("evidence", "")
+
+    scaffold = {
+        "company": company,
+        "framework": "Ben Thompson's Aggregation Theory",
+        "theory_summary": (
+            "Aggregators win by owning the demand relationship and commoditising suppliers. "
+            "Value flows to whoever controls the end-user relationship at zero marginal cost of distribution."
+        ),
+        "tiers": {
+            "tier_1": "Owns supply AND demand (e.g. Netflix — owns content)",
+            "tier_2": "Owns some supply, aggregates rest (e.g. Amazon 1P + 3P marketplace)",
+            "tier_3": "Pure demand aggregator — zero supply ownership (e.g. Google, Uber, Airbnb)",
+        },
+        "analysis_dimensions": {
+            "demand_relationship": "Does the company own the end-user relationship? How sticky is it?",
+            "supplier_leverage": "Can suppliers reach users without this aggregator? What is their outside option?",
+            "marginal_cost": "What is the marginal cost of serving one more user? Approaching zero?",
+            "commoditisation_dynamic": "Is the aggregator commoditising suppliers, or vice versa?",
+            "network_effect_direction": "Does more demand attract more/better supply, which attracts more demand?",
+            "regulatory_exposure": "Does aggregator power attract antitrust or regulatory scrutiny?",
+            "counter_positioning": "Can incumbents copy this model without destroying their own supply relationships?",
+        },
+        "business_model": description,
+        "instruction": (
+            f"Apply Aggregation Theory to {company} using the evidence below. "
+            f"Determine: (1) Is {company} an Aggregator or a Supplier? (2) Which tier? "
+            f"(3) Who currently holds the demand relationship — and is it growing stronger or weaker? "
+            f"(4) What is the long-run value capture trajectory? "
+            f"(5) What is the key strategic risk (regulatory, new aggregator, supplier revolt)?\n\nEvidence:\n{evidence}"
+        ),
+    }
+    return json.dumps(scaffold, indent=2)
+
+
+def _analyze_marketing_laws(inp: dict, _vs: "VectorStore") -> str:
+    company = inp["company"]
+    brand_info = inp["brand_and_products"]
+    evidence = inp.get("evidence", "")
+    focus_laws = inp.get("focus_laws", [])
+
+    laws = {
+        "leadership": "Better to be first than better. Leading brand gets 2× share of #2.",
+        "category": "If you can't be first in a category, create a new one you can lead.",
+        "the_mind": "Being first in the mind beats being first in the marketplace.",
+        "perception": "Marketing is a battle of perceptions, not products.",
+        "focus": "The most powerful concept is owning one word in the prospect's mind.",
+        "exclusivity": "Two companies cannot own the same word in the prospect's mind.",
+        "the_ladder": "Strategy depends on which rung of the ladder you occupy.",
+        "duality": "Every market becomes a two-horse race long-term.",
+        "the_opposite": "If you're shooting for #2, your strategy is defined by the leader.",
+        "division": "Categories divide over time — new sub-categories emerge.",
+        "perspective": "Marketing effects play out over years, not quarters.",
+        "line_extension": "Extending a brand name almost always backfires.",
+        "sacrifice": "You must give something up to gain a strong position.",
+        "attributes": "For every attribute, there's an opposite effective attribute to own.",
+        "candor": "Admitting a negative earns you a positive in the prospect's mind.",
+        "singularity": "Only one move produces substantial results in any situation.",
+        "unpredictability": "You can't predict the future — build flexible plans.",
+        "success": "Success leads to arrogance; arrogance leads to failure.",
+        "failure": "Expect and accept failure — fail fast, learn fast.",
+        "hype": "The situation is often the opposite of how the press portrays it.",
+        "acceleration": "Build on trends, not fads.",
+        "resources": "Without adequate funding, a great idea won't get off the ground.",
+    }
+
+    active_laws = (
+        {k: v for k, v in laws.items() if any(fl.lower() in k for fl in focus_laws)}
+        if focus_laws else laws
+    )
+
+    scaffold = {
+        "company": company,
+        "brand_and_products": brand_info,
+        "framework": "22 Immutable Laws of Marketing — Ries & Trout",
+        "laws_reference": active_laws,
+        "instruction": (
+            f"Audit {company}'s marketing strategy against the 22 Immutable Laws above. "
+            f"For each relevant law: (1) Is {company} mastering or violating it? "
+            f"(2) Provide specific evidence. (3) State the strategic implication. "
+            f"Prioritise the 5 most important law verdicts. "
+            f"Conclude with the single highest-leverage marketing recommendation.\n\n"
+            f"Evidence:\n{evidence}"
+        ),
+    }
+    return json.dumps(scaffold, indent=2)
+
+
+def _assess_leadership_health(inp: dict, _vs: "VectorStore") -> str:
+    company = inp["company"]
+    evidence = inp["leadership_evidence"]
+    key_leaders = inp.get("key_leaders", "")
+
+    scaffold = {
+        "company": company,
+        "key_leaders": key_leaders,
+        "framework": "15 Commitments of Conscious Leadership — Dethmer, Chapman, Warner",
+        "axis": "Above the Line (learning / curiosity / ownership) vs. Below the Line (defending / protecting / controlling)",
+        "above_line_signals": [
+            "Takes 100% responsibility — no blame, no victim narrative in public statements",
+            "Curious and learning-oriented — admits mistakes openly",
+            "Processes emotions without drama or projection",
+            "Candid communication — says uncomfortable truths with care",
+            "Eliminates gossip — only talks to people who can solve problems",
+            "Keeps agreements — cleans them up quickly when broken",
+            "Generates genuine enthusiasm and energy",
+            "Abundant mindset — celebrates competitors' wins without threat",
+            "Operates from zone of genius, not just competence",
+            "Wholehearted collaboration — no hidden agendas",
+        ],
+        "below_line_signals": [
+            "Blame culture — 'not my fault' narratives in earnings calls or press",
+            "Chronic secrecy — hiding bad news until forced",
+            "Leadership team turnover and public dysfunction",
+            "CEO defensiveness rather than curiosity in analyst calls",
+            "Culture of fear rather than culture of learning",
+            "Short-termism over long-term value creation",
+            "Misaligned incentives (compensation vs. shareholder interests)",
+        ],
+        "investment_implications": (
+            "Below-the-line leadership is a leading indicator of organisational decay. "
+            "Conscious leadership organisations (Netflix culture, Bridgewater principles, Amazon LP culture) "
+            "tend to compound; blame cultures tend to erode."
+        ),
+        "instruction": (
+            f"Assess the leadership health of {company} using the above framework. "
+            f"For each signal category: cite specific evidence, classify above/below the line, "
+            f"and rate the severity. "
+            f"Produce an overall leadership health score (A/B/C/D/F) with key evidence. "
+            f"Identify the single biggest leadership risk and the single biggest leadership asset. "
+            f"State the investment implication clearly.\n\nEvidence:\n{evidence}"
+        ),
+    }
+    return json.dumps(scaffold, indent=2)
+
+
+def _analyze_tps_excellence(inp: dict, _vs: "VectorStore") -> str:
+    company = inp["company"]
+    evidence = inp["operational_evidence"]
+    industry = inp.get("industry", "general")
+
+    scaffold = {
+        "company": company,
+        "industry": industry,
+        "framework": "Toyota Production System (TPS) — Process Power Assessment",
+        "pillars": {
+            "just_in_time": {
+                "description": "Produce/deliver only what is needed, when needed, in the quantity needed",
+                "tech_analogy": "CI/CD pipelines, JIT feature delivery, lean inventory / zero-waste supply chains",
+                "score": None,
+            },
+            "jidoka_built_in_quality": {
+                "description": "Stop and fix problems immediately; never pass defects downstream",
+                "tech_analogy": "Automated testing gates, incident response culture, Andon cord authority",
+                "score": None,
+            },
+            "kaizen_continuous_improvement": {
+                "description": "Every employee identifies and eliminates waste — cultural, not just managerial",
+                "tech_analogy": "Engineering retros, blameless post-mortems, OKR iteration cycles",
+                "score": None,
+            },
+            "seven_wastes_muda": {
+                "description": "Overproduction, Waiting, Transportation, Over-processing, Inventory, Motion, Defects",
+                "tech_analogy": "Feature bloat, deployment lag, handoff delays, tech debt, WIP backlog",
+                "score": None,
+            },
+            "heijunka_levelling": {
+                "description": "Smooth demand and production variation to enable consistent flow",
+                "tech_analogy": "Load balancing, sprint cadence, demand forecasting accuracy",
+                "score": None,
+            },
+            "standardised_work": {
+                "description": "Document the one best current method as the baseline for improvement",
+                "tech_analogy": "Runbooks, playbooks, coding standards, deployment checklists",
+                "score": None,
+            },
+            "visual_management": {
+                "description": "Make problems and work-in-progress immediately visible",
+                "tech_analogy": "Dashboards, observability, Kanban boards, on-call alerting",
+                "score": None,
+            },
+        },
+        "scoring_guide": "Score each pillar 0 (absent/dysfunctional) → 3 (world-class). Total ≥ 16 = Process Power moat.",
+        "instruction": (
+            f"Assess {company}'s operational excellence against each TPS pillar above. "
+            f"Score each 0-3, cite specific evidence, and identify waste patterns. "
+            f"Conclude with: (1) Does {company} have genuine Process Power? "
+            f"(2) What is the single biggest operational waste / improvement opportunity? "
+            f"(3) How does this operational profile compare to the best in class "
+            f"(Toyota, Amazon Operations, SpaceX manufacturing)?\n\nEvidence:\n{evidence}"
+        ),
+    }
+    return json.dumps(scaffold, indent=2)
+
+
+def _apply_munger_models(inp: dict, _vs: "VectorStore") -> str:
+    subject = inp["subject"]
+    context = inp["context"]
+    primary_question = inp["primary_question"]
+    emphasise = inp.get("models_to_emphasise", [])
+
+    models = {
+        "incentive_analysis": (
+            "Map every key incentive structure. Show me the incentive, I'll show you the outcome. "
+            "Check: management comp vs. shareholder alignment, supplier incentives, employee incentives."
+        ),
+        "inversion": (
+            "Invert the question: What would DESTROY this business / thesis? "
+            "List the top 5 ways this could go to zero. If you can't find them, look harder."
+        ),
+        "opportunity_cost": (
+            "What is the opportunity cost? Every dollar here is a dollar not in the best alternative. "
+            "What would you have to believe about alternatives to justify this?"
+        ),
+        "compounding": (
+            "Model the compounding dynamics over 10 years. What compounds favourably? "
+            "What compounds against (debt, dilution, competitive erosion)?"
+        ),
+        "circle_of_competence": (
+            "Am I inside my circle of competence here? What do I genuinely know vs. what am I guessing? "
+            "Where is the analysis most speculative?"
+        ),
+        "availability_bias": (
+            "What recent events are dominating the narrative? "
+            "What does the base rate say vs. the recent experience?"
+        ),
+        "confirmation_bias_check": (
+            "What evidence would DISPROVE my thesis? Have I sought it? "
+            "Play devil's advocate for 2 minutes before concluding."
+        ),
+        "lollapalooza_effects": (
+            "Are multiple biases/forces reinforcing each other in the same direction? "
+            "A confluence of 3+ forces creates non-linear outcomes — for better or worse."
+        ),
+        "margin_of_safety": (
+            "What is the margin of safety in this thesis? "
+            "How wrong can I be on the key assumptions before the thesis breaks?"
+        ),
+        "simplicity_test": (
+            "Buffett: 'If you can't explain it simply, you don't understand it.' "
+            "State the core thesis in one sentence. If you can't, keep digging."
+        ),
+    }
+
+    active_models = (
+        {k: v for k, v in models.items() if any(e.lower() in k for e in emphasise)}
+        if emphasise else models
+    )
+
+    scaffold = {
+        "subject": subject,
+        "primary_question": primary_question,
+        "framework": "Charlie Munger's Worldly Wisdom — Mental Model Latticework",
+        "models": active_models,
+        "instruction": (
+            f"Apply the Munger mental model latticework to: '{primary_question}' for {subject}. "
+            f"Work through each model in turn. Be brutally honest — Munger's value is in "
+            f"catching mistakes and blind spots, not confirming existing views. "
+            f"Conclude with: (1) The 2-3 most important insights from this cross-check, "
+            f"(2) The single biggest risk the models reveal, "
+            f"(3) Your updated conviction level (Higher / Same / Lower) and why.\n\nContext:\n{context}"
+        ),
+    }
+    return json.dumps(scaffold, indent=2)
+
+
+def _assess_pmf_quantitative(inp: dict, _vs: "VectorStore") -> str:
+    company = inp["company"]
+    product_type = inp["product_type"]
+    retention = inp.get("retention_metrics", {})
+    engagement = inp.get("engagement_metrics", {})
+    growth = inp.get("growth_metrics", {})
+    context = inp.get("context", "")
+
+    # Benchmarks by product type
+    benchmarks = {
+        "consumer_social": {
+            "d30_retention_strong": 25, "d30_retention_pmf": 15,
+            "dau_mau_strong": 0.5, "dau_mau_pmf": 0.25,
+            "nps_strong": 50,
+        },
+        "saas_b2b": {
+            "logo_retention_12m_strong": 90, "logo_retention_12m_pmf": 80,
+            "nrr_strong": 120, "nrr_pmf": 100,
+            "payback_months_strong": 12, "payback_months_pmf": 24,
+        },
+        "marketplace": {
+            "d30_gtv_retention_strong": 30, "d30_gtv_retention_pmf": 20,
+            "quick_ratio_strong": 4, "quick_ratio_pmf": 2,
+        },
+        "fintech": {
+            "d90_retention_strong": 40, "d90_retention_pmf": 25,
+            "nrr_strong": 110, "nrr_pmf": 95,
+        },
+        "ecommerce": {
+            "repeat_purchase_12m_strong": 50, "repeat_purchase_12m_pmf": 30,
+            "d90_retention_strong": 25, "d90_retention_pmf": 15,
+        },
+        "other": {
+            "d30_retention_strong": 20, "d30_retention_pmf": 10,
+            "nrr_strong": 110, "nrr_pmf": 100,
+        },
+    }
+
+    pmf_stages = {
+        "pre_pmf": "Retention curves declining; churn > acquisition; no stable core user base",
+        "early_pmf": "Retention flattening in a small segment; some users love it but not scalable yet",
+        "strong_pmf": "Flat retention curve + NRR > 100% + organic growth loop forming",
+        "escape_velocity": "Network effects or viral coefficient > 1 compounding PMF into defensible moat",
+    }
+
+    scaffold = {
+        "company": company,
+        "product_type": product_type,
+        "framework": "Tribe Capital Quantitative PMF Framework",
+        "provided_metrics": {
+            "retention": retention,
+            "engagement": engagement,
+            "growth": growth,
+        },
+        "benchmarks_for_product_type": benchmarks.get(product_type, benchmarks["other"]),
+        "pmf_stages": pmf_stages,
+        "key_diagnostic_questions": [
+            "Do retention curves flatten or continue declining past D30/D90?",
+            "Is NRR > 100% (users expand usage over time)?",
+            "What % of new users come organically (true PMF signal)?",
+            "Is the Quick Ratio > 2 (growing faster than leaking)?",
+            "What does the DAU/MAU ratio indicate about habitual usage?",
+            "Is payback period shortening over time (improving CAC efficiency)?",
+        ],
+        "instruction": (
+            f"Assess {company}'s product-market fit quantitatively. "
+            f"For each provided metric: compare to the benchmark, interpret the signal, "
+            f"and classify as: Strong PMF / Approaching PMF / Below PMF Threshold / Unknown. "
+            f"Identify which metrics are missing and what they would tell us. "
+            f"Classify the company's current PMF stage (Pre-PMF / Early PMF / Strong PMF / Escape Velocity). "
+            f"State what metrics to watch most closely as leading indicators. "
+            f"Conclude with the PMF conviction level: High / Medium / Low / Too Early to Tell.\n\nContext:\n{context}"
+        ),
+    }
+    return json.dumps(scaffold, indent=2)

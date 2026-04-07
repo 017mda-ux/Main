@@ -16,6 +16,9 @@ Tools available to the strategy & investment analyst agent:
   12. analyze_tps_excellence        — Toyota Production System / Process Power audit
   13. apply_munger_models           — Munger mental models cross-check
   14. assess_pmf_quantitative       — Tribe Capital quantitative PMF framework
+  15. search_paul_graham_essays     — RAG search over Paul Graham's essays
+  16. list_paul_graham_essays       — List all indexed PG essays
+  17. apply_paul_graham_thinking    — Apply PG frameworks (growth, founder mode, schlep, etc.)
 """
 
 from __future__ import annotations
@@ -436,6 +439,98 @@ TOOL_DEFINITIONS = [
             "required": ["company", "product_type"],
         },
     },
+    # ── Paul Graham Essay Tools ─────────────────────────────────────
+    {
+        "name": "search_paul_graham_essays",
+        "description": (
+            "Semantic search over Paul Graham's essays (paulgraham.com). "
+            "Use this to retrieve PG's thinking on: startups, growth, founder quality, "
+            "default alive/dead, schlep blindness, doing things that don't scale, "
+            "frightening ambition, determination, wealth creation, and more. "
+            "Returns the most relevant essay excerpts with title and URL."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "query": {
+                    "type": "string",
+                    "description": (
+                        "What to search for. Be specific — e.g. "
+                        "'default alive startup survival', "
+                        "'schlep blindness unsexy work moat', "
+                        "'growth rate startup definition', "
+                        "'founder mode vs manager mode', "
+                        "'do things that don\\'t scale early customers'."
+                    ),
+                },
+                "top_k": {
+                    "type": "integer",
+                    "description": "Number of results to return (default 6, max 15).",
+                    "default": 6,
+                },
+            },
+            "required": ["query"],
+        },
+    },
+    {
+        "name": "list_paul_graham_essays",
+        "description": (
+            "List all Paul Graham essays that have been indexed in the knowledge base. "
+            "Use this to discover which essays are available before searching."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "filter": {
+                    "type": "string",
+                    "description": "Optional case-insensitive substring to filter essay titles.",
+                },
+            },
+            "required": [],
+        },
+    },
+    {
+        "name": "apply_paul_graham_thinking",
+        "description": (
+            "Apply Paul Graham's key frameworks to analyse a company or startup. "
+            "Covers: Growth Rate Test, Default Alive/Dead, Founder Mode, Schlep Blindness, "
+            "Frighteningly Ambitious ideas, Do Things That Don't Scale, "
+            "Relentlessly Resourceful test, Power Law / Black Swan Farming, "
+            "Wealth Creation vs. Extraction, and the Be Good filter. "
+            "Produces an integrated PG-lens verdict on the company."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "company": {
+                    "type": "string",
+                    "description": "Company or startup name to analyse.",
+                },
+                "context": {
+                    "type": "string",
+                    "description": "Evidence, financials, and background about the company.",
+                },
+                "stage": {
+                    "type": "string",
+                    "enum": ["early_startup", "growth_stage", "public_company", "any"],
+                    "description": "Company stage — calibrates which PG frameworks apply most.",
+                    "default": "any",
+                },
+                "focus_frameworks": {
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": (
+                        "Optional: limit to specific PG frameworks. "
+                        "Options: 'growth_rate', 'default_alive', 'founder_mode', "
+                        "'schlep_blindness', 'frighteningly_ambitious', "
+                        "'do_things_that_dont_scale', 'relentlessly_resourceful', "
+                        "'power_law', 'wealth_creation', 'be_good'."
+                    ),
+                },
+            },
+            "required": ["company", "context"],
+        },
+    },
 ]
 
 
@@ -453,7 +548,7 @@ def execute_tool(name: str, tool_input: dict, vector_store: "VectorStore") -> st
         "compare_companies": _compare_companies,
         "build_bear_bull_case": _build_bear_bull_case,
         "calculate_rule_of_40": _calculate_rule_of_40,
-        # New framework tools
+        # Framework tools
         "analyze_moat_taxonomy": _analyze_moat_taxonomy,
         "analyze_aggregation_theory": _analyze_aggregation_theory,
         "analyze_marketing_laws": _analyze_marketing_laws,
@@ -461,6 +556,10 @@ def execute_tool(name: str, tool_input: dict, vector_store: "VectorStore") -> st
         "analyze_tps_excellence": _analyze_tps_excellence,
         "apply_munger_models": _apply_munger_models,
         "assess_pmf_quantitative": _assess_pmf_quantitative,
+        # Paul Graham tools
+        "search_paul_graham_essays": _search_pg_essays,
+        "list_paul_graham_essays": _list_pg_essays,
+        "apply_paul_graham_thinking": _apply_paul_graham_thinking,
     }
     fn = dispatch.get(name)
     if fn is None:
@@ -1063,6 +1162,74 @@ def _apply_munger_models(inp: dict, _vs: "VectorStore") -> str:
     return json.dumps(scaffold, indent=2)
 
 
+def _search_pg_essays(inp: dict, vs: "VectorStore") -> str:
+    query = inp["query"]
+    top_k = min(int(inp.get("top_k", 6)), 15)
+
+    results = vs.search_pg(query, top_k=top_k)
+
+    if not results:
+        return json.dumps({
+            "query": query,
+            "results": [],
+            "note": (
+                "No PG essays indexed yet. Run 'python main.py build-pg' "
+                "to scrape and index paulgraham.com essays."
+            ),
+        })
+
+    formatted = []
+    for r in results:
+        formatted.append({
+            "essay_title": r["title"],
+            "url": r["url"],
+            "relevance_score": r["score"],
+            "excerpt": r["text"][:800],
+        })
+
+    return json.dumps(
+        {
+            "query": query,
+            "total_results": len(formatted),
+            "results": formatted,
+            "instruction": (
+                "Integrate these PG essay excerpts into your analysis. "
+                "Reference specific essays by name. "
+                "Apply the frameworks directly to the subject at hand — "
+                "don't just quote PG, derive the investment/strategic implication."
+            ),
+        },
+        indent=2,
+    )
+
+
+def _list_pg_essays(inp: dict, vs: "VectorStore") -> str:
+    titles = vs.get_pg_essay_titles()
+    filter_str = inp.get("filter", "").lower()
+
+    if filter_str:
+        titles = [t for t in titles if filter_str in t.lower()]
+
+    if not titles:
+        return json.dumps({
+            "count": 0,
+            "essays": [],
+            "note": "No PG essays indexed. Run 'python main.py build-pg' first.",
+        })
+
+    return json.dumps(
+        {
+            "count": len(titles),
+            "essays": titles,
+            "instruction": (
+                "These are the Paul Graham essays available for search. "
+                "Use search_paul_graham_essays to retrieve specific content."
+            ),
+        },
+        indent=2,
+    )
+
+
 def _assess_pmf_quantitative(inp: dict, _vs: "VectorStore") -> str:
     company = inp["company"]
     product_type = inp["product_type"]
@@ -1135,6 +1302,271 @@ def _assess_pmf_quantitative(inp: dict, _vs: "VectorStore") -> str:
             f"Classify the company's current PMF stage (Pre-PMF / Early PMF / Strong PMF / Escape Velocity). "
             f"State what metrics to watch most closely as leading indicators. "
             f"Conclude with the PMF conviction level: High / Medium / Low / Too Early to Tell.\n\nContext:\n{context}"
+        ),
+    }
+    return json.dumps(scaffold, indent=2)
+
+
+def _apply_paul_graham_thinking(inp: dict, _vs: "VectorStore") -> str:
+    company = inp["company"]
+    context = inp.get("context", "")
+    stage = inp.get("stage", "any")
+    focus = inp.get("focus_frameworks", [])
+
+    all_frameworks = {
+        "growth_rate": {
+            "essay": "Startup = Growth (2012)",
+            "core_principle": (
+                "A startup is a company designed to grow fast. "
+                "The only essential thing is growth. "
+                "5-7% weekly growth = exceptional trajectory. "
+                "10% monthly = high growth. 1-2% monthly = lifestyle business."
+            ),
+            "diagnostic_questions": [
+                "What is the week-over-week or month-over-month growth rate?",
+                "Is the growth rate accelerating, flat, or decelerating?",
+                "What is the company growing — revenue, users, GMV, ARR?",
+                "Is growth organic (PMF signal) or paid (cash-dependent)?",
+            ],
+            "investment_implication": (
+                "Growth rate is the single most important metric for a growth company. "
+                "A decelerating growth rate is the earliest warning sign. "
+                "An accelerating growth rate is the strongest buy signal."
+            ),
+        },
+        "default_alive": {
+            "essay": "Default Alive or Default Dead? (2015)",
+            "core_principle": (
+                "If a startup's expenses are growing faster than its revenue, "
+                "it will run out of money and die — unless it raises more capital. "
+                "The question to ask: assuming no future fundraising, "
+                "does the company survive? "
+                "Default Alive = revenue growth outpaces burn. "
+                "Default Dead = dependent on perpetual capital raises."
+            ),
+            "diagnostic_questions": [
+                "What is the monthly burn rate vs. monthly revenue?",
+                "How many months of runway remain at current burn?",
+                "Is revenue growth rate faster than expense growth rate?",
+                "What is the path to cash flow positive — months or years?",
+                "If capital markets closed tomorrow, would this company survive?",
+            ],
+            "investment_implication": (
+                "Default Dead companies are options, not businesses — underwrite them as such. "
+                "Default Alive companies have power in negotiations and can be patient. "
+                "The shift from Default Dead to Default Alive is a major re-rating event."
+            ),
+        },
+        "founder_mode": {
+            "essay": "Founder Mode (2024)",
+            "core_principle": (
+                "Founders who continue operating like founders — "
+                "deep involvement in details, skip-level meetings, "
+                "direct customer relationships, authentic culture — "
+                "outperform those who switch to 'hired CEO mode' (trust the layers, delegate everything). "
+                "The conventional manager wisdom ('hire good people and get out of their way') "
+                "often fails in the hands of founders because it cedes the culture to layers."
+            ),
+            "diagnostic_questions": [
+                "Is the founder/CEO still deeply involved in product and strategy?",
+                "Does management feel 'bureaucratic' or 'startup-like' despite scale?",
+                "Are there signs of skip-level engagement (CEO talking to engineers, customers)?",
+                "Has the culture remained authentic to the founder's original vision?",
+                "Is the CEO running the company or has the company started running the CEO?",
+            ],
+            "investment_implication": (
+                "Founder-mode CEOs (Jensen Huang at NVIDIA, Bezos at Amazon, Jobs at Apple) "
+                "tend to compound for decades. "
+                "Manager-mode transitions at founder-led companies often precede mean-reversion. "
+                "Watch for: increasing bureaucracy, slower product cycles, declining culture survey scores."
+            ),
+        },
+        "schlep_blindness": {
+            "essay": "Schlep Blindness (2012)",
+            "core_principle": (
+                "Founders and investors systematically avoid hard, unglamorous work ('schleps'). "
+                "This creates enormous opportunity: the best startup ideas are often the ones "
+                "that seem boring, dirty, or difficult. "
+                "Stripe's insight: payments processing is a schlep everyone avoids — "
+                "therefore it's a massive opportunity with no competition from glory-seekers."
+            ),
+            "diagnostic_questions": [
+                "What is the hardest, most unsexy part of what this company does?",
+                "Is the company doing work competitors refuse because it's too difficult?",
+                "Does the founder actively embrace the schlep or try to engineer around it?",
+                "Would a VC-seeking founder with options skip this problem entirely?",
+            ],
+            "investment_implication": (
+                "Companies that embrace schlep build the deepest moats. "
+                "The harder and more unsexy the work, the fewer competitors will persist. "
+                "Schlep = process power in the making."
+            ),
+        },
+        "frighteningly_ambitious": {
+            "essay": "Frighteningly Ambitious Startup Ideas (2012)",
+            "core_principle": (
+                "The best startup ideas look bad at first to most people. "
+                "If they looked obviously good, they'd already be done. "
+                "The most important ideas seem 'too ambitious' to skeptics "
+                "but 'inevitable' to those who deeply understand the domain. "
+                "The tell: smart people have dismissed it for plausible but ultimately wrong reasons."
+            ),
+            "diagnostic_questions": [
+                "Did the idea seem absurd when first pitched? What was the specific objection?",
+                "Why did smart people think this was impossible / not worth doing?",
+                "What specific insight unlocks the idea that most people lack?",
+                "Is the company doing something that will look obvious in 10 years?",
+            ],
+            "investment_implication": (
+                "Non-consensus, frighteningly ambitious bets are where 100x returns live. "
+                "The consensus is always right about what seems crazy today. "
+                "The contrarian is right when the underlying insight is correct. "
+                "NVIDIA building CUDA before AI existed is the canonical example."
+            ),
+        },
+        "do_things_that_dont_scale": {
+            "essay": "Do Things That Don't Scale (2013)",
+            "core_principle": (
+                "Startups that succeed often begin with intensive manual work "
+                "that is impossible to sustain at scale — and that's fine. "
+                "Airbnb photographed apartments; Stripe manually configured payments; "
+                "DoorDash founders delivered food themselves. "
+                "This forces customer intimacy that builds the intuition to build the right product. "
+                "The manual phase is a learning phase, not a failure."
+            ),
+            "diagnostic_questions": [
+                "Did the founders personally do the work their product now automates?",
+                "Is there evidence of intense early customer intimacy?",
+                "Has the 'unscalable' phase built proprietary insights competitors can't replicate?",
+                "What do they know about customers that only comes from doing things manually?",
+            ],
+            "investment_implication": (
+                "Evidence that founders did things that don't scale is a founder quality signal. "
+                "Companies with this foundation tend to have better product instincts "
+                "and deeper customer empathy than those who tried to scale immediately."
+            ),
+        },
+        "relentlessly_resourceful": {
+            "essay": "Relentlessly Resourceful (2009)",
+            "core_principle": (
+                "The most important quality in a founder is being 'relentlessly resourceful' — "
+                "a combination of determination and creative problem-solving. "
+                "Not smart (necessary but not sufficient). "
+                "Not determined (can become stubbornness). "
+                "Relentlessly resourceful = finds a way forward when every door is closed."
+            ),
+            "diagnostic_questions": [
+                "What near-death experiences has this company navigated?",
+                "How did the founder respond when the obvious path was blocked?",
+                "Are there examples of creative pivots that preserved the core insight?",
+                "Does the founder attract other resourceful people, or bureaucratic ones?",
+            ],
+            "investment_implication": (
+                "Relentlessly resourceful founders build companies that survive adversity. "
+                "Test: find the hardest moment in company history and ask 'what did they do?' "
+                "The answer tells you everything about the founder's quality."
+            ),
+        },
+        "power_law": {
+            "essay": "Black Swan Farming / How to Be an Angel Investor (2009)",
+            "core_principle": (
+                "Investment returns follow a power law, not a normal distribution. "
+                "The best investment in a portfolio should return more than all others combined. "
+                "This means: optimize for maximum upside scenarios, not average scenarios. "
+                "The question is not 'what is the expected return?' "
+                "but 'what is the maximum possible return if everything goes right?'"
+            ),
+            "diagnostic_questions": [
+                "What is the maximum value this company could reach (TAM × market share)?",
+                "Is the upside scenario plausible, or does it require magic?",
+                "How much of the portfolio return would this represent if it works?",
+                "Is this a compounder bet (expected value) or a power law bet (maximum value)?",
+            ],
+            "investment_implication": (
+                "For venture-style bets: size for the power law. "
+                "For compounders: size for expected value. "
+                "Distinguish which type of bet you're making before sizing."
+            ),
+        },
+        "wealth_creation": {
+            "essay": "How to Make Wealth (2004)",
+            "core_principle": (
+                "Wealth is created by building things people want. "
+                "The best companies create value from nothing — "
+                "they don't redistribute existing wealth, they expand the pie. "
+                "The test: if this company disappeared, would the world be meaningfully worse? "
+                "Value extractors (rent-seekers, monopolists extracting surplus) "
+                "tend to face regulatory and competitive backlash over time."
+            ),
+            "diagnostic_questions": [
+                "Does this company create net new value, or redistribute existing value?",
+                "If it disappeared tomorrow, who would suffer and how much?",
+                "Is pricing power from genuine value creation or from rent extraction?",
+                "Is this company expanding the market it operates in, or fighting for share?",
+            ],
+            "investment_implication": (
+                "Genuine wealth creators tend to earn loyalty, pricing power, and regulatory goodwill. "
+                "Value extractors (toll roads, financial intermediaries without efficiency gains) "
+                "invite disruption and regulation. "
+                "Long-term compounders are almost always in the first category."
+            ),
+        },
+        "be_good": {
+            "essay": "Be Good (2008)",
+            "core_principle": (
+                "The simplest filter for whether a company will succeed long-term: "
+                "is it genuinely good? Do good people work there? "
+                "Does it make customers' lives meaningfully better? "
+                "PG's insight: being good is not just morally right — it's strategically powerful. "
+                "Good companies attract better people, earn more trust, and build more durable relationships."
+            ),
+            "diagnostic_questions": [
+                "Would you describe this company as genuinely good for the people it serves?",
+                "Does the culture attract idealistic people or purely mercenary ones?",
+                "Are there signs of ethical shortcuts that will eventually catch up?",
+                "Does the CEO seem like a good person, or a person optimizing only for outcomes?",
+            ],
+            "investment_implication": (
+                "Companies that are genuinely good tend to compound more durably "
+                "because they attract better talent, earn greater customer loyalty, "
+                "and avoid the reputational crises that destroy short-term optimizers. "
+                "'Be good' is a useful final-stage filter after all other analysis."
+            ),
+        },
+    }
+
+    # Filter to requested frameworks if specified
+    active = (
+        {k: v for k, v in all_frameworks.items() if k in focus}
+        if focus else all_frameworks
+    )
+
+    # Calibrate to stage
+    stage_note = {
+        "early_startup": "Focus most on: growth_rate, default_alive, do_things_that_dont_scale, relentlessly_resourceful",
+        "growth_stage": "Focus most on: growth_rate, default_alive, founder_mode, schlep_blindness",
+        "public_company": "Focus most on: founder_mode, wealth_creation, be_good, power_law",
+        "any": "Apply all frameworks proportionally based on evidence available",
+    }.get(stage, "Apply all frameworks proportionally")
+
+    scaffold = {
+        "company": company,
+        "stage": stage,
+        "stage_calibration": stage_note,
+        "framework": "Paul Graham Essay Canon — Startup & Founder Thinking",
+        "frameworks": active,
+        "instruction": (
+            f"Apply Paul Graham's frameworks to {company} using the evidence below. "
+            f"For each relevant framework: "
+            f"(1) State the PG principle in one sentence, "
+            f"(2) Apply it specifically to {company} with evidence, "
+            f"(3) Give the investment/strategic implication. "
+            f"Be direct and specific — PG's value is in cutting through noise to the essential truth. "
+            f"Conclude with: "
+            f"(a) The single most important PG insight for this company, "
+            f"(b) The biggest PG-identified risk, "
+            f"(c) An overall PG-lens verdict (Strong / Mixed / Weak) with one-sentence rationale."
+            f"\n\nContext:\n{context}"
         ),
     }
     return json.dumps(scaffold, indent=2)

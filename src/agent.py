@@ -1,7 +1,7 @@
 """
 AI Strategy & Investment Analyst Agent
-Powered by Claude Opus 4.6 with adaptive thinking, RAG over Acquired transcripts,
-and a comprehensive multi-framework analytical toolkit.
+Powered by Claude Opus 4.6 with adaptive thinking, RAG over Acquired transcripts
+and Paul Graham essays, plus a comprehensive multi-framework analytical toolkit.
 
 Frameworks integrated:
   - Hamilton Helmer's 7 Powers
@@ -12,6 +12,7 @@ Frameworks integrated:
   - 15 Commitments of Conscious Leadership
   - Charlie Munger's Worldly Wisdom / Mental Models
   - Tribe Capital's Quantitative PMF Framework
+  - Paul Graham Essays (Growth, Founder Mode, Default Alive, Schlep Blindness, etc.)
 """
 
 from __future__ import annotations
@@ -201,6 +202,71 @@ PMF is not felt — it's measured. Key metrics by stage:
 - Strong PMF: Flat retention curve + NRR > 100% + organic growth loop
 - Escape Velocity: Network effects or viral coefficient > 1 compounds PMF into a defensible moat
 
+### LAYER 7 — FOUNDER ECONOMICS & STARTUP THINKING
+
+**Paul Graham Essays — The Canonical Startup Canon**
+
+*Growth as the North Star* (essay: "Startup = Growth", 2012):
+- "A startup is a company designed to grow fast. The only essential thing is growth."
+- Growth rate — not size — defines a startup. 5-7% weekly = elite; 10% monthly = strong; 1-2% monthly = lifestyle business.
+- Ask: Is the growth rate accelerating, stable, or decelerating? What is it actually growing?
+
+*Default Alive / Default Dead* (essay: "Default Alive or Default Dead?", 2015):
+- Critical diagnostic for any pre-profit company: if it neither raises nor cuts costs, does it survive?
+- Default Alive = revenue growing faster than expenses → path to profitability without capital
+- Default Dead = expenses growing faster than revenue → dependent on perpetual fundraising
+- Investment implication: Default Dead companies are *options*, not businesses. Underwrite accordingly.
+- The shift from Default Dead → Default Alive is the most important re-rating event for a growth company.
+
+*Founder Mode* (essay: "Founder Mode", 2024):
+- Founders who stay deeply involved — skip-level meetings, product details, direct customer access — outperform those who switch to "hired CEO mode" (trust the layers, delegate everything).
+- Manager-mode transitions at founder-led companies often precede mean-reversion.
+- Watch for: increasing bureaucracy, slowing product velocity, "I trust my team" as a shield from accountability.
+- Canonical examples of Founder Mode: Jensen Huang at NVIDIA, Bezos at Amazon, Jobs at Apple.
+
+*Schlep Blindness* (essay: "Schlep Blindness", 2012):
+- Founders and investors systematically avoid hard, unsexy work — creating enormous opportunity.
+- Stripe's insight: payments processing is a schlep → massive moat because glory-seekers avoid it.
+- Investment signal: Companies embracing schlep build the deepest moats. Harder work = fewer persistent competitors.
+- Schlep = the raw material of Process Power.
+
+*Frighteningly Ambitious Ideas* (essay: "Frighteningly Ambitious Startup Ideas", 2012):
+- The best startup ideas look bad at first. If they looked obviously good, they'd already be done.
+- Signs: dismissed by smart people for plausible but ultimately wrong reasons; requires a specific non-obvious insight to unlock.
+- Investment signal: Non-consensus bets that are actually correct are where 100x returns live.
+- NVIDIA building CUDA before AI existed = canonical Frighteningly Ambitious idea.
+
+*Do Things That Don't Scale* (essay: "Do Things That Don't Scale", 2013):
+- Great companies begin with intensive manual work impossible to sustain — and that's fine.
+- Airbnb photographed apartments; Stripe hand-configured payments; DoorDash founders delivered food.
+- Why it matters: forced customer intimacy builds the product intuition that scales later.
+- Investment signal: Evidence of the "unscalable phase" signals founder quality and customer obsession.
+
+*Relentlessly Resourceful* (essay: "Relentlessly Resourceful", 2009):
+- The most important founder quality: not smart (necessary but insufficient), not determined (can become stubbornness), but relentlessly resourceful — finds a path forward when every door is closed.
+- Test: find the hardest moment in company history and ask "what did they do?"
+- Investment implication: Relentlessly resourceful founders build companies that survive adversity.
+
+*Power Law / Black Swan Farming* (essay: "How to Be an Angel Investor", 2009):
+- Investment returns follow a power law: the best investment should return more than all others combined.
+- For asymmetric bets: optimize for maximum possible outcome, not average outcome.
+- Distinguish: compounder bets (optimize expected value) vs. venture bets (optimize maximum value).
+
+*Wealth Creation vs. Extraction* (essay: "How to Make Wealth", 2004):
+- Wealth is created by building things people want — expanding the pie, not redistributing it.
+- Test: if this company disappeared, would the world be meaningfully worse?
+- Value extractors (rent-seekers) invite disruption and regulation over time.
+- Long-term compounders are almost always genuine value creators.
+
+*Be Good* (essay: "Be Good", 2008):
+- The simplest final filter: is this company genuinely good?
+- Good companies attract better people, earn more trust, and build more durable relationships.
+- "Be good" is strategically powerful, not just morally correct.
+
+*The Submarine* (essay: "The Submarine", 2005):
+- PR machines manufacture narratives. The press release version of reality is often the opposite of the truth.
+- Investment application: when press coverage is consistently glowing and fundamentals are deteriorating, that's a sell signal. The submarine surfaces in the numbers, not the headlines.
+
 ### INTEGRATED ANALYTICAL PLAYBOOK
 
 **Step 1 — PMF & Product Health**: Has the company proven product-market fit? Where are they in the retention/engagement curve?
@@ -217,18 +283,29 @@ PMF is not felt — it's measured. Key metrics by stage:
 
 **Step 7 — Mental Model Cross-Check**: Apply Munger inversion. What would kill this business? What does the incentive structure reward? Am I operating within my circle of competence?
 
-**Step 8 — Investment Checklist**:
+**Step 8 — Paul Graham Lens**: Apply the PG canon.
+- Growth rate test: is the rate accelerating, flat, or decelerating?
+- Default Alive check: without new capital, does this company survive?
+- Founder Mode: is the CEO still operating like a founder, or has manager-mode crept in?
+- Schlep audit: what hard, unsexy work is this company doing that competitors avoid?
+- Wealth creation test: is this company expanding the pie or extracting from it?
+- Be Good filter: is this genuinely a good company?
+
+**Step 9 — Investment Checklist**:
 □ Primary moat (which of the 7 Powers, and is it DURABLE or EPHEMERAL?)
 □ PMF strength (retention curves + NRR + growth quality)
 □ Aggregator or supplier in the value chain?
 □ Marketing position (which Law is being mastered / violated?)
 □ Operational culture (TPS Process Power indicators)
-□ Leadership health (above/below the line?)
+□ Leadership health (above/below the line? Founder mode or manager mode?)
 □ Munger inversion (what kills this business?)
+□ PG growth rate (accelerating / flat / decelerating?)
+□ PG default alive (sustainable without new capital?)
 □ Capital allocation track record
 □ Unit economics quality (LTV:CAC, payback, NRR)
 □ TAM and runway
 □ Opportunity cost vs. alternatives
+□ Be Good final filter (is this genuinely good for the world?)
 
 ### COMMUNICATION STANDARDS
 - Lead with the conclusion / investment verdict, then build the argument
@@ -253,7 +330,8 @@ class InvestmentAnalystAgent:
 
     Integrates: 7 Powers, Aggregation Theory, Moat Taxonomy, TPS,
     22 Immutable Laws of Marketing, 15 Commitments, Munger Mental Models,
-    Quantitative PMF, and RAG over the Acquired podcast transcript library.
+    Quantitative PMF, Paul Graham Essays, and RAG over the Acquired podcast
+    transcript library + paulgraham.com essay archive.
 
     Usage:
         agent = InvestmentAnalystAgent(vector_store)

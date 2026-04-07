@@ -4,22 +4,26 @@ AI Strategy & Investment Analyst — CLI entrypoint
 
 Frameworks: 7 Powers · Aggregation Theory · Moat Taxonomy · TPS ·
             22 Immutable Laws of Marketing · 15 Commitments ·
-            Munger Mental Models · Quantitative PMF · Acquired Podcast RAG
+            Munger Mental Models · Quantitative PMF ·
+            Paul Graham Essays · Acquired Podcast RAG
 
 Commands:
   build-kb   Scrape Acquired transcripts and build the vector knowledge base
+  build-pg   Scrape Paul Graham essays and add them to the knowledge base
   chat       Launch the interactive strategy analyst chat
   ask        Ask a single question (non-interactive)
   status     Show knowledge base stats
 
 Usage examples:
-  python main.py build-kb                                    # full scrape + index
+  python main.py build-kb                                    # full Acquired scrape + index
   python main.py build-kb --max-episodes 20                  # quick test
+  python main.py build-pg                                    # index all PG essays
+  python main.py build-pg --priority-only                    # index high-signal essays only
   python main.py chat                                        # interactive REPL
-  python main.py ask "Analyse Nvidia's moat"                 # 7 Powers analysis
-  python main.py ask "Apply aggregation theory to Uber"
+  python main.py ask "Analyse Nvidia's moat"
+  python main.py ask "Apply Paul Graham's default alive test to Samsara"
+  python main.py ask "Is this founder in founder mode or manager mode?"
   python main.py ask "Score Apple on the 22 Laws of Marketing"
-  python main.py ask "Is Shopify above or below the line on leadership?"
   python main.py status                                      # KB info
 """
 
@@ -59,6 +63,12 @@ def _get_scraper():
     from src.scraper import AcquiredScraper
     transcripts_path = os.getenv("TRANSCRIPTS_PATH", "./data/transcripts")
     return AcquiredScraper(cache_dir=transcripts_path)
+
+
+def _get_pg_scraper():
+    from src.scraper import PaulGrahamScraper
+    pg_path = os.getenv("PG_ESSAYS_PATH", "./data/pg_essays")
+    return PaulGrahamScraper(cache_dir=pg_path)
 
 
 # ──────────────────────────────────────────────────────────────────────
@@ -109,6 +119,54 @@ def cmd_build_kb(args):
     )
 
 
+def cmd_build_pg(args):
+    """Scrape Paul Graham essays and index them into the knowledge base."""
+    console.print(
+        Panel.fit(
+            "[bold cyan]Paul Graham Essay Knowledge Base Builder[/bold cyan]\n"
+            "Scraping essays from paulgraham.com and indexing into ChromaDB…",
+            border_style="cyan",
+        )
+    )
+
+    scraper = _get_pg_scraper()
+    vs = _get_vector_store()
+
+    with Progress(
+        SpinnerColumn(),
+        TextColumn("[progress.description]{task.description}"),
+        console=console,
+    ) as progress:
+        task = progress.add_task("Fetching essay list…", total=None)
+
+        essay_list = scraper.get_essay_list()
+        label = "priority essays" if args.priority_only else "all essays"
+        progress.update(task, description=f"Found {len(essay_list)} essays. Fetching {label}…")
+
+        essays_with_text = []
+        for i, essay in enumerate(essay_list):
+            progress.update(
+                task,
+                description=f"[{i+1}/{len(essay_list)}] {essay['title'][:60]}…",
+            )
+        # Use get_all_essays for caching + filtering
+        essays_with_text = scraper.get_all_essays(
+            priority_only=args.priority_only,
+            max_essays=args.max_essays,
+            verbose=False,
+        )
+
+        progress.update(task, description="Ingesting into vector store…")
+        total_chunks = vs.ingest_pg_essays(essays_with_text, verbose=False)
+
+    console.print(
+        f"\n[bold green]✓ Done![/bold green] "
+        f"Indexed {len(essays_with_text)} essays / "
+        f"{total_chunks} new chunks into the knowledge base.\n"
+        f"Total PG chunks in DB: [bold]{vs.count_pg()}[/bold]"
+    )
+
+
 def cmd_status(_args):
     """Show knowledge base statistics."""
     vs = _get_vector_store()
@@ -121,12 +179,18 @@ def cmd_status(_args):
         return
 
     slugs = vs.get_episode_slugs()
+    pg_count = vs.count_pg()
+    pg_titles = vs.get_pg_essay_titles() if pg_count > 0 else []
     console.print(
         Panel.fit(
             f"[bold]Knowledge Base Status[/bold]\n\n"
-            f"Chunks indexed : [cyan]{count:,}[/cyan]\n"
-            f"Episodes       : [cyan]{len(slugs)}[/cyan]\n"
-            f"DB path        : [dim]{os.getenv('CHROMA_DB_PATH', './data/chroma_db')}[/dim]",
+            f"[underline]Acquired Podcast[/underline]\n"
+            f"  Chunks indexed : [cyan]{count:,}[/cyan]\n"
+            f"  Episodes       : [cyan]{len(slugs)}[/cyan]\n\n"
+            f"[underline]Paul Graham Essays[/underline]\n"
+            f"  Chunks indexed : [cyan]{pg_count:,}[/cyan]\n"
+            f"  Essays         : [cyan]{len(pg_titles)}[/cyan]\n\n"
+            f"DB path          : [dim]{os.getenv('CHROMA_DB_PATH', './data/chroma_db')}[/dim]",
             border_style="green",
         )
     )
@@ -134,6 +198,10 @@ def cmd_status(_args):
         console.print("\n[bold]Indexed episodes:[/bold]")
         for s in slugs:
             console.print(f"  • {s}")
+    if pg_titles:
+        console.print("\n[bold]Indexed PG essays:[/bold]")
+        for t in pg_titles:
+            console.print(f"  • {t}")
 
 
 def cmd_chat(_args):
@@ -148,7 +216,8 @@ def cmd_chat(_args):
             "Ask me about any company, moat, business model, marketing strategy, "
             "leadership health, or investment thesis.\n"
             "Frameworks: 7 Powers · Aggregation Theory · Moat Taxonomy · TPS · "
-            "22 Laws of Marketing · 15 Commitments · Munger · Quantitative PMF\n\n"
+            "22 Laws of Marketing · 15 Commitments · Munger · Quantitative PMF · "
+            "Paul Graham Essays\n\n"
             "[dim]Commands: 'reset' to clear history, 'quit' / 'exit' to leave.[/dim]",
             border_style="cyan",
             expand=False,
@@ -157,9 +226,14 @@ def cmd_chat(_args):
 
     if vs.is_empty():
         console.print(
-            "[yellow]⚠  Knowledge base is empty.[/yellow] "
-            "Run [bold]python main.py build-kb[/bold] first for best results. "
+            "[yellow]⚠  Acquired KB is empty.[/yellow] "
+            "Run [bold]python main.py build-kb[/bold] for Acquired transcripts. "
             "Continuing with base model knowledge only.\n"
+        )
+    if vs.is_pg_empty():
+        console.print(
+            "[yellow]⚠  Paul Graham KB is empty.[/yellow] "
+            "Run [bold]python main.py build-pg[/bold] to index PG essays.\n"
         )
 
     while True:
@@ -253,6 +327,22 @@ def main():
         help="Limit to N episodes (useful for testing; default: all)",
     )
 
+    # build-pg
+    p_pg = sub.add_parser("build-pg", help="Scrape and index Paul Graham essays")
+    p_pg.add_argument(
+        "--priority-only",
+        action="store_true",
+        default=False,
+        help="Only index the curated high-signal essay list (faster)",
+    )
+    p_pg.add_argument(
+        "--max-essays",
+        type=int,
+        default=None,
+        metavar="N",
+        help="Limit to N essays (useful for testing; default: all)",
+    )
+
     # chat
     sub.add_parser("chat", help="Launch interactive chat")
 
@@ -266,6 +356,7 @@ def main():
     args = parser.parse_args()
     dispatch = {
         "build-kb": cmd_build_kb,
+        "build-pg": cmd_build_pg,
         "chat": cmd_chat,
         "ask": cmd_ask,
         "status": cmd_status,

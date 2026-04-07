@@ -220,3 +220,196 @@ class AcquiredScraper:
                 if blank_run == 1:
                     cleaned.append("")
         return "\n".join(cleaned).strip()
+
+
+# ──────────────────────────────────────────────────────────────────────
+#  Paul Graham Essay Scraper
+# ──────────────────────────────────────────────────────────────────────
+
+PG_BASE = "http://paulgraham.com"
+PG_ARTICLES_INDEX = "http://paulgraham.com/articles.html"
+
+# High-priority essays most relevant to business strategy & investing
+PG_PRIORITY_SLUGS = {
+    "growth", "foundermode", "aord", "schlep", "ambitious", "ds",
+    "startupideas", "determined", "wealth", "good", "submarine",
+    "relres", "before", "avg", "hwh", "hiring", "makersschedule",
+    "fr", "ramen", "identity", "badeconomy", "notnot", "13sentences",
+    "ideas", "investors", "die", "equity", "foundervsceo",
+    "jessica", "addiction", "sun", "worked",
+}
+
+
+class PaulGrahamScraper:
+    """
+    Scrapes Paul Graham's essays from paulgraham.com and caches them locally.
+
+    Returns essay dicts compatible with VectorStore.ingest_pg_essays():
+      { slug, title, url, transcript }
+    """
+
+    def __init__(self, cache_dir: str = "./data/pg_essays"):
+        self.cache_dir = Path(cache_dir)
+        self.cache_dir.mkdir(parents=True, exist_ok=True)
+        self.session = requests.Session()
+        self.session.headers.update({
+            "User-Agent": (
+                "Mozilla/5.0 (compatible; PGEssayBot/1.0; "
+                "investment research tool)"
+            ),
+            "Accept": "text/html,application/xhtml+xml,*/*;q=0.8",
+        })
+
+    # ------------------------------------------------------------------
+    # Public API
+    # ------------------------------------------------------------------
+
+    def get_essay_list(self) -> list[dict]:
+        """
+        Return list of essay metadata dicts: { slug, title, url }
+        Loads from cache if available; otherwise scrapes paulgraham.com.
+        """
+        cache_file = self.cache_dir / "essay_list.json"
+        if cache_file.exists():
+            with open(cache_file) as f:
+                return json.load(f)
+
+        essays = self._scrape_essay_list()
+        with open(cache_file, "w") as f:
+            json.dump(essays, f, indent=2)
+        return essays
+
+    def get_essay_text(self, essay: dict) -> Optional[str]:
+        """
+        Return full text of *essay*. Loads from cache or scrapes.
+        """
+        slug = essay["slug"]
+        cache_file = self.cache_dir / f"{slug}.txt"
+        if cache_file.exists():
+            return cache_file.read_text(encoding="utf-8")
+
+        text = self._scrape_essay(essay["url"])
+        if text:
+            cache_file.write_text(text, encoding="utf-8")
+        return text
+
+    def get_all_essays(
+        self,
+        priority_only: bool = False,
+        max_essays: Optional[int] = None,
+        delay: float = 1.0,
+        verbose: bool = True,
+    ) -> list[dict]:
+        """
+        Scrape / load all essays and return:
+          [{ slug, title, url, transcript }, ...]
+
+        Args:
+            priority_only: If True, only fetch the curated high-signal list.
+            max_essays:    Cap the total number fetched (useful for testing).
+        """
+        all_meta = self.get_essay_list()
+
+        if priority_only:
+            all_meta = [e for e in all_meta if e["slug"] in PG_PRIORITY_SLUGS]
+
+        if max_essays:
+            all_meta = all_meta[:max_essays]
+
+        results = []
+        for i, essay in enumerate(all_meta):
+            if verbose:
+                print(f"[{i+1}/{len(all_meta)}] {essay['title']}")
+            text = self.get_essay_text(essay)
+            if text and len(text) > 200:
+                results.append({**essay, "transcript": text})
+            time.sleep(delay)
+
+        return results
+
+    # ------------------------------------------------------------------
+    # Internal scrapers
+    # ------------------------------------------------------------------
+
+    def _scrape_essay_list(self) -> list[dict]:
+        """Fetch paulgraham.com/articles.html and extract essay links."""
+        try:
+            resp = self.session.get(PG_ARTICLES_INDEX, timeout=15)
+            resp.raise_for_status()
+        except requests.RequestException as exc:
+            print(f"Warning: failed to fetch PG articles index: {exc}")
+            return []
+
+        soup = BeautifulSoup(resp.text, "lxml")
+        essays: list[dict] = []
+
+        for link in soup.find_all("a", href=True):
+            href: str = link["href"]
+            # PG essay links are like "growth.html" (relative)
+            if not href.endswith(".html") or "/" in href:
+                continue
+            slug = href.replace(".html", "")
+            title = link.get_text(strip=True)
+            if not title or len(title) < 3:
+                continue
+            full_url = f"{PG_BASE}/{href}"
+            essays.append({"slug": slug, "title": title, "url": full_url})
+
+        # Deduplicate by slug
+        seen: set[str] = set()
+        unique: list[dict] = []
+        for e in essays:
+            if e["slug"] not in seen:
+                seen.add(e["slug"])
+                unique.append(e)
+
+        return unique
+
+    def _scrape_essay(self, url: str) -> Optional[str]:
+        """Fetch and extract the main text body from a PG essay page."""
+        try:
+            resp = self.session.get(url, timeout=15)
+            resp.raise_for_status()
+        except requests.RequestException as exc:
+            print(f"  Warning: failed to fetch {url}: {exc}")
+            return None
+
+        soup = BeautifulSoup(resp.text, "lxml")
+
+        # PG's site uses a simple <font> / <table> layout — grab all <p> and <font> text
+        # Try table cell with the most text first
+        best_cell = None
+        best_len = 0
+        for td in soup.find_all("td"):
+            text = td.get_text()
+            if len(text) > best_len:
+                best_len = len(text)
+                best_cell = td
+
+        if best_cell and best_len > 300:
+            return self._clean_pg_text(best_cell.get_text())
+
+        # Fallback: concatenate all <p> tags
+        paragraphs = soup.find_all("p")
+        if paragraphs:
+            text = "\n\n".join(p.get_text() for p in paragraphs)
+            if len(text) > 200:
+                return self._clean_pg_text(text)
+
+        return None
+
+    @staticmethod
+    def _clean_pg_text(text: str) -> str:
+        """Normalise whitespace for PG essay text."""
+        lines = [line.strip() for line in text.splitlines()]
+        cleaned: list[str] = []
+        blank_run = 0
+        for line in lines:
+            if line:
+                cleaned.append(line)
+                blank_run = 0
+            else:
+                blank_run += 1
+                if blank_run == 1:
+                    cleaned.append("")
+        return "\n".join(cleaned).strip()

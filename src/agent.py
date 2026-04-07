@@ -13,6 +13,10 @@ Frameworks integrated:
   - Charlie Munger's Worldly Wisdom / Mental Models
   - Tribe Capital's Quantitative PMF Framework
   - Paul Graham Essays (Growth, Founder Mode, Default Alive, Schlep Blindness, etc.)
+  - Michael Mauboussin (Capital Allocation, Expectations Investing, ROIC/CAP, Base Rates)
+  - Nick Sleep & Qais Zakaria — Nomad Investment Partnership Letters
+  - Li Lu — Columbia Business School Lecture & Value Investing Philosophy
+  - Richard Zeckhauser — Investing in the Unknown and Unknowable
 """
 
 from __future__ import annotations
@@ -267,6 +271,123 @@ PMF is not felt — it's measured. Key metrics by stage:
 - PR machines manufacture narratives. The press release version of reality is often the opposite of the truth.
 - Investment application: when press coverage is consistently glowing and fundamentals are deteriorating, that's a sell signal. The submarine surfaces in the numbers, not the headlines.
 
+### LAYER 8 — CAPITAL ALLOCATION & EXPECTATIONS INVESTING
+
+**Michael Mauboussin — The Quantitative Foundations of Value**
+
+*The Capital Allocation Imperative* ("Capital Allocation: Evidence, Analytical Methods, and Assessment Guidance"):
+- The CEO's primary job is capital allocation. Every FCF dollar has five destinations: (1) organic reinvestment, (2) M&A, (3) dividends, (4) buybacks, (5) debt repayment.
+- Value is created ONLY when ROIC > WACC. Growth creates value only when the incremental return exceeds the cost of capital — otherwise growth destroys value.
+- Return on Incremental Invested Capital (ROIIC) = change in NOPAT / change in invested capital. ROIIC is more diagnostic than average ROIC — it reveals the marginal quality of capital decisions.
+- Capital allocator rating system: (A) World-class = consistently deploys capital at ROIIC > 20%; (F) Value-destroyers = ROIIC consistently below WACC despite reporting EPS growth.
+- Red flag pattern: serial acquirers with rising goodwill/revenue ratios — almost always overpaying. ~60-70% of acquisitions destroy shareholder value.
+- Green flag pattern: opportunistic counter-cyclical buybacks (Meta 2022, Apple across cycles) = management understands intrinsic value.
+
+*Expectations Investing* ("Expectations Investing", Rappaport & Mauboussin, 2001/2021):
+- The stock price IS a DCF. Every price embeds specific expectations for revenue growth, margins, reinvestment, and Competitive Advantage Period (CAP).
+- The investor's job: decode what the price assumes → compare to base rates → bet only when implied expectations are materially wrong.
+- Reverse-DCF process: find the growth rate / margin / CAP that makes the DCF = current price. If that implied expectation is unrealistic, the setup is mispriced.
+- The most actionable question: "The market believes X. I believe Y. Here is why that difference is real and not yet priced." If you cannot complete that sentence, you don't have a differentiated view.
+
+*ROIC, Moat Durability & Mean Reversion* ("Measuring the Moat", Credit Suisse 2013):
+- **The ROIC Matrix:**
+  - High ROIC + High Growth = Compounder (holy grail — maximise position)
+  - High ROIC + Low Growth = Cash Cow (good but limited; return capital)
+  - Low ROIC + High Growth = Value Trap (dangerous — growth destroys more value)
+  - Low ROIC + Low Growth = Melting Ice Cube (avoid)
+- Mean reversion is the dominant force. High ROIC attracts competition → returns compress toward WACC. Speed: Network effects/switching costs = 10-20 years; Scale advantages = 5-10 years; No moat = 1-3 years.
+- **Competitive Advantage Period (CAP)** = years the company sustains ROIC > WACC. Average S&P 500: 5-7 years. Network-effect platforms: 15-20+ years. If valuation implies >15 years, the moat evidence bar is very high.
+- Base rates by sector: Software platforms sustain top-quartile ROIC 10+ years ~35% of the time. Industrials ~15%. Retail ~10% (exceptions: Costco, NVR). Mean reversion is not pessimism — it's the base case.
+
+*Base Rates* ("The Base Rate Book", Credit Suisse 2016):
+- Always anchor forecasts to base rates before applying company-specific views. Availability bias makes recent outliers feel representative.
+- Revenue growth persistence: among >20% growers, ~50% sustain >15% for 5 years, <20% for 10 years.
+- Margin expansion: >30% gross margin businesses expand EBIT 200-400bps over 5 years on average. Most capex-heavy businesses do not expand meaningfully.
+- Use base rates as the outside view; company-specific analysis as the inside view. Update the outside view only when there is specific, verifiable reason to.
+
+*Luck vs. Skill* ("The Success Equation", 2012):
+- All outcomes combine skill and luck. ROIC has a structural component (moat) and a cyclical component (macro/luck).
+- Where luck dominates, reversion to the mean is fastest and most certain.
+- Diagnostic: strip out cyclical tailwinds — what does ROIC look like through the full cycle (peak + trough average)? That is the structural ROIC.
+- Investment implication: never pay a premium for ROIC that is primarily luck-driven. Demand evidence of structural, through-cycle competitive advantage.
+
+*On P/E and Multiples:*
+- P/E is not a valuation tool — it embeds hidden assumptions about ROIC, growth, reinvestment, and WACC. The same P/E can be cheap or expensive depending on those hidden inputs.
+- A 30x P/E is cheap for a 30%-ROIC compounder with 15-year CAP. It is wildly expensive for a 12%-ROIC, 8%-grower in a commodity industry.
+- Always ask: what ROIC, growth rate, and CAP does this multiple implicitly assume?
+
+### LAYER 9 — DEEP VALUE, UNCERTAINTY & SCALABLE ECONOMICS
+
+**Nick Sleep & Qais Zakaria — Nomad Investment Partnership Letters (2001–2014)**
+
+*Scale Economics Shared* (the central Sleep/Zakaria insight):
+- The most durable businesses share cost savings with customers as they scale — lowering prices to grow volume, which lowers costs further, which enables more price reduction.
+- This is the anti-rent-seeking model: choosing to grow the pie rather than extract margin.
+- Canonical examples: Costco (membership model passes savings to members), Amazon (AWS + Prime + marketplace reinvests every efficiency into lower prices and faster delivery).
+- The test: "Does this company get cheaper to use as it grows?" If yes, it may be a Scale Economics Shared business.
+- Investment implication: these businesses build customer trust so deep it becomes a cultural moat — customers *want* them to win. This is rarer and more durable than financial switching costs alone.
+
+*Destination Analysis* (Sleep's framework for assessing long-term trajectory):
+- Ask: "What does this business look like in 10-20 years if everything goes right?" Work backwards from the destination.
+- Most investors are too short-term; the market systematically undervalues businesses with long runways.
+- The competitive advantage of patient capital: you can hold what impatient capital will sell. Most institutional investors have 2-3 year horizons; a 10-year view is a structural edge.
+
+*Sizing with Conviction* (portfolio construction philosophy):
+- Nomad ran a highly concentrated portfolio (often <10 positions). Diversification is protection against ignorance.
+- When you have high conviction and a long runway, the right action is to own a lot and hold a long time — not to diversify away your best idea.
+- "The big money is not in the buying and the selling, but in the waiting." (attributed to Jesse Livermore; embraced by Sleep/Zakaria)
+
+*The Retail Delusion* (Sleep on why retail analysts chronically underprice Amazon and Costco):
+- Analysts benchmark Amazon's margins against retail peers → it looks expensive. But Amazon is building infrastructure, not extracting margin.
+- Rule: when a business reinvests aggressively into long-duration assets, current earnings dramatically understate the value being created.
+- Always ask: is the margin suppression deliberate (reinvestment) or structural (lack of pricing power)?
+
+**Li Lu — Columbia Business School Lecture & Value Investing Philosophy**
+
+*Civilizational Alpha*:
+- The greatest long-term investment opportunity is exposure to human civilizational progress — the compounding of knowledge, technology, and productivity over decades.
+- Li Lu's insight: if you believe human civilization continues to progress (the base case for any rational investor), then long-duration equity ownership of companies that ride that progress is the highest-conviction bet available.
+- Investment implication: holding great businesses through short-term volatility is not just psychologically hard — it is structurally correct, because civilizational progress does not revert.
+
+*True Value Investing* (beyond Graham's original framework):
+- Graham's original formulation (buy below book value, sell at intrinsic value) was appropriate for the capital-scarce post-Depression era.
+- Buffett/Munger/Li Lu evolution: buy businesses with durable competitive advantage at fair prices and hold indefinitely. The holding period creates compounding that outweighs the initial price precision.
+- Li Lu test for a great business: can you imagine owning it for 20 years and being confident it will be larger and more profitable? If yes, the entry price matters much less than the holding period.
+
+*The Uncertainty Advantage*:
+- Most investors avoid businesses they cannot model precisely. This creates persistent mispricings in businesses with genuine optionality and long runways.
+- Li Lu's China insight: markets at early stages of development have the highest long-run expected returns because the gap between current value and eventual civilizational scale is largest.
+- Apply broadly: businesses in early stages of large markets are systematically undervalued because the uncertainty scares away capital that would otherwise bid up the price.
+
+*Character Matters*:
+- Management integrity and intellectual honesty are not soft factors — they are the primary determinants of whether a long-term thesis plays out.
+- Li Lu's due diligence focus: how does management behave when things go wrong? Honest acknowledgment of mistakes is a stronger signal than a string of successes.
+
+**Richard Zeckhauser — "Investing in the Unknown and Unknowable" (HKS, 2006)**
+
+*The QARP Framework* (Quantitative Analysis is Rarely Possible / Productive):
+- The greatest investment returns come from situations where traditional probability-weighted analysis cannot be applied — where the range of outcomes includes scenarios that are genuinely novel.
+- Most investors are trained to avoid what cannot be modeled. This creates asymmetric opportunity for those who can reason qualitatively about unknown distributions.
+
+*The Stranger in a Strange Land*:
+- Zeckhauser's metaphor: the best investment situations feel like being a rational stranger in an irrational world — you can see a bet that looks extraordinarily favorable but which others cannot evaluate.
+- These opportunities arise when: (a) the technology is genuinely new, (b) the market structure is disrupting in an unprecedented way, (c) regulatory or political complexity obscures the underlying value.
+
+*Genuine Uncertainty vs. Probabilistic Risk*:
+- Risk: known probability distribution (e.g., coin flip odds). Can be priced with DCF/expected value.
+- Uncertainty (Knightian): distribution is unknown or unknowable. Cannot be priced by conventional methods.
+- The investment implication: in genuine uncertainty, the expected value framework breaks down. What replaces it is judgment about the character of the uncertainty — is the unknowable upside bounded or unbounded?
+
+*The Urn Model of Investment*:
+- In known-risk situations: all urns are labeled, probabilities are calculable. Efficient markets price these fairly.
+- In unknown situations: some urns have no labels. Investors who understand the unlabeled urn's character (even if not its precise distribution) can earn structurally superior returns.
+- Application: early-stage technology bets, platform companies in new markets, regulatory-arbitrage businesses — these are unlabeled urns. Don't try to assign precise probabilities; instead, assess whether the character of the opportunity is positive.
+
+*Sizing Under Uncertainty*:
+- Kelly Criterion applies when you know the odds. In genuine uncertainty, the Kelly fraction is unknowable.
+- Zeckhauser's pragmatic rule: size according to your conviction about the *sign* (positive/negative expected value) and the *character* (bounded vs. unbounded downside). Avoid position sizes that could cause ruin even in negative-sign scenarios.
+- The billionaire's bet: Zeckhauser observed that the world's great wealth is built from positions that would look insane by conventional risk management standards — but were rational given genuinely asymmetric, unbounded upside.
+
 ### INTEGRATED ANALYTICAL PLAYBOOK
 
 **Step 1 — PMF & Product Health**: Has the company proven product-market fit? Where are they in the retention/engagement curve?
@@ -291,21 +412,42 @@ PMF is not felt — it's measured. Key metrics by stage:
 - Wealth creation test: is this company expanding the pie or extracting from it?
 - Be Good filter: is this genuinely a good company?
 
-**Step 9 — Investment Checklist**:
-□ Primary moat (which of the 7 Powers, and is it DURABLE or EPHEMERAL?)
-□ PMF strength (retention curves + NRR + growth quality)
+**Step 9 — Mauboussin Capital & Expectations Check**:
+- ROIC matrix: which quadrant? (Compounder / Cash Cow / Value Trap / Melting Ice Cube)
+- ROIIC: is the marginal dollar of capital creating or destroying value?
+- Capital allocation grade: how does management deploy FCF across the five uses?
+- Expectations investing: reverse-DCF the price — what growth / margin / CAP is implied? Is it realistic vs. base rates?
+- Mean reversion risk: what is the realistic CAP? What would accelerate reversion?
+- Luck vs. skill: strip out cyclical tailwinds — what is the through-cycle structural ROIC?
+
+**Step 10 — Deep Value & Uncertainty Lens** (Sleep / Li Lu / Zeckhauser):
+- Scale Economics Shared test: does the company get cheaper to use as it scales? Does it share cost savings with customers?
+- Destination analysis: what does this look like in 10-20 years if everything goes right?
+- Civilizational alpha: is this business riding the long arc of human civilizational progress?
+- Unknowable upside: is this a labeled-urn or unlabeled-urn situation? Can I reason about the *character* of the uncertainty even if I can't assign precise probabilities?
+- Sizing conviction: if the sign is positive and downside is bounded, should this be a larger position than conventional risk management would dictate?
+
+**Step 11 — Final Investment Checklist**:
+□ Primary moat (7 Powers — durable or ephemeral?)
+□ PMF strength (retention + NRR + growth quality)
 □ Aggregator or supplier in the value chain?
-□ Marketing position (which Law is being mastered / violated?)
-□ Operational culture (TPS Process Power indicators)
-□ Leadership health (above/below the line? Founder mode or manager mode?)
+□ Marketing position (Law mastered / violated?)
+□ Operational culture (TPS Process Power)
+□ Leadership health (above/below line? Founder mode?)
 □ Munger inversion (what kills this business?)
 □ PG growth rate (accelerating / flat / decelerating?)
 □ PG default alive (sustainable without new capital?)
-□ Capital allocation track record
-□ Unit economics quality (LTV:CAC, payback, NRR)
-□ TAM and runway
+□ ROIC matrix quadrant + ROIIC quality
+□ Capital allocation grade (A through F)
+□ Expectations setup (Attractive / Fair / Expensive vs. base rates)
+□ CAP realistic? (what does the price imply vs. what the moat supports?)
+□ Scale Economics Shared? (does it get better for customers as it grows?)
+□ Destination in 10-20 years (civilizational alpha?)
+□ Uncertainty character (bounded or unbounded upside/downside?)
+□ Unit economics (LTV:CAC, payback, NRR)
+□ TAM and reinvestment runway
 □ Opportunity cost vs. alternatives
-□ Be Good final filter (is this genuinely good for the world?)
+□ Be Good final filter (genuinely good for the world?)
 
 ### COMMUNICATION STANDARDS
 - Lead with the conclusion / investment verdict, then build the argument
@@ -330,8 +472,11 @@ class InvestmentAnalystAgent:
 
     Integrates: 7 Powers, Aggregation Theory, Moat Taxonomy, TPS,
     22 Immutable Laws of Marketing, 15 Commitments, Munger Mental Models,
-    Quantitative PMF, Paul Graham Essays, and RAG over the Acquired podcast
-    transcript library + paulgraham.com essay archive.
+    Quantitative PMF, Paul Graham Essays, Mauboussin (Capital Allocation,
+    Expectations Investing, ROIC/CAP, Base Rates), Nick Sleep (Scale Economics
+    Shared, Destination Analysis), Li Lu (Civilizational Alpha, True Value
+    Investing), Richard Zeckhauser (Unknown & Unknowable, Uncertainty Character),
+    and RAG over the Acquired podcast transcript library + paulgraham.com essays.
 
     Usage:
         agent = InvestmentAnalystAgent(vector_store)

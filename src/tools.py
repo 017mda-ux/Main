@@ -2,23 +2,26 @@
 Agent Tools — definitions (JSON schema) + Python implementations.
 
 Tools available to the strategy & investment analyst agent:
-  1.  search_acquired_transcripts  — RAG search over all Acquired episodes
-  2.  list_acquired_episodes        — List indexed episodes
-  3.  analyze_seven_powers          — Hamilton Helmer's 7 Powers framework
-  4.  analyze_unit_economics        — Unit economics / LTV:CAC analysis
-  5.  compare_companies             — Side-by-side competitive comparison
-  6.  build_bear_bull_case          — Structured bear / bull thesis
-  7.  calculate_rule_of_40          — SaaS Rule of 40 / growth-adjusted metrics
-  8.  analyze_moat_taxonomy         — Reaction Wheel taxonomy of moats
-  9.  analyze_aggregation_theory    — Ben Thompson's Aggregation Theory assessment
-  10. analyze_marketing_laws        — 22 Immutable Laws of Marketing audit
-  11. assess_leadership_health      — 15 Commitments of Conscious Leadership scorecard
-  12. analyze_tps_excellence        — Toyota Production System / Process Power audit
-  13. apply_munger_models           — Munger mental models cross-check
-  14. assess_pmf_quantitative       — Tribe Capital quantitative PMF framework
-  15. search_paul_graham_essays     — RAG search over Paul Graham's essays
-  16. list_paul_graham_essays       — List all indexed PG essays
-  17. apply_paul_graham_thinking    — Apply PG frameworks (growth, founder mode, schlep, etc.)
+  1.  search_acquired_transcripts    — RAG search over all Acquired episodes
+  2.  list_acquired_episodes          — List indexed episodes
+  3.  analyze_seven_powers            — Hamilton Helmer's 7 Powers framework
+  4.  analyze_unit_economics          — Unit economics / LTV:CAC analysis
+  5.  compare_companies               — Side-by-side competitive comparison
+  6.  build_bear_bull_case            — Structured bear / bull thesis
+  7.  calculate_rule_of_40            — SaaS Rule of 40 / growth-adjusted metrics
+  8.  analyze_moat_taxonomy           — Reaction Wheel taxonomy of moats
+  9.  analyze_aggregation_theory      — Ben Thompson's Aggregation Theory assessment
+  10. analyze_marketing_laws          — 22 Immutable Laws of Marketing audit
+  11. assess_leadership_health        — 15 Commitments of Conscious Leadership scorecard
+  12. analyze_tps_excellence          — Toyota Production System / Process Power audit
+  13. apply_munger_models             — Munger mental models cross-check
+  14. assess_pmf_quantitative         — Tribe Capital quantitative PMF framework
+  15. search_paul_graham_essays       — RAG search over Paul Graham's essays
+  16. list_paul_graham_essays         — List all indexed PG essays
+  17. apply_paul_graham_thinking      — Apply PG frameworks (growth, founder mode, schlep, etc.)
+  18. analyze_capital_allocation      — Mauboussin capital allocation quality scorecard
+  19. run_expectations_investing      — Reverse DCF / price-implied expectations analysis
+  20. assess_roic_moat_durability     — ROIC vs WACC spread, CAP, mean-reversion test
 """
 
 from __future__ import annotations
@@ -531,6 +534,146 @@ TOOL_DEFINITIONS = [
             "required": ["company", "context"],
         },
     },
+
+    # ── Mauboussin tools ───────────────────────────────────────────────
+    {
+        "name": "analyze_capital_allocation",
+        "description": (
+            "Score a company's capital allocation quality using Michael Mauboussin's "
+            "framework. Evaluates: (1) ROIC vs WACC spread and trend, "
+            "(2) Return on Incremental Invested Capital (ROIIC), "
+            "(3) use-of-cash mix across organic reinvestment / M&A / buybacks / dividends / debt, "
+            "(4) management incentive alignment, (5) capital allocation track record. "
+            "The output is a structured scorecard with a conviction rating."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "company": {
+                    "type": "string",
+                    "description": "Company name.",
+                },
+                "roic_history": {
+                    "type": "string",
+                    "description": (
+                        "ROIC figures over the past 3-5 years, e.g. "
+                        "'FY21: 28%, FY22: 31%, FY23: 35%, FY24: 38%'."
+                    ),
+                },
+                "wacc_estimate": {
+                    "type": "number",
+                    "description": "Estimated WACC in percent, e.g. 9.5.",
+                },
+                "capital_uses": {
+                    "type": "string",
+                    "description": (
+                        "Description of how the company has deployed FCF over recent years: "
+                        "capex, M&A, buybacks, dividends, debt repayment."
+                    ),
+                },
+                "context": {
+                    "type": "string",
+                    "description": "Any additional financial or strategic context.",
+                },
+            },
+            "required": ["company"],
+        },
+    },
+    {
+        "name": "run_expectations_investing",
+        "description": (
+            "Apply Mauboussin & Rappaport's Expectations Investing framework. "
+            "Reverse-engineers the stock price to decode what revenue growth, "
+            "operating margin, and Competitive Advantage Period (CAP) the market "
+            "is currently pricing in. Compares those implied expectations to "
+            "historical base rates and your own variant view to identify whether "
+            "the setup is attractive, fair, or expensive."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "company": {
+                    "type": "string",
+                    "description": "Company name.",
+                },
+                "current_price": {
+                    "type": "number",
+                    "description": "Current share price in USD.",
+                },
+                "market_cap": {
+                    "type": "number",
+                    "description": "Current market capitalisation in USD billions.",
+                },
+                "revenue_ttm": {
+                    "type": "number",
+                    "description": "Trailing twelve-month revenue in USD billions.",
+                },
+                "fcf_margin_ttm": {
+                    "type": "number",
+                    "description": "Trailing FCF margin as a percent, e.g. 22.5.",
+                },
+                "revenue_growth_rate": {
+                    "type": "number",
+                    "description": "Current annual revenue growth rate as a percent.",
+                },
+                "wacc": {
+                    "type": "number",
+                    "description": "WACC assumption in percent (default 10).",
+                    "default": 10,
+                },
+                "context": {
+                    "type": "string",
+                    "description": "Additional context about growth trajectory, competitive position.",
+                },
+            },
+            "required": ["company", "market_cap", "revenue_ttm"],
+        },
+    },
+    {
+        "name": "assess_roic_moat_durability",
+        "description": (
+            "Mauboussin's ROIC-based moat durability test. Plots a company on the "
+            "ROIC matrix (High/Low ROIC × High/Low Growth), assesses the speed of "
+            "mean reversion using base rates, estimates the Competitive Advantage "
+            "Period (CAP), and flags whether the current valuation embeds a CAP "
+            "that is realistic or optimistic. Also scores the Luck vs. Skill "
+            "component — how much of recent ROIC is structural vs. cyclical."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "company": {
+                    "type": "string",
+                    "description": "Company name.",
+                },
+                "industry": {
+                    "type": "string",
+                    "description": "Industry / sector for base-rate calibration.",
+                },
+                "roic_current": {
+                    "type": "number",
+                    "description": "Current ROIC as a percent.",
+                },
+                "roic_5yr_avg": {
+                    "type": "number",
+                    "description": "5-year average ROIC as a percent.",
+                },
+                "revenue_growth": {
+                    "type": "number",
+                    "description": "Current revenue growth rate as a percent.",
+                },
+                "moat_evidence": {
+                    "type": "string",
+                    "description": "Evidence for or against a durable competitive advantage.",
+                },
+                "context": {
+                    "type": "string",
+                    "description": "Any additional context.",
+                },
+            },
+            "required": ["company"],
+        },
+    },
 ]
 
 
@@ -560,6 +703,10 @@ def execute_tool(name: str, tool_input: dict, vector_store: "VectorStore") -> st
         "search_paul_graham_essays": _search_pg_essays,
         "list_paul_graham_essays": _list_pg_essays,
         "apply_paul_graham_thinking": _apply_paul_graham_thinking,
+        # Mauboussin tools
+        "analyze_capital_allocation": _analyze_capital_allocation,
+        "run_expectations_investing": _run_expectations_investing,
+        "assess_roic_moat_durability": _assess_roic_moat_durability,
     }
     fn = dispatch.get(name)
     if fn is None:
@@ -1567,6 +1714,349 @@ def _apply_paul_graham_thinking(inp: dict, _vs: "VectorStore") -> str:
             f"(b) The biggest PG-identified risk, "
             f"(c) An overall PG-lens verdict (Strong / Mixed / Weak) with one-sentence rationale."
             f"\n\nContext:\n{context}"
+        ),
+    }
+    return json.dumps(scaffold, indent=2)
+
+
+# ──────────────────────────────────────────────────────────────────────
+#  Mauboussin tool implementations
+# ──────────────────────────────────────────────────────────────────────
+
+def _analyze_capital_allocation(inp: dict, _vs: "VectorStore") -> str:
+    company = inp["company"]
+    roic_history = inp.get("roic_history", "Not provided")
+    wacc = inp.get("wacc_estimate", 9.5)
+    capital_uses = inp.get("capital_uses", "Not provided")
+    context = inp.get("context", "")
+
+    scaffold = {
+        "tool": "analyze_capital_allocation",
+        "framework": "Mauboussin Capital Allocation Framework",
+        "sources": [
+            "Capital Allocation: Evidence, Analytical Methods, and Assessment Guidance (Morgan Stanley IM)",
+            "Expectations Investing (Mauboussin & Rappaport, 2001/2021)",
+            "The True Measures of Success (HBR, 2012)",
+            "Calculating Return on Invested Capital (Credit Suisse, 2014)",
+        ],
+        "company": company,
+        "core_principle": (
+            "The CEO's primary job is capital allocation — deciding what to do with the FCF the business generates. "
+            "All deployments reduce to five choices: (1) organic reinvestment, (2) acquisitions, "
+            "(3) dividends, (4) share buybacks, (5) debt repayment. "
+            "Value is created ONLY when capital is deployed at ROIC > WACC. "
+            "The spread × invested capital × growth rate is the complete value-creation equation."
+        ),
+        "roic_inputs": {
+            "roic_history": roic_history,
+            "wacc_estimate_pct": wacc,
+            "spread_commentary": (
+                f"ROIC > {wacc}% = value creation; ROIC < {wacc}% = value destruction. "
+                "Trend matters more than level — improving spread signals strengthening moat; "
+                "declining spread signals competitive erosion even when ROIC is still nominally high."
+            ),
+        },
+        "roiic_framework": {
+            "definition": (
+                "Return on Incremental Invested Capital (ROIIC) = Change in NOPAT / Change in Invested Capital. "
+                "ROIIC measures the MARGINAL return on each new dollar deployed — "
+                "far more revealing than average ROIC about capital allocation skill."
+            ),
+            "interpretation": {
+                "above_30pct": "Exceptional — management finding scarce high-return investments",
+                "15_to_30pct": "Good — creating value above most WACCs",
+                "wacc_to_15pct": "Adequate — borderline value creation",
+                "below_wacc": "Value destruction — growth is making things worse, not better",
+                "negative": "Capital being burned — every dollar reinvested destroys value",
+            },
+            "diagnostic": "Is ROIIC converging toward or diverging from average ROIC? Convergence = commoditisation.",
+        },
+        "five_uses_of_capital": {
+            "1_organic_reinvestment": {
+                "value_test": "ROIC on incremental capex/opex above WACC?",
+                "green_flag": "High reinvestment rate + ROIIC > 20% = highest quality capital allocation",
+                "red_flag": "Reinvestment rate declining + 'capital discipline' language = running out of good ideas",
+            },
+            "2_acquisitions": {
+                "value_test": "Does post-acquisition ROIC hold or improve?",
+                "base_rate": "~60-70% of acquisitions destroy shareholder value (McKinsey/BCG/Mauboussin). "
+                             "Exceptions: bolt-ons in known adjacencies at disciplined prices.",
+                "red_flag": "Serial acquirers with rising goodwill/revenue, declining organic growth.",
+                "green_flag": "Track record of post-deal ROIC improvement.",
+            },
+            "3_dividends": {
+                "signal": "Appropriate when reinvestment + M&A at ROIC > WACC exhausted. "
+                          "Initiating a dividend in a growth company signals limited reinvestment runway.",
+            },
+            "4_buybacks": {
+                "value_test": "Buybacks create value below intrinsic value; destroy it above. "
+                              "Check: counter-cyclical (buy low) or pro-cyclical (buy high)?",
+                "red_flag": "Buybacks at peak multiples; buybacks funded by debt in rising-rate env.",
+                "green_flag": "Opportunistic buybacks at trough valuations (Meta 2022, Apple consistently).",
+            },
+            "5_debt_repayment": {
+                "signal": "Preferred when business is cyclical and reinvestment ROIC is uncertain.",
+            },
+        },
+        "capital_uses_provided": capital_uses,
+        "management_incentive_check": {
+            "principle": (
+                "If management is compensated on EPS or revenue, expect EPS-accretive but ROIC-dilutive decisions. "
+                "Best incentive structure: TSR relative to peers over 5 years, or ROIC improvement vs. target."
+            ),
+            "questions": [
+                "Is management compensated on ROIC improvement or EPS/revenue?",
+                "Do insiders own meaningful equity?",
+                "Has management communicated a clear capital allocation philosophy?",
+                "Have they bought back stock when cheap, not just when flush with cash?",
+                "Track record of walking away from overpriced acquisitions?",
+            ],
+        },
+        "instruction": (
+            f"For {company}: assess capital allocation track record. "
+            f"Score each of the five uses as: Excellent / Good / Adequate / Poor / Unknown. "
+            f"Estimate ROIIC if data permits. "
+            f"Give an overall Capital Allocator Rating: (A) World-class, (B) Above average, (C) Average, (D) Below average, (F) Value-destroyers. "
+            f"Cite specific decisions supporting your rating.\n\nContext:\n{context}"
+        ),
+    }
+    return json.dumps(scaffold, indent=2)
+
+
+def _run_expectations_investing(inp: dict, _vs: "VectorStore") -> str:
+    company = inp["company"]
+    market_cap = inp.get("market_cap")
+    revenue_ttm = inp.get("revenue_ttm")
+    fcf_margin = inp.get("fcf_margin_ttm")
+    growth_rate = inp.get("revenue_growth_rate")
+    wacc = inp.get("wacc", 10.0)
+    context = inp.get("context", "")
+
+    ev_to_revenue = None
+    implied_cap_note = "Insufficient data — provide market_cap and revenue_ttm for quantitative anchor."
+    if market_cap and revenue_ttm:
+        ev_to_revenue = round(market_cap / revenue_ttm, 1)
+        if fcf_margin and growth_rate and wacc:
+            fcf_0 = revenue_ttm * (fcf_margin / 100)
+            fcf_yield = round(fcf_0 / market_cap * 100, 1)
+            g = growth_rate / 100
+            r = wacc / 100
+            if r > g:
+                gordon_tv = round(fcf_0 * (1 + g) / (r - g), 1)
+                implied_cap_note = (
+                    f"FCF yield: {fcf_yield}%. Gordon Growth terminal value at {growth_rate}% growth vs {wacc}% WACC: ~${gordon_tv}B. "
+                    f"Market cap ${market_cap}B implies {'growth well above terminal rate must persist for years' if market_cap > gordon_tv else 'modest or terminal growth is priced in'}. "
+                    f"EV/Revenue: {ev_to_revenue}x."
+                )
+            else:
+                implied_cap_note = (
+                    f"Growth ({growth_rate}%) > WACC ({wacc}%) — requires multi-stage DCF. "
+                    f"EV/Revenue: {ev_to_revenue}x. FCF yield: ~{round(revenue_ttm * fcf_margin / 100 / market_cap * 100, 1)}%."
+                )
+
+    scaffold = {
+        "tool": "run_expectations_investing",
+        "framework": "Mauboussin & Rappaport — Expectations Investing",
+        "sources": [
+            "Expectations Investing: Reading Stock Prices for Better Returns (Rappaport & Mauboussin, 2001/2021)",
+            "What Does a Price-Earnings Multiple Mean? (Mauboussin, 2014)",
+            "The Base Rate Book: Integrating Base Rates and Incentives in Financial Forecasting (Credit Suisse, 2016)",
+        ],
+        "company": company,
+        "inputs": {
+            "market_cap_bn": market_cap,
+            "revenue_ttm_bn": revenue_ttm,
+            "fcf_margin_pct": fcf_margin,
+            "revenue_growth_rate_pct": growth_rate,
+            "wacc_pct": wacc,
+            "ev_to_revenue": ev_to_revenue,
+        },
+        "core_principle": (
+            "The stock price is a DCF. Every price embeds expectations about revenue growth, margins, "
+            "investment needs, and competitive advantage duration. "
+            "The investor's job: (1) decode what the price assumes, "
+            "(2) compare to base rates and your variant view, "
+            "(3) bet only when implied expectations are materially wrong. "
+            "'Buy where expectations are too pessimistic' is more actionable than 'buy good businesses.'"
+        ),
+        "three_step_process": {
+            "step_1_decode": {
+                "implied_cap_quantitative": implied_cap_note,
+                "questions": [
+                    "What revenue CAGR does the price require over 5 and 10 years?",
+                    "What FCF margin does the price assume at maturity?",
+                    "What Competitive Advantage Period (CAP) is embedded?",
+                ],
+            },
+            "step_2_base_rates": {
+                "revenue_growth_persistence": (
+                    "Among companies growing >20%: ~50% sustain >15% for 5 years, <20% for 10 years. "
+                    "Growth mean-reverts faster than most models assume."
+                ),
+                "margin_expansion": (
+                    ">30% gross margin companies expand EBIT ~200-400bps over 5 years on average. "
+                    "Software expands faster; capital-heavy businesses rarely expand meaningfully."
+                ),
+                "roic_persistence": (
+                    "Top-quartile ROIC (>20%) sustained 5 years: ~40% of companies. "
+                    "Sustained 10 years: ~20%. Mean reversion is the base case."
+                ),
+                "cap_base_rates": (
+                    "Average S&P 500 CAP: 5-7 years. "
+                    "Network-effect platforms: 15-20+ years. "
+                    "Strong switching costs: 10-15 years. "
+                    "Valuation implying >15-year CAP requires exceptional moat evidence."
+                ),
+            },
+            "step_3_variant_view": {
+                "conviction_test": (
+                    "Complete this: 'The market believes X. I believe Y. Here is why the difference is real and not yet priced.' "
+                    "If you cannot complete it, you don't have a differentiated view worth acting on."
+                ),
+                "trigger_points": [
+                    "New product / market / capability not in consensus models",
+                    "Competitive threat or regulatory risk not yet priced",
+                    "Market pricing top-decile outcome for an average-moat company",
+                ],
+            },
+        },
+        "multiples_context": {
+            "mauboussin_on_pe": (
+                "P/E is not a valuation tool — it embeds hidden assumptions about growth, ROIC, reinvestment, and WACC. "
+                "30x P/E is cheap for a 30%-ROIC compounder with 15-year CAP. "
+                "It's wildly expensive for a 12%-ROIC, 8%-grower in a commodity industry."
+            ),
+            "ev_revenue": (
+                f"EV/Revenue ~{ev_to_revenue}x. Software: 5-10x fair for 25-30% growers; 15-20x implies very long CAP. "
+                "Only meaningful paired with FCF margin and growth trajectory."
+            ) if ev_to_revenue else "EV/Revenue: not calculable from inputs.",
+        },
+        "instruction": (
+            f"Apply Expectations Investing to {company}. "
+            f"(1) Estimate what the price implies for 5yr and 10yr revenue CAGR, terminal FCF margin, and embedded CAP. "
+            f"(2) Compare to Mauboussin base rates for this industry/size. "
+            f"(3) State your variant view — where are implied expectations wrong? "
+            f"(4) Conclude: Expectations Setup = Attractive / Fair / Expensive, with rationale.\n\nContext:\n{context}"
+        ),
+    }
+    return json.dumps(scaffold, indent=2)
+
+
+def _assess_roic_moat_durability(inp: dict, _vs: "VectorStore") -> str:
+    company = inp["company"]
+    industry = inp.get("industry", "Not specified")
+    roic_current = inp.get("roic_current")
+    roic_5yr = inp.get("roic_5yr_avg")
+    revenue_growth = inp.get("revenue_growth")
+    moat_evidence = inp.get("moat_evidence", "Not provided")
+    context = inp.get("context", "")
+
+    roic_label = "High (>15%)" if (roic_current or 0) >= 15 else ("Low (<15%)" if roic_current is not None else "Unknown")
+    growth_label = "High (>15%)" if (revenue_growth or 0) >= 15 else ("Low (<15%)" if revenue_growth is not None else "Unknown")
+
+    matrix_quadrant = "Unknown — provide roic_current and revenue_growth"
+    if roic_current is not None and revenue_growth is not None:
+        if roic_current >= 15 and revenue_growth >= 15:
+            matrix_quadrant = "COMPOUNDER — High ROIC + High Growth = maximum value creation (holy grail)"
+        elif roic_current >= 15 and revenue_growth < 15:
+            matrix_quadrant = "CASH COW — High ROIC + Low Growth = durable but return capital aggressively"
+        elif roic_current < 15 and revenue_growth >= 15:
+            matrix_quadrant = "VALUE TRAP — Low ROIC + High Growth = growth destroys value; seductive but dangerous"
+        else:
+            matrix_quadrant = "MELTING ICE CUBE — Low ROIC + Low Growth = avoid or short"
+
+    trend_note = "Insufficient data."
+    if roic_current is not None and roic_5yr is not None:
+        diff = round(roic_current - roic_5yr, 1)
+        sign = "+" if diff >= 0 else ""
+        if diff > 3:
+            trend_note = f"ROIC improving: {roic_current}% vs 5yr avg {roic_5yr}% ({sign}{diff}pp). Moat may be widening."
+        elif diff < -3:
+            trend_note = f"ROIC declining: {roic_current}% vs 5yr avg {roic_5yr}% ({sign}{diff}pp). Moat erosion — investigate."
+        else:
+            trend_note = f"ROIC stable: {roic_current}% vs 5yr avg {roic_5yr}% ({sign}{diff}pp). Moat appears intact."
+
+    scaffold = {
+        "tool": "assess_roic_moat_durability",
+        "framework": "Mauboussin ROIC Moat Durability & Mean Reversion",
+        "sources": [
+            "Measuring the Moat: Assessing the Magnitude and Sustainability of Value Creation (Credit Suisse, 2013)",
+            "The Base Rate Book (Credit Suisse, 2016)",
+            "The Success Equation: Untangling Skill and Luck (Mauboussin, 2012)",
+            "Capital Allocation: Evidence, Analytical Methods, and Assessment Guidance (Morgan Stanley IM)",
+        ],
+        "company": company,
+        "industry": industry,
+        "roic_matrix": {
+            "roic_level": roic_label,
+            "growth_level": growth_label,
+            "quadrant": matrix_quadrant,
+            "roic_current_pct": roic_current,
+            "roic_5yr_avg_pct": roic_5yr,
+            "trend": trend_note,
+        },
+        "core_principle": (
+            "ROIC is the single most important financial metric for long-term value creation. "
+            "Every business strategy ultimately expresses itself in ROIC. "
+            "The moat question is not 'is ROIC high today?' but 'how long can ROIC stay above WACC, at what scale?' "
+            "That duration is the CAP. CAP × ROIC spread × growth rate = economic value created."
+        ),
+        "mean_reversion_framework": {
+            "principle": (
+                "Mean reversion is the dominant force in business economics — high returns attract competition. "
+                "Speed of reversion by moat type: "
+                "Network effects / switching costs → slow (10-20 yrs). "
+                "Cost advantages / scale → medium (5-10 yrs). "
+                "No moat / commodity / fad → fast (1-3 yrs)."
+            ),
+            "base_rates_by_sector": {
+                "software_platform": "Top-quartile ROIC sustained 10+ years: ~35% of companies",
+                "financial_services": "~25%",
+                "consumer_staples": "~30%",
+                "industrials": "~15%",
+                "semiconductors": "Highly cyclical; moat exceptions (NVDA, ASML) are rare",
+                "retail": "Fast reversion (2-5 yrs) except fortress moats (Costco, NVR)",
+            },
+            "acceleration_risks": [
+                "New entrant with structurally lower cost base",
+                "Technology substitution making switching costs irrelevant",
+                "Regulatory intervention breaking platform control",
+                "Customer concentration enabling price pushback",
+            ],
+        },
+        "cap_estimation": {
+            "benchmarks": {
+                "no_moat": "0-3 yr CAP",
+                "narrow_moat": "3-7 yr CAP",
+                "wide_moat": "7-15 yr CAP",
+                "exceptional_moat": "15-25+ yr CAP (Visa, Google, NVIDIA CUDA, Costco)",
+            },
+            "test": (
+                "Build a DCF and find what CAP makes NPV = market cap. "
+                "If price requires 20-yr CAP but moat evidence suggests narrow moat, that is your risk."
+            ),
+        },
+        "luck_vs_skill": {
+            "principle": (
+                "All ROIC has a structural component (moat/skill) and a cyclical component (luck/macro). "
+                "Strip out cyclical tailwinds: what does ROIC look like through the full cycle?"
+            ),
+            "diagnostic": [
+                "Is the industry in a demand supercycle? (If yes, ROIC flatters the moat)",
+                "Is ROIC driven by pricing power (structural) or volume leverage (cyclical)?",
+                "Would ROIC hold if macro tailwind reversed?",
+                "Compare peak-cycle ROIC to trough-cycle ROIC — the gap reveals luck's contribution",
+            ],
+        },
+        "moat_evidence_provided": moat_evidence,
+        "instruction": (
+            f"Apply ROIC moat durability analysis to {company} in {industry}. "
+            f"(1) Confirm matrix placement and trend. "
+            f"(2) Estimate realistic CAP range with evidence from moat structure. "
+            f"(3) Assess mean-reversion speed and what would accelerate it. "
+            f"(4) Separate structural from cyclical ROIC — what is the through-cycle ROIC? "
+            f"(5) Conclude: Moat Durability = Exceptional / Strong / Adequate / Weak / None, "
+            f"and the single most important variable to monitor.\n\nContext:\n{context}"
         ),
     }
     return json.dumps(scaffold, indent=2)

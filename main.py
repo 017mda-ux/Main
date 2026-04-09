@@ -5,25 +5,29 @@ AI Strategy & Investment Analyst — CLI entrypoint
 Frameworks: 7 Powers · Aggregation Theory · Moat Taxonomy · TPS ·
             22 Immutable Laws of Marketing · 15 Commitments ·
             Munger Mental Models · Quantitative PMF ·
-            Paul Graham Essays · Acquired Podcast RAG
+            Paul Graham Essays · Jeff Bezos Letters · Acquired Podcast RAG
 
 Commands:
-  build-kb   Scrape Acquired transcripts and build the vector knowledge base
-  build-pg   Scrape Paul Graham essays and add them to the knowledge base
-  chat       Launch the interactive strategy analyst chat
-  ask        Ask a single question (non-interactive)
-  status     Show knowledge base stats
+  build-kb      Scrape Acquired transcripts and build the vector knowledge base
+  build-pg      Scrape Paul Graham essays and add them to the knowledge base
+  build-bezos   Scrape Jeff Bezos shareholder letters and add them to the knowledge base
+  chat          Launch the interactive strategy analyst chat
+  ask           Ask a single question (non-interactive)
+  status        Show knowledge base stats
 
 Usage examples:
   python main.py build-kb                                    # full Acquired scrape + index
   python main.py build-kb --max-episodes 20                  # quick test
   python main.py build-pg                                    # index all PG essays
   python main.py build-pg --priority-only                    # index high-signal essays only
+  python main.py build-bezos                                 # index all Bezos letters (1997-2020)
+  python main.py build-bezos --priority-only                 # index the highest-signal letters
   python main.py chat                                        # interactive REPL
   python main.py ask "Analyse Nvidia's moat"
   python main.py ask "Apply Paul Graham's default alive test to Samsara"
   python main.py ask "Is this founder in founder mode or manager mode?"
   python main.py ask "Score Apple on the 22 Laws of Marketing"
+  python main.py ask "What would Bezos think of DoorDash's flywheel?"
   python main.py status                                      # KB info
 """
 
@@ -69,6 +73,12 @@ def _get_pg_scraper():
     from src.scraper import PaulGrahamScraper
     pg_path = os.getenv("PG_ESSAYS_PATH", "./data/pg_essays")
     return PaulGrahamScraper(cache_dir=pg_path)
+
+
+def _get_bezos_scraper():
+    from src.scraper import BezosLetterScraper
+    bezos_path = os.getenv("BEZOS_LETTERS_PATH", "./data/bezos_letters")
+    return BezosLetterScraper(cache_dir=bezos_path)
 
 
 # ──────────────────────────────────────────────────────────────────────
@@ -167,6 +177,50 @@ def cmd_build_pg(args):
     )
 
 
+def cmd_build_bezos(args):
+    """Scrape Jeff Bezos shareholder letters and index them into the knowledge base."""
+    console.print(
+        Panel.fit(
+            "[bold cyan]Jeff Bezos Shareholder Letter Knowledge Base Builder[/bold cyan]\n"
+            "Scraping letters from aboutamazon.com (1997–2020) and indexing into ChromaDB…",
+            border_style="cyan",
+        )
+    )
+
+    scraper = _get_bezos_scraper()
+    vs = _get_vector_store()
+
+    with Progress(
+        SpinnerColumn(),
+        TextColumn("[progress.description]{task.description}"),
+        console=console,
+    ) as progress:
+        task = progress.add_task("Fetching Bezos letters…", total=None)
+
+        letters = scraper.get_all_letters(
+            priority_only=args.priority_only,
+            max_letters=args.max_letters,
+            verbose=False,
+        )
+
+        label = "priority letters" if args.priority_only else "all letters"
+        progress.update(
+            task,
+            description=f"Fetched {len(letters)} {label}. Ingesting into vector store…",
+        )
+
+        total_chunks = vs.ingest_bezos_letters(letters, verbose=False)
+
+    years = [str(l["year"]) for l in letters]
+    console.print(
+        f"\n[bold green]✓ Done![/bold green] "
+        f"Indexed {len(letters)} letters / "
+        f"{total_chunks} new chunks into the knowledge base.\n"
+        f"Years covered: [bold]{', '.join(sorted(years))}[/bold]\n"
+        f"Total Bezos chunks in DB: [bold]{vs.count_bezos()}[/bold]"
+    )
+
+
 def cmd_status(_args):
     """Show knowledge base statistics."""
     vs = _get_vector_store()
@@ -181,6 +235,8 @@ def cmd_status(_args):
     slugs = vs.get_episode_slugs()
     pg_count = vs.count_pg()
     pg_titles = vs.get_pg_essay_titles() if pg_count > 0 else []
+    bezos_count = vs.count_bezos()
+    bezos_years = vs.get_bezos_letter_years() if bezos_count > 0 else []
     console.print(
         Panel.fit(
             f"[bold]Knowledge Base Status[/bold]\n\n"
@@ -190,6 +246,9 @@ def cmd_status(_args):
             f"[underline]Paul Graham Essays[/underline]\n"
             f"  Chunks indexed : [cyan]{pg_count:,}[/cyan]\n"
             f"  Essays         : [cyan]{len(pg_titles)}[/cyan]\n\n"
+            f"[underline]Jeff Bezos Letters[/underline]\n"
+            f"  Chunks indexed : [cyan]{bezos_count:,}[/cyan]\n"
+            f"  Letters        : [cyan]{len(bezos_years)}[/cyan]\n\n"
             f"DB path          : [dim]{os.getenv('CHROMA_DB_PATH', './data/chroma_db')}[/dim]",
             border_style="green",
         )
@@ -202,6 +261,9 @@ def cmd_status(_args):
         console.print("\n[bold]Indexed PG essays:[/bold]")
         for t in pg_titles:
             console.print(f"  • {t}")
+    if bezos_years:
+        console.print("\n[bold]Indexed Bezos letters:[/bold]")
+        console.print(f"  {', '.join(bezos_years)}")
 
 
 def cmd_chat(_args):
@@ -234,6 +296,11 @@ def cmd_chat(_args):
         console.print(
             "[yellow]⚠  Paul Graham KB is empty.[/yellow] "
             "Run [bold]python main.py build-pg[/bold] to index PG essays.\n"
+        )
+    if vs.is_bezos_empty():
+        console.print(
+            "[yellow]⚠  Bezos Letters KB is empty.[/yellow] "
+            "Run [bold]python main.py build-bezos[/bold] to index Bezos shareholder letters.\n"
         )
 
     while True:
@@ -343,6 +410,22 @@ def main():
         help="Limit to N essays (useful for testing; default: all)",
     )
 
+    # build-bezos
+    p_bezos = sub.add_parser("build-bezos", help="Scrape and index Jeff Bezos shareholder letters")
+    p_bezos.add_argument(
+        "--priority-only",
+        action="store_true",
+        default=False,
+        help="Only index the curated high-signal letters (faster)",
+    )
+    p_bezos.add_argument(
+        "--max-letters",
+        type=int,
+        default=None,
+        metavar="N",
+        help="Limit to N letters (useful for testing; default: all)",
+    )
+
     # chat
     sub.add_parser("chat", help="Launch interactive chat")
 
@@ -357,6 +440,7 @@ def main():
     dispatch = {
         "build-kb": cmd_build_kb,
         "build-pg": cmd_build_pg,
+        "build-bezos": cmd_build_bezos,
         "chat": cmd_chat,
         "ask": cmd_ask,
         "status": cmd_status,

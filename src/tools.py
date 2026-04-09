@@ -22,6 +22,9 @@ Tools available to the strategy & investment analyst agent:
   18. analyze_capital_allocation      — Mauboussin capital allocation quality scorecard
   19. run_expectations_investing      — Reverse DCF / price-implied expectations analysis
   20. assess_roic_moat_durability     — ROIC vs WACC spread, CAP, mean-reversion test
+  21. search_bezos_letters            — RAG search over Jeff Bezos annual shareholder letters
+  22. apply_bezos_frameworks          — Apply full Bezos mental model set (Day 1/2, customer obsession, etc.)
+  23. analyze_business_invariants     — "What's NOT going to change?" Bezos invariants framework
 """
 
 from __future__ import annotations
@@ -674,6 +677,112 @@ TOOL_DEFINITIONS = [
             "required": ["company"],
         },
     },
+    # ── Bezos Letters tools ────────────────────────────────────────────
+    {
+        "name": "search_bezos_letters",
+        "description": (
+            "Semantic search over Jeff Bezos's annual shareholder letters (1997–2020). "
+            "Use this to retrieve Bezos's original words on Day 1 culture, customer obsession, "
+            "long-term thinking, invention, high standards, flywheel mechanics, FCF, "
+            "and what never changes in great businesses. "
+            "Returns the most relevant letter excerpts with year metadata."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "query": {
+                    "type": "string",
+                    "description": (
+                        "The search query. Be specific — e.g. "
+                        "'customer obsession vs competitor focus', "
+                        "'Day 1 culture high standards', "
+                        "'free cash flow vs net income', "
+                        "'what is not going to change invariants'."
+                    ),
+                },
+                "top_k": {
+                    "type": "integer",
+                    "description": "Number of results to return (default 6, max 15).",
+                    "default": 6,
+                },
+                "year_filter": {
+                    "type": "string",
+                    "description": (
+                        "Optional: restrict search to a specific year, e.g. '1997' or '2016'."
+                    ),
+                },
+            },
+            "required": ["query"],
+        },
+    },
+    {
+        "name": "apply_bezos_frameworks",
+        "description": (
+            "Apply Jeff Bezos's full set of management and business frameworks "
+            "from the 1997–2020 Amazon shareholder letters. "
+            "Frameworks include: Day 1 vs Day 2, customer obsession, "
+            "long-term orientation, missionaries vs mercenaries, "
+            "Type 1 vs Type 2 decisions, disagree and commit, "
+            "free cash flow primacy, regret minimisation, flywheel dynamics, "
+            "high standards (recognition + scope + coaching), "
+            "invent and simplify, wandering and exploration, institutional yes, "
+            "and the 'what's not going to change' invariants test."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "company": {
+                    "type": "string",
+                    "description": "Company to evaluate through the Bezos lens.",
+                },
+                "context": {
+                    "type": "string",
+                    "description": "Evidence and context gathered from other research.",
+                },
+                "frameworks_to_emphasise": {
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": (
+                        "Optional list of specific frameworks to prioritise, e.g. "
+                        "['day_1_culture', 'customer_obsession', 'flywheel', 'invariants']."
+                    ),
+                },
+            },
+            "required": ["company", "context"],
+        },
+    },
+    {
+        "name": "analyze_business_invariants",
+        "description": (
+            "Apply Bezos's 'What's NOT going to change?' framework to identify "
+            "the stable human desires and structural constants a company can build "
+            "durable strategy around. "
+            "As Bezos said: 'I almost never get the question: What's not going to change "
+            "in the next 10 years? And I submit to you that that second question is actually "
+            "the more important of the two — because you can build a business strategy around "
+            "the things that are stable in time.' "
+            "Use this tool to identify what is truly invariant in a market, "
+            "then assess how deeply a company is aligned with those invariants."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "company": {
+                    "type": "string",
+                    "description": "Company to analyse.",
+                },
+                "market": {
+                    "type": "string",
+                    "description": "The market or industry context (e.g. 'e-commerce', 'cloud infrastructure', 'food delivery').",
+                },
+                "context": {
+                    "type": "string",
+                    "description": "Any additional evidence or context.",
+                },
+            },
+            "required": ["company", "market"],
+        },
+    },
 ]
 
 
@@ -707,6 +816,10 @@ def execute_tool(name: str, tool_input: dict, vector_store: "VectorStore") -> st
         "analyze_capital_allocation": _analyze_capital_allocation,
         "run_expectations_investing": _run_expectations_investing,
         "assess_roic_moat_durability": _assess_roic_moat_durability,
+        # Bezos letters tools
+        "search_bezos_letters": _search_bezos_letters,
+        "apply_bezos_frameworks": _apply_bezos_frameworks,
+        "analyze_business_invariants": _analyze_business_invariants,
     }
     fn = dispatch.get(name)
     if fn is None:
@@ -2057,6 +2170,319 @@ def _assess_roic_moat_durability(inp: dict, _vs: "VectorStore") -> str:
             f"(4) Separate structural from cyclical ROIC — what is the through-cycle ROIC? "
             f"(5) Conclude: Moat Durability = Exceptional / Strong / Adequate / Weak / None, "
             f"and the single most important variable to monitor.\n\nContext:\n{context}"
+        ),
+    }
+    return json.dumps(scaffold, indent=2)
+
+
+# ──────────────────────────────────────────────────────────────────────
+#  Bezos Letters tool implementations
+# ──────────────────────────────────────────────────────────────────────
+
+def _search_bezos_letters(inp: dict, vs: "VectorStore") -> str:
+    query = inp["query"]
+    top_k = min(int(inp.get("top_k", 6)), 15)
+    year_filter = inp.get("year_filter")
+
+    results = vs.search_bezos(query, top_k=top_k)
+
+    if year_filter:
+        results = [r for r in results if r.get("year") == str(year_filter)]
+
+    if not results:
+        return (
+            "No results found in Bezos letters. "
+            "The knowledge base may be empty — run `python main.py build-bezos` first."
+        )
+
+    lines = [f"## Bezos Letters search: '{query}'\n"]
+    for i, r in enumerate(results, 1):
+        lines.append(
+            f"### [{i}] {r['title']} — {r['year']} (relevance: {r['score']:.3f})\n"
+            f"chunk {r['chunk_index']}\n\n"
+            f"{r['text']}\n"
+        )
+    return "\n---\n".join(lines)
+
+
+def _apply_bezos_frameworks(inp: dict, _vs: "VectorStore") -> str:
+    company = inp["company"]
+    context = inp.get("context", "")
+    emphasise = inp.get("frameworks_to_emphasise", [])
+
+    all_frameworks = {
+        "day_1_culture": {
+            "source": "2016 Shareholder Letter",
+            "core_principle": (
+                "Day 1 culture: the day-one start-up mindset — customer obsession, "
+                "willingness to be misunderstood, eagerness to invent, long-term thinking. "
+                "Day 2 is stasis, followed by irrelevance, then death. "
+                "Warning signs of Day 2: process over outcomes, proxy metrics replacing real metrics, "
+                "external trends ignored, decisions made by consensus not conviction."
+            ),
+            "diagnostic_questions": [
+                "Does the company treat itself as though it is still Day 1?",
+                "Are decisions fast (Type 2) or slow (bureaucracy)?",
+                "Is there genuine willingness to be misunderstood for long-term bets?",
+                "Are outcomes or processes being optimised?",
+            ],
+        },
+        "customer_obsession": {
+            "source": "Multiple letters, most explicitly 1997",
+            "core_principle": (
+                "Start from the customer and work backwards — not from capabilities or competitors. "
+                "Competitor-focused companies wait to see what competitors do and then react. "
+                "Customer-obsessed companies pioneer, invent, and are willing to be misunderstood "
+                "because they are building what the customer will want, not what they're asking for today."
+            ),
+            "diagnostic_questions": [
+                "Does product development start from a real customer problem or a capability looking for a use?",
+                "Is the company measuring customer delight directly (NPS, retention, word of mouth)?",
+                "When features conflict between what's good for customers and revenue, which wins?",
+                "Is the CEO personally reading customer complaints and escalating?",
+            ],
+        },
+        "long_term_orientation": {
+            "source": "1997 Shareholder Letter (the 'it's all about the long run' letter)",
+            "core_principle": (
+                "We will make bold, rather than timid, investment decisions when we see a sufficient "
+                "probability of gaining market leadership advantages — even if the payoff is uncertain "
+                "and the investment looks 'irrational' in the short term. "
+                "We will continue to make investment decisions in light of long-term market leadership "
+                "considerations rather than short-term profitability or Wall Street reactions."
+            ),
+            "diagnostic_questions": [
+                "Is management willing to sacrifice near-term profitability for long-run positioning?",
+                "Do earnings calls focus on inputs (customer metrics, investment initiatives) or outputs (EPS)?",
+                "Has the company ever taken an action Wall Street hated that proved right in 5+ years?",
+                "Does management have meaningful equity ownership that aligns with long-run holders?",
+            ],
+        },
+        "missionaries_vs_mercenaries": {
+            "source": "Referenced across multiple letters; explicitly in 2002",
+            "core_principle": (
+                "Missionaries build great products and happen to make money. "
+                "Mercenaries build companies to make money and hope the product is good. "
+                "Missionaries care about the mission more than the outcome. "
+                "Mercenaries ask: what business should we be in? Missionaries ask: what problem must we solve?"
+            ),
+            "diagnostic_questions": [
+                "Would the founders and team keep building this even if it didn't make money for 5 more years?",
+                "Is there a genuine mission that pre-exists the commercial opportunity?",
+                "Do the best employees join for the mission or the comp package?",
+                "Is there evidence of irrational persistence — continuing when rational actors would quit?",
+            ],
+        },
+        "type_1_type_2_decisions": {
+            "source": "2015 Shareholder Letter",
+            "core_principle": (
+                "Type 1 decisions are one-way doors — irreversible, consequential, made slowly and carefully. "
+                "Type 2 decisions are two-way doors — reversible, made quickly by small teams or individuals. "
+                "The trap: treating Type 2 decisions like Type 1 decisions → slow, bureaucratic. "
+                "As organisations grow, the default process for all decisions becomes Type 1 — "
+                "this is the path to Day 2."
+            ),
+            "diagnostic_questions": [
+                "Does the company distinguish between reversible and irreversible decisions?",
+                "Are small, reversible decisions being made at the right level of the org?",
+                "Is there evidence of decision-making velocity commensurate with company size?",
+                "Do leaders disagree-and-commit, or do they stall waiting for consensus?",
+            ],
+        },
+        "flywheel": {
+            "source": "Implicit in 1997-2001 letters; made explicit by Bezos in interviews",
+            "core_principle": (
+                "A flywheel is a self-reinforcing cycle where each element strengthens the others. "
+                "Amazon's flywheel: lower prices → more customers → more volume → more sellers → "
+                "more selection → lower prices. "
+                "The key: identify the engine that makes the flywheel spin, "
+                "then invest relentlessly in it — even at the expense of short-term profits."
+            ),
+            "diagnostic_questions": [
+                "Can you identify a clear self-reinforcing cycle in this business?",
+                "Is the company investing in the engine of that flywheel?",
+                "Are there actions that would slow the flywheel — and is management resisting them?",
+                "How many turns has the flywheel made? (Scale is often what makes flywheels irreversible)",
+            ],
+        },
+        "free_cash_flow_primacy": {
+            "source": "2004 Shareholder Letter",
+            "core_principle": (
+                "Net income is an accounting construct. Free cash flow is the reality. "
+                "Bezos explicitly redirected attention from net income to free cash flow per share "
+                "as the primary financial metric. "
+                "A company with high net income but low FCF conversion is hiding capex intensity, "
+                "working capital consumption, or accounting manipulation. "
+                "FCF is what actually compounds for shareholders."
+            ),
+            "diagnostic_questions": [
+                "Is FCF consistently above or below net income? The gap reveals the real business quality.",
+                "Is FCF per share growing — the actual long-run shareholder wealth driver?",
+                "What is the FCF margin trend? Is the business getting more or less capital efficient?",
+                "Are there non-cash charges masking true cash generation?",
+            ],
+        },
+        "high_standards": {
+            "source": "2017 Shareholder Letter",
+            "core_principle": (
+                "High standards are teachable, domain-specific, and require two things: "
+                "(1) recognising what good looks like, and "
+                "(2) understanding the realistic scope of work required to achieve it. "
+                "Most failures come not from low motivation but from unrealistic beliefs about "
+                "how hard something is. The coach's job is to show what great looks like "
+                "and set realistic expectations about the effort required to get there."
+            ),
+            "diagnostic_questions": [
+                "Does leadership have a clear, specific standard of what 'great' looks like in their core activity?",
+                "Are standards written down and shared, or is 'great' left implicit?",
+                "Does the org have coaching mechanisms that teach standards, not just grade against them?",
+                "Is there evidence that the company has rejected 'good enough' when it mattered?",
+            ],
+        },
+        "regret_minimisation": {
+            "source": "Bezos personal story; referenced in multiple contexts",
+            "core_principle": (
+                "When making a major bet, project yourself to age 80 and ask: "
+                "would I regret NOT having tried this? "
+                "If yes, try it. The regret of inaction is almost always greater than the regret of action. "
+                "This is why Amazon kept investing through losses — "
+                "Bezos knew the regret of not building AWS or Prime would be permanent."
+            ),
+            "investment_implication": (
+                "Management teams that make bold, regret-minimisation-driven decisions "
+                "tend to create category-defining businesses. "
+                "Teams optimising to avoid criticism tend to make safe, mediocre decisions. "
+                "Look for evidence that the company has taken asymmetric long-term bets "
+                "that looked irrational at the time."
+            ),
+        },
+        "invariants": {
+            "source": "Frequently quoted by Bezos in interviews and letters",
+            "core_principle": (
+                "'I almost never get the question: What's not going to change in the next 10 years? "
+                "And I submit to you that that second question is actually the more important of the two — "
+                "because you can build a business strategy around the things that are stable in time.' "
+                "Amazon's invariants: customers always want lower prices, faster delivery, and wider selection. "
+                "Every Amazon investment flows from these three invariants."
+            ),
+            "diagnostic_questions": [
+                "What does this company believe will NOT change in its market over the next 10+ years?",
+                "Is strategy built around those invariants or around current trend-chasing?",
+                "Are the identified invariants genuinely stable, or are they assumptions masquerading as constants?",
+                "What would invalidate an identified invariant? How likely is that?",
+            ],
+        },
+    }
+
+    active = (
+        {k: v for k, v in all_frameworks.items() if any(e.lower() in k for e in emphasise)}
+        if emphasise else all_frameworks
+    )
+
+    scaffold = {
+        "company": company,
+        "framework": "Jeff Bezos Annual Shareholder Letters — Management Mental Models (1997–2020)",
+        "frameworks": active,
+        "instruction": (
+            f"Apply the Bezos frameworks above to {company} using the evidence below. "
+            f"For each relevant framework: "
+            f"(1) State the Bezos principle in one sentence, "
+            f"(2) Apply it specifically to {company} with evidence, "
+            f"(3) Give the investment/strategic implication. "
+            f"Conclude with: "
+            f"(a) Is this a Day 1 or Day 2 company right now? "
+            f"(b) The single most important Bezos-lens insight for this company, "
+            f"(c) An overall Bezos-lens verdict (Strong / Mixed / Weak) with one-sentence rationale."
+            f"\n\nContext:\n{context}"
+        ),
+    }
+    return json.dumps(scaffold, indent=2)
+
+
+def _analyze_business_invariants(inp: dict, _vs: "VectorStore") -> str:
+    company = inp["company"]
+    market = inp.get("market", "general")
+    context = inp.get("context", "")
+
+    scaffold = {
+        "tool": "analyze_business_invariants",
+        "framework": "Bezos Invariants Framework — What's NOT Going to Change?",
+        "core_bezos_quote": (
+            "'I almost never get the question: What's not going to change in the next 10 years? "
+            "And I submit to you that that second question is actually the more important of the two — "
+            "because you can build a business strategy around the things that are stable in time. "
+            "We know that customers want low prices, and I know that's going to be true 10 years from now. "
+            "They want fast delivery; they want vast selection. "
+            "It's impossible to imagine a future 10 years from now where a customer comes to me and says, "
+            "'Jeff, I love Amazon; I just wish the prices were a little higher,' "
+            "or 'I love Amazon; I just wish you'd deliver a little more slowly.' "
+            "Impossible. And so the effort we put into those things, spinning those things up, "
+            "we know the energy we put into it today will still be paying off dividends for our customers "
+            "10 years from now. When you have something you know is true, even over the long term, "
+            "you can afford to put a lot of energy into it.' — Jeff Bezos"
+        ),
+        "company": company,
+        "market": market,
+        "invariant_identification_framework": {
+            "step_1_customer_desires": {
+                "question": f"In the {market} market, what do customers fundamentally desire that will not change in 10+ years?",
+                "examples": {
+                    "e_commerce": "Lower prices, faster delivery, wider selection — Bezos's three invariants",
+                    "cloud_infrastructure": "Lower cost, higher reliability, more capabilities, simpler management",
+                    "consumer_social": "Connection with people who matter, status signalling, entertainment",
+                    "enterprise_software": "Reduced cost, reduced complexity, more reliability, better security",
+                    "food_delivery": "Convenience, speed, variety, reliability — not necessarily price",
+                },
+                "test": "Imagine a customer in 10 years saying 'I wish the company did less of X.' If impossible, X is an invariant.",
+            },
+            "step_2_structural_constants": {
+                "question": "What structural realities of the market will not change regardless of technology shifts?",
+                "examples": [
+                    "Physics: delivery still requires moving atoms through space",
+                    "Human psychology: loss aversion, social proof, status-seeking are invariant",
+                    "Economics: lower cost tends to expand market size (demand curves slope down)",
+                    "Attention economics: human attention remains finite even as content supply scales",
+                ],
+            },
+            "step_3_company_alignment": {
+                "question": f"How deeply is {company}'s strategy aligned with the identified invariants?",
+                "scoring": {
+                    "deeply_aligned": "Strategy is built directly around invariants — every major investment flows from them",
+                    "partially_aligned": "Core strategy touches invariants but significant effort is in trend-chasing",
+                    "misaligned": "Strategy is primarily built around what's changing, not what's staying the same",
+                },
+            },
+            "step_4_invariant_validation": {
+                "question": "What would invalidate each identified invariant? How likely is that?",
+                "test": "If a technology shift could make customers prefer higher prices or slower delivery, is this really an invariant?",
+            },
+            "step_5_investment_implication": {
+                "principle": (
+                    "Companies that build strategy around genuine invariants have compounding advantages: "
+                    "every dollar invested today in serving those invariants pays dividends indefinitely. "
+                    "Companies that build strategy around trends risk obsolescence when trends shift. "
+                    "The deepest moats are built on the deepest invariants."
+                ),
+                "key_question": (
+                    f"If {company} relentlessly served its core customer invariants for 10 more years, "
+                    f"how large and defensible would it be? "
+                    f"If the answer is 'much larger and more defensible,' the strategy is sound."
+                ),
+            },
+        },
+        "instruction": (
+            f"Apply the Bezos invariants framework to {company} in the {market} market. "
+            f"(1) Identify the top 3 genuine customer invariants in this market — "
+            f"things customers will always want, regardless of technology shifts. "
+            f"(2) Assess how deeply {company}'s strategy is built around those invariants vs. "
+            f"trend-chasing. "
+            f"(3) Identify any false invariants the company may be treating as permanent "
+            f"that are actually transient. "
+            f"(4) Estimate the strategic advantage {company} accrues from serving invariants "
+            f"vs. competitors focused on what's changing. "
+            f"(5) Give a one-paragraph verdict: Is {company} a business built for the long run "
+            f"(invariant-anchored) or a business at risk of disruption when current trends shift?\n\n"
+            f"Context:\n{context}"
         ),
     }
     return json.dumps(scaffold, indent=2)

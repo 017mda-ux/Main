@@ -17,6 +17,7 @@ Frameworks integrated:
   - Nick Sleep & Qais Zakaria — Nomad Investment Partnership Letters
   - Li Lu — Columbia Business School Lecture & Value Investing Philosophy
   - Richard Zeckhauser — Investing in the Unknown and Unknowable
+  - Jeff Bezos — Annual Shareholder Letters (1997–2020)
 """
 
 from __future__ import annotations
@@ -388,6 +389,76 @@ PMF is not felt — it's measured. Key metrics by stage:
 - Zeckhauser's pragmatic rule: size according to your conviction about the *sign* (positive/negative expected value) and the *character* (bounded vs. unbounded downside). Avoid position sizes that could cause ruin even in negative-sign scenarios.
 - The billionaire's bet: Zeckhauser observed that the world's great wealth is built from positions that would look insane by conventional risk management standards — but were rational given genuinely asymmetric, unbounded upside.
 
+### LAYER 10 — BEZOS ANNUAL SHAREHOLDER LETTERS (1997–2020)
+
+**The Central Bezos Diagnostic — The Invariants Question**
+
+> *"I almost never get the question: 'What's not going to change in the next 10 years?' And I submit to you that that second question is actually the more important of the two — because you can build a business strategy around the things that are stable in time. We know that customers want low prices, and I know that's going to be true 10 years from now. They want fast delivery; they want vast selection. It's impossible to imagine a future 10 years from now where a customer comes to me and says, 'Jeff, I love Amazon; I just wish the prices were a little higher,' or 'I love Amazon; I just wish you'd deliver a little more slowly.' Impossible. And so the effort we put into those things, spinning those things up, we know the energy we put into it today will still be paying off dividends for our customers 10 years from now. When you have something you know is true, even over the long term, you can afford to put a lot of energy into it."* — Jeff Bezos
+
+**Investment application**: The most durable businesses are built on what never changes, not what's trending. Every company analysis must begin with: *What does this business believe will NOT change? Is strategy built around those invariants?* Trend-chasers are disrupted; invariant-anchored businesses compound indefinitely.
+
+**Day 1 vs Day 2** (2016 Letter — the most important culture framework)
+- Day 1: customer obsession, willingness to be misunderstood, eagerness to invent, long-term patience
+- Day 2: stasis, followed by irrelevance, then death
+- Day 2 warning signs: process valued over outcomes; proxy metrics replacing real metrics; external trends ignored; decisions made by consensus not conviction; "that's not how we do things here"
+- Investment implication: a company that slips from Day 1 to Day 2 culture almost never recovers without a leadership reset
+
+**Customer Obsession over Competitor Focus** (1997 Letter and throughout)
+- Competitor-focused companies wait to react. Customer-obsessed companies pioneer.
+- Working backwards from the customer — not from existing capabilities — is how Amazon built AWS, Kindle, Prime, Alexa
+- Test: when features conflict between customer benefit and revenue, which wins?
+
+**Long-Term Orientation** (1997 Letter — the foundational commitment)
+- "We will make bold rather than timid investment decisions when we see a sufficient probability of gaining market leadership advantages — even if the payoff is uncertain and the investment looks irrational in the short term."
+- Companies willing to be misunderstood by Wall Street for 5-10 years tend to build the deepest moats
+- Investment signal: does management sacrifice near-term margins for long-run positioning? Or manage to the quarter?
+
+**Missionaries vs. Mercenaries**
+- Missionaries build great products and happen to make money
+- Mercenaries build companies to make money and hope the product is good
+- Test: Would the team keep building this if it didn't make money for 5 more years?
+
+**Type 1 vs. Type 2 Decisions** (2015 Letter)
+- Type 1: one-way doors — irreversible, consequential, made slowly and carefully
+- Type 2: two-way doors — reversible, made quickly by small teams
+- The organisational trap: treating Type 2 decisions like Type 1 → bureaucracy → Day 2
+- Investment diagnostic: is decision velocity appropriate for company size? Can a 10-person team ship a feature without 15 approvals?
+
+**Disagree and Commit**
+- High-conviction leaders commit fully once a decision is made, even if they argued against it
+- Distinguishes healthy debate (above-the-line) from passive resistance that kills execution
+- Red flag: executives who "disagree and undermine" — appearing aligned while sabotaging
+
+**Free Cash Flow Primacy** (2004 Letter)
+- "Net income is an accounting construct. Free cash flow is the reality."
+- Bezos redirected every metric conversation toward FCF per share growth as the ultimate measure
+- Application: always check FCF vs. net income gap — it reveals capex intensity, working capital dynamics, and accounting quality
+
+**Flywheel Dynamics** (the Amazon engine, crystallised by Jim Collins)
+- Self-reinforcing cycles: lower prices → more customers → more volume → more sellers → more selection → lower prices
+- Investment test: can you identify a clear flywheel? Is the company investing in its engine?
+- Danger signal: actions that extract short-term value at the cost of flywheel momentum (e.g., raising Prime prices too aggressively, charging sellers too much)
+
+**High Standards** (2017 Letter)
+- High standards are teachable and domain-specific — not innate traits
+- Two requirements: (1) recognise what great looks like; (2) understand the realistic scope of effort required
+- Failure mode: teams assume great is achievable quickly → produce mediocre work → don't know why
+- Investment signal: does the company have explicit standards in its core activity? Are those standards written and taught?
+
+**Regret Minimisation Framework**
+- "Imagine yourself at 80 looking back. Would you regret not having tried?" If yes: do it.
+- This is why Amazon kept investing through losses — the regret of not building AWS was unacceptable
+- Investment implication: leaders using regret minimisation make asymmetric long-term bets. Leaders optimising to avoid criticism make safe, mediocre decisions.
+
+**Invent and Simplify / Wandering**
+- Great invention requires willingness to wander — to explore without a clear destination
+- Amazon's culture: "wander in service of discovery, not randomness"
+- The best investments often look like wandering: AWS in 2004 didn't look like an e-commerce strategy, but it was the right wander
+
+**Institutional Yes** (the failure mode of large organisations)
+- As companies grow, the default answer to new ideas shifts from "yes, let's try" to "no, that's not our business"
+- Investment diagnostic: when did this company last launch something genuinely new? Not incremental — genuinely new.
+
 ### INTEGRATED ANALYTICAL PLAYBOOK
 
 **Step 1 — PMF & Product Health**: Has the company proven product-market fit? Where are they in the retention/engagement curve?
@@ -427,7 +498,18 @@ PMF is not felt — it's measured. Key metrics by stage:
 - Unknowable upside: is this a labeled-urn or unlabeled-urn situation? Can I reason about the *character* of the uncertainty even if I can't assign precise probabilities?
 - Sizing conviction: if the sign is positive and downside is bounded, should this be a larger position than conventional risk management would dictate?
 
-**Step 11 — Final Investment Checklist**:
+**Step 11 — Bezos Frameworks Lens**:
+- **Invariants test**: What does this company believe will NOT change in 10 years? Is strategy built on those invariants or on trends?
+- **Day 1 or Day 2?**: Is the culture still customer-obsessed, fast-moving, and experimental — or is it bureaucratic, process-driven, and defensive?
+- **Customer obsession**: Does product development start from a genuine customer problem, or from capabilities looking for a market?
+- **Long-term orientation**: Is management willing to sacrifice near-term metrics for long-run positioning? Evidence?
+- **Missionary test**: Would the team keep building this if it didn't make money for 5 more years?
+- **Flywheel check**: Is there a self-reinforcing cycle? Is the company investing in the engine?
+- **FCF vs. net income**: What is FCF conversion? Is FCF per share growing?
+- **High standards**: Does the organisation have explicit, taught standards of excellence?
+- **Type 2 decision velocity**: Is the company making reversible decisions fast enough, or is it trapped in Type 1 bureaucracy for everything?
+
+**Step 12 — Final Investment Checklist**:
 □ Primary moat (7 Powers — durable or ephemeral?)
 □ PMF strength (retention + NRR + growth quality)
 □ Aggregator or supplier in the value chain?
@@ -448,6 +530,12 @@ PMF is not felt — it's measured. Key metrics by stage:
 □ TAM and reinvestment runway
 □ Opportunity cost vs. alternatives
 □ Be Good final filter (genuinely good for the world?)
+□ Bezos invariants: strategy built on what's NOT changing?
+□ Day 1 or Day 2 culture? (customer obsession, speed, willingness to invent)
+□ Missionary or mercenary? (team building for the mission or the exit)
+□ Flywheel spinning? (self-reinforcing cycle + investment in its engine)
+□ FCF quality: FCF vs. net income gap; FCF per share trend
+□ High standards: explicit excellence culture in core activity?
 
 ### COMMUNICATION STANDARDS
 - Lead with the conclusion / investment verdict, then build the argument
@@ -476,7 +564,8 @@ class InvestmentAnalystAgent:
     Expectations Investing, ROIC/CAP, Base Rates), Nick Sleep (Scale Economics
     Shared, Destination Analysis), Li Lu (Civilizational Alpha, True Value
     Investing), Richard Zeckhauser (Unknown & Unknowable, Uncertainty Character),
-    and RAG over the Acquired podcast transcript library + paulgraham.com essays.
+    and RAG over the Acquired podcast transcript library + paulgraham.com essays +
+    Jeff Bezos annual shareholder letters (1997–2020).
 
     Usage:
         agent = InvestmentAnalystAgent(vector_store)

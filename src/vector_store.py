@@ -15,6 +15,7 @@ from sentence_transformers import SentenceTransformer
 
 COLLECTION_NAME = "acquired_transcripts"
 PG_COLLECTION_NAME = "pg_essays"
+BEZOS_COLLECTION_NAME = "bezos_letters"
 EMBED_MODEL = "all-MiniLM-L6-v2"   # fast, 384-dim, good for semantic search
 CHUNK_SIZE = 800       # tokens ≈ characters / 4  →  ~3 200 chars per chunk
 CHUNK_OVERLAP = 150    # overlap to preserve context across boundaries
@@ -45,6 +46,10 @@ class VectorStore:
         )
         self._pg_collection = self._client.get_or_create_collection(
             name=PG_COLLECTION_NAME,
+            metadata={"hnsw:space": "cosine"},
+        )
+        self._bezos_collection = self._client.get_or_create_collection(
+            name=BEZOS_COLLECTION_NAME,
             metadata={"hnsw:space": "cosine"},
         )
 
@@ -275,6 +280,120 @@ class VectorStore:
 
     def is_pg_empty(self) -> bool:
         return self._pg_collection.count() == 0
+
+    # ------------------------------------------------------------------
+    # Jeff Bezos Annual Shareholder Letters — Ingestion & Search
+    # ------------------------------------------------------------------
+
+    def ingest_bezos_letters(self, letters: list[dict], verbose: bool = True) -> int:
+        """
+        Chunk and embed a list of Bezos letter dicts (must have 'transcript' key).
+        Each letter dict: { year, title, url, transcript }
+        Returns the number of new chunks added.
+        """
+        total = 0
+        for letter in letters:
+            text = letter.get("transcript", "")
+            if not text:
+                continue
+            chunks = _chunk_text(text, CHUNK_SIZE, CHUNK_OVERLAP)
+            if not chunks:
+                continue
+
+            year = str(letter.get("year", ""))
+            ids = [f"bezos__{year}__chunk_{i}" for i in range(len(chunks))]
+            metadatas = [
+                {
+                    "year": year,
+                    "title": letter.get("title", f"Bezos Letter {year}"),
+                    "url": letter.get("url", ""),
+                    "chunk_index": i,
+                    "total_chunks": len(chunks),
+                }
+                for i in range(len(chunks))
+            ]
+
+            existing = set(self._bezos_collection.get(ids=ids)["ids"])
+            new_ids = [id_ for id_ in ids if id_ not in existing]
+            if not new_ids:
+                continue
+
+            new_chunks = [chunks[ids.index(id_)] for id_ in new_ids]
+            new_meta = [metadatas[ids.index(id_)] for id_ in new_ids]
+            embeddings = self._embedder.encode(
+                new_chunks, show_progress_bar=False
+            ).tolist()
+
+            self._bezos_collection.add(
+                ids=new_ids,
+                documents=new_chunks,
+                embeddings=embeddings,
+                metadatas=new_meta,
+            )
+
+            total += len(new_ids)
+            if verbose:
+                print(f"  Ingested {len(new_ids)} chunks from Bezos letter: '{letter.get('title', year)}'")
+
+        return total
+
+    def search_bezos(
+        self,
+        query: str,
+        top_k: int = TOP_K_DEFAULT,
+    ) -> list[dict]:
+        """
+        Semantic search over Jeff Bezos shareholder letters.
+        Returns result dicts: { text, score, title, year, url, chunk_index }
+        """
+        if self._bezos_collection.count() == 0:
+            return []
+
+        query_embedding = self._embedder.encode([query])[0].tolist()
+        results = self._bezos_collection.query(
+            query_embeddings=[query_embedding],
+            n_results=min(top_k, max(self._bezos_collection.count(), 1)),
+            include=["documents", "metadatas", "distances"],
+        )
+
+        hits = []
+        for doc, meta, dist in zip(
+            results["documents"][0],
+            results["metadatas"][0],
+            results["distances"][0],
+        ):
+            hits.append(
+                {
+                    "text": doc,
+                    "score": round(1.0 - dist, 4),
+                    "title": meta.get("title", ""),
+                    "year": meta.get("year", ""),
+                    "url": meta.get("url", ""),
+                    "chunk_index": meta.get("chunk_index", 0),
+                }
+            )
+        return hits
+
+    def get_bezos_letter_years(self) -> list[str]:
+        """Return sorted list of all unique Bezos letter years in the store."""
+        if self._bezos_collection.count() == 0:
+            return []
+        all_meta = self._bezos_collection.get(include=["metadatas"])["metadatas"]
+        seen: set[str] = set()
+        years: list[str] = []
+        for m in all_meta:
+            y = m.get("year", "")
+            if y and y not in seen:
+                seen.add(y)
+                years.append(y)
+        return sorted(years)
+
+    def count_bezos(self) -> int:
+        """Number of Bezos letter chunks indexed."""
+        return self._bezos_collection.count()
+
+    def is_bezos_empty(self) -> bool:
+        return self._bezos_collection.count() == 0
 
 
 # ------------------------------------------------------------------

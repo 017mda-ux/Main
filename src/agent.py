@@ -18,6 +18,7 @@ Frameworks integrated:
   - Li Lu — Columbia Business School Lecture & Value Investing Philosophy
   - Richard Zeckhauser — Investing in the Unknown and Unknowable
   - Jeff Bezos — Annual Shareholder Letters (1997–2020)
+  - Chris Hohn / TCI Fund Management — Moat-First Investing, Concentration, Long-Term Holding
 """
 
 from __future__ import annotations
@@ -389,7 +390,95 @@ PMF is not felt — it's measured. Key metrics by stage:
 - Zeckhauser's pragmatic rule: size according to your conviction about the *sign* (positive/negative expected value) and the *character* (bounded vs. unbounded downside). Avoid position sizes that could cause ruin even in negative-sign scenarios.
 - The billionaire's bet: Zeckhauser observed that the world's great wealth is built from positions that would look insane by conventional risk management standards — but were rational given genuinely asymmetric, unbounded upside.
 
-### LAYER 10 — BEZOS ANNUAL SHAREHOLDER LETTERS (1997–2020)
+### LAYER 10 — CHRIS HOHN / TCI FUND MANAGEMENT
+
+**Performance benchmark**: ~18% annualised since 2004 vs ~9% S&P 500. 2025: $18.9B in net gains. ~$53B AUM, 9 positions, 84% in top 5, 8-year average holding period. One of the most concentrated, best-performing institutional funds in history.
+
+**The Hohn Hierarchy: Moat → Risk → Compounding → Sizing → Valuation (last)**
+
+Hohn is explicit: "The most important thing, in the types of investing we do, is high barriers to entry; the moats that Warren Buffett has talked about. Competition kills profits. Substitution eliminates your business. The forces of competition and substitution and disruption are very powerful."
+
+He will not look at valuation until the moat has passed rigorous inspection. The financial model is irrelevant if the business cannot defend its position.
+
+**The Seven Moat Types — Stack as Many as Possible**
+
+1. *Irreplaceable Physical Assets (Natural Monopolies)*: Infrastructure — airports, pipelines, transmission networks — that cannot be replicated regardless of capital. "Most investors don't really look at irreplaceable physical assets. We're in a world where people just look at earnings."
+
+2. *Intellectual Property / Technical Complexity*: Products requiring decades of accumulated engineering knowledge. Aircraft engines: "there are only two players in narrow body engines and two in wide body, and there'd be no new entrants for more than 50 years." The complexity is the moat.
+
+3. *Installed Base*: Deep operational embedding that makes migration catastrophic. Microsoft's installed base made Teams a viable bundle against Zoom regardless of product quality — the switching cost was the data and workflow, not the software.
+
+4. *Scale*: Fixed-cost businesses where unit economics improve with volume, creating a cost floor competitors cannot reach.
+
+5. *Network Effects*: Visa, Meta — each new participant increases value for all others. The network becomes self-reinforcing and self-defending.
+
+6. *Brand*: Durable price premium from trusted identity — earned over decades, lost quickly if trust is broken.
+
+7. *Customer Switching Costs*: Mission-critical software. "Once embedded into operations, switching creates complexity and data migration challenges." The customer's pain of leaving is the moat.
+
+**The Hohn Ideal**: "Often you would like not just one barrier to entry but maybe five: intellectual property, brands, hard assets, contracts, network effects." Score companies on breadth (how many moat types) AND depth (how durable each layer).
+
+**Risk First — The Soros Principle**
+
+"Investing is all about risk and return, and the vast majority of investors focus on return. But I focused in my career on risk firstly."
+
+"Risk, as George Soros said, is not knowing what you're doing."
+
+"What kills you as an investor is permanent loss of capital."
+
+The investment process must begin with: *how exactly does this investment result in permanent capital loss?* If you cannot answer that precisely, you don't understand the investment.
+
+**Position Sizing Is Where Returns Are Made or Lost**
+
+"It doesn't matter if you're right or wrong, all that matters is how big you are — your position size when you're right and your position size when you're wrong. If I'm right on a 1% position, it kind of doesn't make any difference."
+
+TCI holds 10–15%, historically up to 25%, in a single position. ~200 companies in the investable universe. ~10–15 in the portfolio.
+
+Investment implication: finding the right business is necessary but insufficient. Sizing the position proportionally to conviction is what converts being right into returns. The failure mode of most investors is not being wrong — it is being right in a 2% position.
+
+**Long-Term Holding — The Compounding Advantage**
+
+"Our average holding period of a stock in our portfolio is 8 years. We've held stocks for 13 years, 12 years, and 10 years."
+
+"There aren't that many great companies, the super companies of the world. If you find them, you should hold on to them."
+
+"Good companies stay good and bad companies stay bad."
+
+The compounding mathematics: a 20%-ROIC business held 8 years at a fair multiple generates a superior outcome to a 25%-ROIC business traded in and out three times with transaction costs and reinvestment friction.
+
+**Concentration**
+
+"We may have 10 type holdings, 10 stocks, 15 stocks. We don't own a hundred things." Current structure: 9 positions, 84% in top 5.
+
+Hohn's current holdings (Q4 2025): GE Aerospace (~27%), Visa, Microsoft, Moody's, S&P Global, Airbus, Canadian National Railway — every one a business with multiple stacked moats.
+
+**Compounding > Multiple Expansion**
+
+"The multiples matter less than the growth when you look at it over a longer period."
+
+"The intrinsic value compounding matters more than the stock price."
+
+Do not optimise for the next 12-month return. Optimise for 8-year intrinsic value growth. A business compounding intrinsic value at 18% for 8 years is a 3.7x from fair value regardless of whether you buy it at 20x or 25x earnings.
+
+**Valuation Comes Last**
+
+Only after the moat passes rigorous inspection does Hohn look at valuation. Not before. This is the anti-consensus sequence: most investors screen for valuation first, then assess quality. Hohn screens for quality first, then assesses whether valuation is acceptable.
+
+**Intuition as Pattern Recognition**
+
+"Intuition is pattern recognition — it's the opposite of intellect. Thinking without thinking."
+
+Applied to: management trustworthiness, fraud detection, business model durability. Hohn shorted Wirecard by recognising the fraud pattern: small/unknown auditor, no verifiable cash flows, empty offices in supposedly booming Asian subsidiaries.
+
+**On Shorting**
+
+"Shorting has a maximum upside of 100% and a theoretically infinite downside." Buffett told Hohn he and Munger never shorted because it was "too hard and unpredictable because of the investor psychology aspect of it." Hohn concurs — shorting is not a great business model.
+
+**On Activism**
+
+"It's pointless being an activist in a B business." TCI's activism has been targeted at forcing capital allocation improvements in genuinely high-quality businesses — not turnarounds. The quality of the business must come first; activism is the lever, not the thesis.
+
+### LAYER 11 — BEZOS ANNUAL SHAREHOLDER LETTERS (1997–2020)
 
 **The Central Bezos Diagnostic — The Invariants Question**
 
@@ -498,7 +587,30 @@ PMF is not felt — it's measured. Key metrics by stage:
 - Unknowable upside: is this a labeled-urn or unlabeled-urn situation? Can I reason about the *character* of the uncertainty even if I can't assign precise probabilities?
 - Sizing conviction: if the sign is positive and downside is bounded, should this be a larger position than conventional risk management would dictate?
 
-**Step 11 — Bezos Frameworks Lens**:
+**Step 11 — Hohn / TCI Moat-Quality & Conviction Check**:
+
+*Context*: Chris Hohn's TCI Fund Management has compounded at ~18% annualised since 2004 vs ~9% for the S&P 500, running a ~$53B fund with just 9 positions and an 8-year average holding period. One of the most concentrated, highest-conviction approaches in institutional investing.
+
+- **Moats before everything**: "The most important thing is high barriers to entry. Competition kills profits. Substitution eliminates your business." Hohn will not look at valuation until the moat passes rigorous inspection.
+- **Stacked moat audit** — does the company have multiple layers simultaneously?
+  1. *Irreplaceable physical assets*: infrastructure/assets that cannot be rebuilt regardless of capital deployed
+  2. *IP / technical complexity*: product so complex (aircraft engines, semiconductors) that new entrants cannot replicate in decades
+  3. *Installed base*: deep workflow/data embedding that makes migration catastrophic
+  4. *Scale*: fixed-cost structure with unit economics competitors cannot match
+  5. *Network effects*: each new participant increases value for all — Visa, Meta
+  6. *Brand*: durable price premium from trusted identity
+  7. *Switching costs*: mission-critical dependency that makes leaving irrational
+- **The ideal**: "Not just one barrier to entry but maybe five: IP, brands, hard assets, contracts, network effects." Score how many of the 7 apply — depth AND breadth.
+- **Sustainability test**: "Would this moat still be dominant in 10 years? Can it be substituted? Can it be competed away?" Any yes = fail.
+- **Risk first**: "What kills you as an investor is permanent loss of capital." Define exactly how capital could be permanently lost before evaluating upside.
+- **Position sizing by conviction**: "It doesn't matter if you're right or wrong, all that matters is how big you are when you're right and how big when you're wrong." If conviction is high and moat is deep, the position should be large (10-25%), not 2%.
+- **Holding period logic**: "There aren't that many great companies. If you find them, you should hold on to them." 8-year average hold. "Good companies stay good."
+- **Compounding over multiple expansion**: "The multiples matter less than the growth when you look at it over a longer period." A 20%-ROIC business held 8 years at 25x beats a 15%-ROIC business bought at 15x and sold at 20x.
+- **Intuition as pattern recognition**: "Intuition is pattern recognition — it's the opposite of intellect." Apply to management trustworthiness, fraud signals, business durability.
+- **Fraud checklist** (from Wirecard short): small/unknown auditor, unverifiable cash flows, geographically implausible revenue claims, empty offices in supposedly booming subsidiaries.
+- **Activism filter**: "It's pointless being an activist in a B business." Only engage with or credit activism in genuinely high-quality businesses.
+
+**Step 12 — Bezos Frameworks Lens**:
 - **Invariants test**: What does this company believe will NOT change in 10 years? Is strategy built on those invariants or on trends?
 - **Day 1 or Day 2?**: Is the culture still customer-obsessed, fast-moving, and experimental — or is it bureaucratic, process-driven, and defensive?
 - **Customer obsession**: Does product development start from a genuine customer problem, or from capabilities looking for a market?
@@ -509,7 +621,7 @@ PMF is not felt — it's measured. Key metrics by stage:
 - **High standards**: Does the organisation have explicit, taught standards of excellence?
 - **Type 2 decision velocity**: Is the company making reversible decisions fast enough, or is it trapped in Type 1 bureaucracy for everything?
 
-**Step 12 — Final Investment Checklist**:
+**Step 13 — Final Investment Checklist**:
 □ Primary moat (7 Powers — durable or ephemeral?)
 □ PMF strength (retention + NRR + growth quality)
 □ Aggregator or supplier in the value chain?
@@ -536,6 +648,11 @@ PMF is not felt — it's measured. Key metrics by stage:
 □ Flywheel spinning? (self-reinforcing cycle + investment in its engine)
 □ FCF quality: FCF vs. net income gap; FCF per share trend
 □ High standards: explicit excellence culture in core activity?
+□ Hohn stacked moat score: how many of the 7 moat types apply? (target 3+)
+□ Moat sustainability: still dominant in 10 years? Substitution risk? Competition risk?
+□ Permanent loss of capital risk: exactly how does this go wrong?
+□ Conviction sizing: is position sized proportionally to conviction, or timidly?
+□ Holding period logic: is this a business to own for 8+ years, or a trade?
 
 ### COMMUNICATION STANDARDS
 - Lead with the conclusion / investment verdict, then build the argument
@@ -565,7 +682,8 @@ class InvestmentAnalystAgent:
     Shared, Destination Analysis), Li Lu (Civilizational Alpha, True Value
     Investing), Richard Zeckhauser (Unknown & Unknowable, Uncertainty Character),
     and RAG over the Acquired podcast transcript library + paulgraham.com essays +
-    Jeff Bezos annual shareholder letters (1997–2020).
+    Jeff Bezos annual shareholder letters (1997–2020), plus Chris Hohn / TCI Fund
+    Management (moat-first investing, concentration, long-term holding).
 
     Usage:
         agent = InvestmentAnalystAgent(vector_store)

@@ -25,6 +25,7 @@ Tools available to the strategy & investment analyst agent:
   21. search_bezos_letters            — RAG search over Jeff Bezos annual shareholder letters
   22. apply_bezos_frameworks          — Apply full Bezos mental model set (Day 1/2, customer obsession, etc.)
   23. analyze_business_invariants     — "What's NOT going to change?" Bezos invariants framework
+  24. apply_hohn_framework            — Chris Hohn / TCI moat-quality audit, stacked moat scoring, conviction sizing
 """
 
 from __future__ import annotations
@@ -783,6 +784,45 @@ TOOL_DEFINITIONS = [
             "required": ["company", "market"],
         },
     },
+    # ── Chris Hohn / TCI ──────────────────────────────────────────────
+    {
+        "name": "apply_hohn_framework",
+        "description": (
+            "Apply Chris Hohn's TCI Fund Management investment framework. "
+            "Hohn has compounded at ~18% annualised since 2004 running a ~$53B fund "
+            "with just 9 positions and an 8-year average holding period. "
+            "This tool performs: (1) a stacked moat audit across Hohn's 7 moat types, "
+            "(2) a permanent-capital-loss risk assessment, "
+            "(3) a conviction-sizing recommendation, "
+            "(4) a long-term holding period assessment, "
+            "and (5) a compounding-vs-multiple-expansion verdict. "
+            "Use after other moat tools to apply Hohn's concentration and "
+            "long-term lens on top of the base moat analysis."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "company": {
+                    "type": "string",
+                    "description": "Company to evaluate.",
+                },
+                "context": {
+                    "type": "string",
+                    "description": "Evidence gathered from other research — transcript excerpts, financials, moat analysis.",
+                },
+                "holding_horizon_years": {
+                    "type": "integer",
+                    "description": "Intended holding period in years (Hohn's benchmark is 8 years).",
+                    "default": 8,
+                },
+                "portfolio_context": {
+                    "type": "string",
+                    "description": "Optional: what else is in the portfolio? Used to assess concentration and opportunity cost.",
+                },
+            },
+            "required": ["company", "context"],
+        },
+    },
 ]
 
 
@@ -820,6 +860,8 @@ def execute_tool(name: str, tool_input: dict, vector_store: "VectorStore") -> st
         "search_bezos_letters": _search_bezos_letters,
         "apply_bezos_frameworks": _apply_bezos_frameworks,
         "analyze_business_invariants": _analyze_business_invariants,
+        # Hohn / TCI tools
+        "apply_hohn_framework": _apply_hohn_framework,
     }
     fn = dispatch.get(name)
     if fn is None:
@@ -2483,6 +2525,146 @@ def _analyze_business_invariants(inp: dict, _vs: "VectorStore") -> str:
             f"(5) Give a one-paragraph verdict: Is {company} a business built for the long run "
             f"(invariant-anchored) or a business at risk of disruption when current trends shift?\n\n"
             f"Context:\n{context}"
+        ),
+    }
+    return json.dumps(scaffold, indent=2)
+
+
+# ──────────────────────────────────────────────────────────────────────
+#  Chris Hohn / TCI Fund Management tool implementation
+# ──────────────────────────────────────────────────────────────────────
+
+def _apply_hohn_framework(inp: dict, _vs: "VectorStore") -> str:
+    company = inp["company"]
+    context = inp.get("context", "")
+    horizon = int(inp.get("holding_horizon_years", 8))
+    portfolio_context = inp.get("portfolio_context", "")
+
+    scaffold = {
+        "tool": "apply_hohn_framework",
+        "framework": "Chris Hohn / TCI Fund Management — Moat-First, Concentrated, Long-Term Investing",
+        "performance_benchmark": (
+            "TCI has compounded at ~18% annualised since 2004 vs ~9% for the S&P 500. "
+            "~$53B AUM, 9 positions, 84% in top 5, 8-year average holding period. "
+            "2025: $18.9B in net gains — TCI's best year ever. "
+            "Current holdings: GE Aerospace (~27%), Visa, Microsoft, Moody's, S&P Global, Airbus, Canadian National."
+        ),
+        "company": company,
+        "hohn_hierarchy": (
+            "Hohn's sequence: Moat → Risk → Compounding power → Conviction sizing → Valuation (last). "
+            "He will not look at valuation until the moat has passed rigorous inspection. "
+            "The financial model is irrelevant if the moat doesn't hold."
+        ),
+        "stacked_moat_audit": {
+            "scoring_guide": "Score each moat type: 0 = absent, 1 = weak, 2 = moderate, 3 = strong. Target total: 10+ for a Hohn-grade business.",
+            "moat_types": {
+                "1_irreplaceable_physical_assets": {
+                    "description": "Infrastructure, assets that cannot be replicated regardless of capital deployed",
+                    "hohn_quote": "'Most investors don't really look at irreplaceable physical assets. We're in a world where people just look at earnings.'",
+                    "examples": "Airports, pipelines, spectrum licenses, rail networks, power transmission",
+                    "score": None,
+                    "evidence": "Apply to company from context provided",
+                },
+                "2_ip_technical_complexity": {
+                    "description": "Products so technically complex that new entrants cannot replicate in decades",
+                    "hohn_quote": "'Aircraft engines — there are only two players in narrow body and two in wide body, and there'd be no new entrants for more than 50 years.'",
+                    "examples": "Aircraft engines, advanced semiconductors, pharmaceutical formulations, satellite technology",
+                    "score": None,
+                    "evidence": "Apply to company from context provided",
+                },
+                "3_installed_base": {
+                    "description": "Deep operational embedding that makes migration catastrophic",
+                    "hohn_quote": "Microsoft's installed base made Teams a natural bundle — the switching cost was the data and workflow, not the software.",
+                    "examples": "ERP systems, core banking software, mission-critical SaaS, embedded instruments",
+                    "score": None,
+                    "evidence": "Apply to company from context provided",
+                },
+                "4_scale": {
+                    "description": "Fixed-cost businesses where unit economics improve with volume — a cost floor competitors cannot reach",
+                    "examples": "TSMC (fab investment amortised over more chips), Visa (network cost fixed), AWS (datacentre fixed cost over growing customers)",
+                    "score": None,
+                    "evidence": "Apply to company from context provided",
+                },
+                "5_network_effects": {
+                    "description": "Each new participant increases value for all — self-reinforcing and self-defending",
+                    "hohn_quote": "Visa, Meta — value spirals upward as more users join, creating a self-reinforcing loop that's incredibly difficult to disrupt.",
+                    "examples": "Payment networks, social platforms, marketplace liquidity, protocol standards",
+                    "score": None,
+                    "evidence": "Apply to company from context provided",
+                },
+                "6_brand": {
+                    "description": "Durable price premium from trusted identity — earned over decades",
+                    "examples": "LVMH, Apple, Hermès — premium pricing sustained through quality + aspiration signalling",
+                    "score": None,
+                    "evidence": "Apply to company from context provided",
+                },
+                "7_switching_costs": {
+                    "description": "Mission-critical dependency — the customer's pain of leaving is the moat",
+                    "hohn_quote": "'Once embedded into operations, switching creates complexity and data migration challenges.'",
+                    "examples": "Bloomberg Terminal, Veeva Systems, Workday, IDEXX instruments, credit rating requirements",
+                    "score": None,
+                    "evidence": "Apply to company from context provided",
+                },
+            },
+            "hohn_ideal": "'Often you would like not just one barrier to entry but maybe five: IP, brands, hard assets, contracts, network effects.'",
+            "sustainability_test": f"Would {company}'s moat still be dominant in 10 years? Can it be substituted? Can it be competed away? Hohn says any 'yes' is a fail.",
+        },
+        "risk_assessment": {
+            "soros_definition": "'Risk is not knowing what you're doing.' — George Soros, via Hohn",
+            "hohn_principle": "'What kills you as an investor is permanent loss of capital.'",
+            "permanent_loss_scenarios": f"List the specific scenarios under which {company} results in permanent capital loss — not temporary drawdown, but permanent impairment.",
+            "fraud_checklist": {
+                "description": "Pattern recognition applied to Wirecard short — these are the signals Hohn looks for",
+                "signals": [
+                    "Small or unknown auditor for a large company",
+                    "Unverifiable cash flows — cash on balance sheet not confirmed by bank statements",
+                    "Geographically implausible revenue claims",
+                    "Empty offices in supposedly booming subsidiaries",
+                    "Management defensive about questions rather than curious",
+                    "Complexity that obscures rather than reflects the business",
+                ],
+            },
+        },
+        "compounding_assessment": {
+            "hohn_principle": "'The multiples matter less than the growth when you look at it over a longer period.'",
+            "compounding_math": (
+                f"At a {horizon}-year holding horizon: "
+                f"a 20%-ROIC business held {horizon} years at 25x P/E "
+                f"generates {(1.20**horizon):.1f}x intrinsic value growth. "
+                f"A 15%-ROIC business bought at 15x and sold at 20x (one re-rating) "
+                f"generates much less if the holding period is short. "
+                f"Hohn's edge: holding the compounder long enough that intrinsic value growth dominates."
+            ),
+            "holding_logic": f"'There aren't that many great companies. If you find them, you should hold on to them.' Is {company} the kind of business you hold for {horizon}+ years?",
+            "good_companies_principle": "'Good companies stay good and bad companies stay bad.' Is this a good company or a bad company?",
+        },
+        "conviction_sizing": {
+            "hohn_principle": "'It doesn't matter if you're right or wrong, all that matters is how big you are when you're right and when you're wrong. If I'm right on a 1% position, it kind of doesn't make any difference.'",
+            "tci_sizing": "TCI holds 10–15%, historically up to 25%, in a single name. 9 positions, 84% in top 5.",
+            "sizing_framework": {
+                "hohn_quality_grade_A": "Stacked moats (5+), dominant, durable, missionary management → 10-20% position",
+                "hohn_quality_grade_B": "Strong moats (3-4), good management, clear compounding → 5-10% position",
+                "hohn_quality_grade_C": "One or two moats, some risk, uncertain durability → 2-5% position",
+                "hohn_quality_below_grade": "Weak or absent moats → do not own",
+            },
+            "opportunity_cost": portfolio_context or "Compare this to the best business already in the portfolio — would capital be better deployed there?",
+        },
+        "valuation_note": (
+            "Hohn looks at valuation LAST — only after the moat has passed inspection. "
+            "He does not use valuation to screen out businesses with great moats. "
+            "The question is not 'is it cheap?' but 'is the moat durable enough that "
+            "intrinsic value compounding over 8+ years will deliver adequate returns "
+            "regardless of the starting multiple?'"
+        ),
+        "instruction": (
+            f"Apply the Hohn / TCI framework to {company} using the evidence below. "
+            f"(1) Score each of the 7 moat types 0-3 and explain the evidence for each. "
+            f"(2) Total the stacked moat score and grade: 15+ = Hohn-grade, 10-14 = strong, <10 = insufficient. "
+            f"(3) Identify the specific scenarios for permanent capital loss — be precise. "
+            f"(4) Assess whether intrinsic value will compound at 15%+ over {horizon} years. "
+            f"(5) Recommend a conviction-sized position: Grade A (10-20%), B (5-10%), C (2-5%), or Pass. "
+            f"(6) One-sentence Hohn verdict: Is this a business to own for 8+ years at full conviction, "
+            f"or not?\n\nContext:\n{context}"
         ),
     }
     return json.dumps(scaffold, indent=2)

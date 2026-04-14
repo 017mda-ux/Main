@@ -5,12 +5,14 @@ AI Strategy & Investment Analyst — CLI entrypoint
 Frameworks: 7 Powers · Aggregation Theory · Moat Taxonomy · TPS ·
             22 Immutable Laws of Marketing · 15 Commitments ·
             Munger Mental Models · Quantitative PMF ·
-            Paul Graham Essays · Jeff Bezos Letters · Acquired Podcast RAG
+            Paul Graham Essays · Jeff Bezos Letters · Acquired Podcast RAG ·
+            Invest Like the Best (Ellenbogen: 1% Rule, Act Two, DCA-Up)
 
 Commands:
   build-kb      Scrape Acquired transcripts and build the vector knowledge base
   build-pg      Scrape Paul Graham essays and add them to the knowledge base
   build-bezos   Scrape Jeff Bezos shareholder letters and add them to the knowledge base
+  build-iltb    Index Invest Like the Best episode transcripts (Ellenbogen EP.452 etc.)
   chat          Launch the interactive strategy analyst chat
   ask           Ask a single question (non-interactive)
   status        Show knowledge base stats
@@ -22,12 +24,14 @@ Usage examples:
   python main.py build-pg --priority-only                    # index high-signal essays only
   python main.py build-bezos                                 # index all Bezos letters (1997-2020)
   python main.py build-bezos --priority-only                 # index the highest-signal letters
+  python main.py build-iltb                                  # index ILTB episodes (EP.452+)
   python main.py chat                                        # interactive REPL
   python main.py ask "Analyse Nvidia's moat"
   python main.py ask "Apply Paul Graham's default alive test to Samsara"
   python main.py ask "Is this founder in founder mode or manager mode?"
   python main.py ask "Score Apple on the 22 Laws of Marketing"
   python main.py ask "What would Bezos think of DoorDash's flywheel?"
+  python main.py ask "Apply Ellenbogen's 1% rule and Act Two framework to Shopify"
   python main.py status                                      # KB info
 """
 
@@ -79,6 +83,12 @@ def _get_bezos_scraper():
     from src.scraper import BezosLetterScraper
     bezos_path = os.getenv("BEZOS_LETTERS_PATH", "./data/bezos_letters")
     return BezosLetterScraper(cache_dir=bezos_path)
+
+
+def _get_iltb_scraper():
+    from src.scraper import InvestLikeTheBestScraper
+    iltb_path = os.getenv("ILTB_PATH", "./data/iltb_transcripts")
+    return InvestLikeTheBestScraper(cache_dir=iltb_path)
 
 
 # ──────────────────────────────────────────────────────────────────────
@@ -221,6 +231,48 @@ def cmd_build_bezos(args):
     )
 
 
+def cmd_build_iltb(_args):
+    """Index Invest Like the Best episode transcripts into the knowledge base."""
+    console.print(
+        Panel.fit(
+            "[bold cyan]Invest Like the Best Knowledge Base Builder[/bold cyan]\n"
+            "Loading ILTB transcripts (EP.452 Ellenbogen + future episodes) into ChromaDB…",
+            border_style="cyan",
+        )
+    )
+
+    scraper = _get_iltb_scraper()
+    vs = _get_vector_store()
+
+    with Progress(
+        SpinnerColumn(),
+        TextColumn("[progress.description]{task.description}"),
+        console=console,
+    ) as progress:
+        task = progress.add_task("Fetching ILTB episodes…", total=None)
+
+        episodes = scraper.get_all_episodes(verbose=False)
+
+        progress.update(
+            task,
+            description=f"Fetched {len(episodes)} episode(s). Ingesting into vector store…",
+        )
+
+        total_chunks = vs.ingest_iltb_episodes(episodes, verbose=False)
+
+    titles = [ep["title"] for ep in episodes]
+    console.print(
+        f"\n[bold green]✓ Done![/bold green] "
+        f"Indexed {len(episodes)} episode(s) / "
+        f"{total_chunks} new chunks into the knowledge base.\n"
+        f"Total ILTB chunks in DB: [bold]{vs.count_iltb()}[/bold]"
+    )
+    if titles:
+        console.print("\n[bold]Indexed episodes:[/bold]")
+        for t in titles:
+            console.print(f"  • {t}")
+
+
 def cmd_status(_args):
     """Show knowledge base statistics."""
     vs = _get_vector_store()
@@ -237,6 +289,8 @@ def cmd_status(_args):
     pg_titles = vs.get_pg_essay_titles() if pg_count > 0 else []
     bezos_count = vs.count_bezos()
     bezos_years = vs.get_bezos_letter_years() if bezos_count > 0 else []
+    iltb_count = vs.count_iltb()
+    iltb_titles = vs.get_iltb_episode_titles() if iltb_count > 0 else []
     console.print(
         Panel.fit(
             f"[bold]Knowledge Base Status[/bold]\n\n"
@@ -249,6 +303,9 @@ def cmd_status(_args):
             f"[underline]Jeff Bezos Letters[/underline]\n"
             f"  Chunks indexed : [cyan]{bezos_count:,}[/cyan]\n"
             f"  Letters        : [cyan]{len(bezos_years)}[/cyan]\n\n"
+            f"[underline]Invest Like the Best[/underline]\n"
+            f"  Chunks indexed : [cyan]{iltb_count:,}[/cyan]\n"
+            f"  Episodes       : [cyan]{len(iltb_titles)}[/cyan]\n\n"
             f"DB path          : [dim]{os.getenv('CHROMA_DB_PATH', './data/chroma_db')}[/dim]",
             border_style="green",
         )
@@ -264,6 +321,10 @@ def cmd_status(_args):
     if bezos_years:
         console.print("\n[bold]Indexed Bezos letters:[/bold]")
         console.print(f"  {', '.join(bezos_years)}")
+    if iltb_titles:
+        console.print("\n[bold]Indexed ILTB episodes:[/bold]")
+        for t in iltb_titles:
+            console.print(f"  • {t}")
 
 
 def cmd_chat(_args):
@@ -301,6 +362,12 @@ def cmd_chat(_args):
         console.print(
             "[yellow]⚠  Bezos Letters KB is empty.[/yellow] "
             "Run [bold]python main.py build-bezos[/bold] to index Bezos shareholder letters.\n"
+        )
+    if vs.is_iltb_empty():
+        console.print(
+            "[yellow]⚠  Invest Like the Best KB is empty.[/yellow] "
+            "Run [bold]python main.py build-iltb[/bold] to index ILTB transcripts "
+            "(Ellenbogen 1% Rule, Act Two, DCA-Up frameworks).\n"
         )
 
     while True:
@@ -426,6 +493,12 @@ def main():
         help="Limit to N letters (useful for testing; default: all)",
     )
 
+    # build-iltb
+    sub.add_parser(
+        "build-iltb",
+        help="Index Invest Like the Best episode transcripts (Ellenbogen EP.452 etc.)",
+    )
+
     # chat
     sub.add_parser("chat", help="Launch interactive chat")
 
@@ -441,6 +514,7 @@ def main():
         "build-kb": cmd_build_kb,
         "build-pg": cmd_build_pg,
         "build-bezos": cmd_build_bezos,
+        "build-iltb": cmd_build_iltb,
         "chat": cmd_chat,
         "ask": cmd_ask,
         "status": cmd_status,

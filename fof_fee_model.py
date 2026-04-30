@@ -220,41 +220,68 @@ def print_fee_breakdown(scenarios_gc: list[float]) -> None:
     print()
 
 
-if __name__ == "__main__":
-    # Scenarios: gross MOIC on committed capital
-    scenarios_gc = [0.85, 1.0, 1.5, 2.0, 2.5, 3.0, 3.48, 3.63, 4.0, 4.5, 5.0, 6.0, 7.0]
+def print_dollar_table(fund_size_m: float, gross_multiples: list[int]) -> None:
+    """
+    Print a clean dollar-value table for a given fund size (in $M)
+    at integer gross MOIC increments (on committed capital).
+    """
+    scale = fund_size_m  # multiply normalized $1 figures by this
 
-    print_table(scenarios_gc)
-    print_fee_breakdown(scenarios_gc)
+    invested_m  = INVESTED * scale
+    mgmt_fee_m  = MGMT_FEE_TOTAL * scale
 
-    # Key thresholds
-    print("KEY STRUCTURAL THRESHOLDS")
-    print("-" * 60)
+    col_w = 11  # column width for dollar figures
 
-    # LP breakeven (net = 1x)
-    # Regime 1: net = 0.1765 + 0.81×Gc = 1.0 → Gc = 0.8235/0.81 = 1.017
-    lp_breakeven_gc = (1.0 - (1.0 - PRE_DPI_LP) * (1 - PLACEMENT_RATE) * (1 - INVESTED/INVESTED)) / 1.0
-    # More precisely: solve numerically
-    for gc_test in [x/1000 for x in range(800, 1500)]:
-        r = waterfall(gc_test / INVESTED)
-        if r.net_moic_lp >= 1.0:
-            print(f"  LP breakeven (net = 1.0x):          ~{gc_test:.3f}x gross on committed")
-            break
-
-    # 3x DPI threshold
-    for gc_test in [x/100 for x in range(100, 700)]:
-        r = waterfall(gc_test / INVESTED)
-        if "catch-up" in r.regime.lower() or "Post" in r.regime:
-            print(f"  3x DPI threshold (catch-up begins): ~{gc_test:.2f}x gross on committed")
-            break
-
-    # Catch-up complete
-    for gc_test in [x/100 for x in range(100, 700)]:
-        r = waterfall(gc_test / INVESTED)
-        if "Post" in r.regime:
-            print(f"  Catch-up complete (85/15 kicks in): ~{gc_test:.2f}x gross on committed")
-            break
-
+    title = f"OPTION 1 — ${fund_size_m:.0f}M FUND  |  Gross on committed capital"
     print()
-    print("  During catch-up (3.48x–3.63x gross), LP net is FLAT at 3.00x")
-    print("  All incremental returns accrue to GP until they reach 15% of profits")
+    print("=" * 85)
+    print(f"  {title}")
+    print(f"  Committed: ${fund_size_m:.0f}M  |  Invested: ${invested_m:.1f}M  |  Mgmt fees: ${mgmt_fee_m:.1f}M (1.5% × 10yr)")
+    print(f"  Placement: 10% of gross profit, no hurdle")
+    print(f"  Carry: 90/10 pre-3x DPI  →  100% GP catch-up to 15%  →  85/15")
+    print("=" * 85)
+
+    hdr = (
+        f"  {'Gross':>6}  {'Net':>6}  │  "
+        f"{'Mgmt Fee':>{col_w}}  {'Placement':>{col_w}}  {'GP Carry':>{col_w}}  {'Total Fees':>{col_w}}  │  Regime"
+    )
+    sep = "  " + "─" * 83
+    print(hdr)
+    print(sep)
+
+    for gc in gross_multiples:
+        r = waterfall(gc / INVESTED)
+
+        mgmt_m      = r.mgmt_fees      * scale
+        placement_m = r.placement_fee  * scale
+        carry_m     = r.gp_carry       * scale
+        total_fee_m = (r.mgmt_fees + r.placement_fee + r.gp_carry) * scale
+
+        # Flag the catch-up dead zone (in-progress only, not post)
+        flag = "  ◄ GP catch-up" if r.regime == "Catch-up (in progress)" else ""
+
+        print(
+            f"  {r.gross_moic_committed:>5.1f}x  {r.net_moic_lp:>5.2f}x  │  "
+            f"${mgmt_m:>{col_w-1}.1f}M  ${placement_m:>{col_w-1}.1f}M  ${carry_m:>{col_w-1}.1f}M  ${total_fee_m:>{col_w-1}.1f}M  │  {r.regime}{flag}"
+        )
+
+    print(sep)
+    print(f"  {'Gross':>6}  {'Net':>6}  │  {'Mgmt Fee':>{col_w}}  {'Placement':>{col_w}}  {'GP Carry':>{col_w}}  {'Total Fees':>{col_w}}")
+    print()
+    print("  Gross     = MOIC on committed capital (before all fees)")
+    print("  Net       = MOIC to LP on committed capital (after mgmt + placement + carry)")
+    print("  Placement = 10% of gross profit paid to underlying managers (no hurdle)")
+    print("  GP Carry  = incentive fee retained by FoF manager per waterfall")
+    print("  Total     = Mgmt + Placement + GP Carry")
+    print()
+    print("  Note: GP catch-up zone falls between 3x and 4x gross (~3.5x–3.6x).")
+    print("        LP net is flat at $90.0M / 3.00x during that band.")
+    print()
+    print()
+
+
+if __name__ == "__main__":
+    print_dollar_table(
+        fund_size_m    = 30,
+        gross_multiples = list(range(1, 8)),   # 1x through 7x
+    )

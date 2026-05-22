@@ -12,6 +12,8 @@ Tools:
   6. web_search                  — Live web search for news, track record, team, portfolio
   7. fetch_webpage               — Scrape a specific URL for deep reading
   8. lp_evaluation_framework     — LP evaluation rubric scaffold for structured scoring
+  9. search_990_lp_investments   — Parse IRS 990 Schedule D/R for actual LP fund commitments
+ 10. scan_ivy_hospital_990s      — Batch scan all Ivy + hospital 990s for LP investment data
 """
 
 from __future__ import annotations
@@ -22,6 +24,7 @@ from typing import TYPE_CHECKING
 from .sec import search_investment_advisers, get_adviser_form_adv, search_form_d_fundraising
 from .nonprofits import search_institutional_lps, get_lp_financials
 from .web import search_web, scrape_webpage
+from .irs_990 import get_lp_investments_from_990, batch_search_ivy_lps, KNOWN_LP_ENTITIES
 
 # ──────────────────────────────────────────────────────────────────────
 #  Tool JSON schema definitions
@@ -238,6 +241,78 @@ TOOL_DEFINITIONS = [
             "required": ["gp_name", "fund_strategy", "research_summary"],
         },
     },
+    {
+        "name": "search_990_lp_investments",
+        "description": (
+            "Parse IRS Form 990 Schedule D (Investments - Other Securities) and "
+            "Schedule R (Unrelated Partnerships) for a specific endowment, university, "
+            "or hospital to extract their actual LP fund commitments. "
+            "Data comes directly from the IRS public 990 XML dataset. "
+            "Best sources: Harvard Management Private Equity Corp, Mass General Brigham, "
+            "Yale New Haven Hospital, Dana-Farber, NewYork-Presbyterian — these hospital-affiliated "
+            "entities tend to have more granular LP investment disclosure than the universities themselves. "
+            "Use entity names from the known list or provide EIN directly."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "entity": {
+                    "type": "string",
+                    "description": (
+                        "Entity name or EIN. Known entities include: "
+                        "'Harvard Management Private Equity Corp' (EIN 04-3070522), "
+                        "'Harvard Management Company' (EIN 23-7361259), "
+                        "'Yale University' (EIN 06-0646973), "
+                        "'Princeton University (PRINCO)' (EIN 21-0634501), "
+                        "'Mass General Brigham' (EIN 04-3230035), "
+                        "'Yale New Haven Hospital' (EIN 06-0646652), "
+                        "'Dana-Farber Cancer Institute' (EIN 04-2263923), "
+                        "'NewYork-Presbyterian Hospital' (EIN 13-1624096), "
+                        "'Columbia University' (EIN 13-5598093), "
+                        "'University of Pennsylvania' (EIN 23-1352685)."
+                    ),
+                },
+                "years": {
+                    "type": "array",
+                    "items": {"type": "integer"},
+                    "description": "Filing years to search (default: [2024, 2023, 2022]). Use year the 990 was FILED, not the tax year.",
+                    "default": [2024, 2023, 2022],
+                },
+                "max_filings": {
+                    "type": "integer",
+                    "description": "Number of filings to parse (default 2, returns most recent first).",
+                    "default": 2,
+                },
+            },
+            "required": ["entity"],
+        },
+    },
+    {
+        "name": "scan_ivy_hospital_990s",
+        "description": (
+            "Batch scan IRS 990 filings for ALL Ivy League endowments and "
+            "affiliated hospital investment pools simultaneously. "
+            "Searches Schedule D and Schedule R for LP fund commitments across: "
+            "Harvard Management Private Equity Corp, Harvard Management Company, "
+            "Yale University, Princeton University, Mass General Brigham, "
+            "Yale New Haven Hospital, Columbia University, University of Pennsylvania, "
+            "Dana-Farber Cancer Institute, and NewYork-Presbyterian Hospital. "
+            "Use this for a broad sweep of which entities have which funds in their 990s. "
+            "This may take 30-60 seconds as it downloads multiple XML files."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "years": {
+                    "type": "array",
+                    "items": {"type": "integer"},
+                    "description": "Filing years to search across all entities (default: [2024, 2023, 2022]).",
+                    "default": [2024, 2023, 2022],
+                },
+            },
+            "required": [],
+        },
+    },
 ]
 
 
@@ -256,6 +331,8 @@ def execute_tool(name: str, tool_input: dict) -> str:
         "web_search": _tool_web_search,
         "fetch_webpage": _tool_fetch_webpage,
         "lp_evaluation_framework": _tool_lp_evaluation_framework,
+        "search_990_lp_investments": _tool_search_990_lp_investments,
+        "scan_ivy_hospital_990s": _tool_scan_ivy_hospital_990s,
     }
     fn = dispatch.get(name)
     if fn is None:
@@ -500,3 +577,15 @@ def _tool_lp_evaluation_framework(inp: dict) -> dict:
             f"Be direct — a 'Watch List' is not a 'Pass'. Flag all data gaps honestly."
         ),
     }
+
+
+def _tool_search_990_lp_investments(inp: dict) -> dict:
+    entity = inp["entity"]
+    years = inp.get("years", [2024, 2023, 2022])
+    max_filings = int(inp.get("max_filings", 2))
+    return get_lp_investments_from_990(entity, years=years, max_filings=max_filings)
+
+
+def _tool_scan_ivy_hospital_990s(inp: dict) -> dict:
+    years = inp.get("years", [2024, 2023, 2022])
+    return batch_search_ivy_lps(years=years)

@@ -4,16 +4,19 @@ GP Sourcing Agent Tools
 Tool definitions (JSON schema for Claude) and Python implementations.
 
 Tools:
-  1. search_gp_registry          — Find PE/VC/buyout firms in SEC IAPD + EDGAR
-  2. get_gp_regulatory_data      — Form ADV details: AUM, strategy, clients
-  3. track_fund_fundraising      — Form D filings: recent fund closes and capital raises
-  4. search_institutional_lps    — Endowments / foundations on ProPublica (LP capacity)
-  5. get_lp_financials           — 990 investment income and asset trends
-  6. web_search                  — Live web search for news, track record, team, portfolio
-  7. fetch_webpage               — Scrape a specific URL for deep reading
-  8. lp_evaluation_framework     — LP evaluation rubric scaffold for structured scoring
-  9. search_990_lp_investments   — Parse IRS 990 Schedule D/R for actual LP fund commitments
- 10. scan_ivy_hospital_990s      — Batch scan all Ivy + hospital 990s for LP investment data
+  1.  search_gp_registry          — Find PE/VC/buyout firms in SEC IAPD + EDGAR
+  2.  get_gp_regulatory_data      — Form ADV details: AUM, strategy, clients
+  3.  track_fund_fundraising      — Form D filings: fund history for a named GP
+  4.  search_institutional_lps    — Endowments / foundations on ProPublica (LP capacity)
+  5.  get_lp_financials           — 990 investment income and asset trends
+  6.  web_search                  — Live web search for news, track record, team, portfolio
+  7.  fetch_webpage               — Scrape a specific URL for deep reading
+  8.  lp_evaluation_framework     — LP evaluation rubric scaffold for structured scoring
+  9.  search_990_lp_investments   — Parse IRS 990 Schedule D/R for actual LP fund commitments
+ 10.  scan_ivy_hospital_990s      — Batch scan all Ivy + hospital 990s for LP investment data
+ 11.  form_d_live_feed            — Live Form D feed: new private fund raises by date/type/size
+ 12.  form_d_filing_detail        — Parse a specific Form D XML: size, persons, exemptions
+ 13.  form_d_manager_history      — All Form D filings for a GP — fund family + raise trajectory
 """
 
 from __future__ import annotations
@@ -25,6 +28,7 @@ from .sec import search_investment_advisers, get_adviser_form_adv, search_form_d
 from .nonprofits import search_institutional_lps, get_lp_financials
 from .web import search_web, scrape_webpage
 from .irs_990 import get_lp_investments_from_990, batch_search_ivy_lps, KNOWN_LP_ENTITIES
+from .form_d_feed import search_form_d_feed, get_form_d_detail, search_form_d_by_manager
 
 # ──────────────────────────────────────────────────────────────────────
 #  Tool JSON schema definitions
@@ -288,6 +292,142 @@ TOOL_DEFINITIONS = [
         },
     },
     {
+        "name": "form_d_live_feed",
+        "description": (
+            "Pull the live SEC EDGAR Form D feed — new private fund capital raises filtered by "
+            "date range, strategy type, and offering size. Form D is filed when a fund makes its "
+            "first sale of securities under Regulation D. Use this to answer: "
+            "'What new PE/buyout/VC funds launched in the last 90 days?' "
+            "'Which funds over $500M filed Form D this quarter?' "
+            "Set parse_xml=true to get full offering sizes, investor counts, and key persons "
+            "(slower — ~1s per filing). Without parse_xml, returns fast index-only results. "
+            "Rule 506(b) = traditional private placement; Rule 506(c) = general solicitation allowed."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "days_back": {
+                    "type": "integer",
+                    "description": "Look-back window in days. Default 90. Use 30 for recent, 365 for annual sweep.",
+                    "default": 90,
+                },
+                "fund_type": {
+                    "type": "string",
+                    "enum": ["buyout", "venture", "growth", "credit", "real_estate", "hedge_fund", "all"],
+                    "description": (
+                        "Strategy filter. 'buyout' matches PE/buyout/capital partners funds; "
+                        "'venture' matches VC; 'growth' matches growth equity; "
+                        "'credit' matches direct lending/private credit; "
+                        "'real_estate' matches RE/infrastructure; 'all' returns everything."
+                    ),
+                },
+                "min_offering_usd": {
+                    "type": "integer",
+                    "description": "Minimum total offering amount in dollars (e.g. 100000000 = $100M). Only effective with parse_xml=true.",
+                },
+                "max_offering_usd": {
+                    "type": "integer",
+                    "description": "Maximum total offering amount in dollars. Only effective with parse_xml=true.",
+                },
+                "keywords": {
+                    "type": "string",
+                    "description": (
+                        "Free-text search terms added to the EDGAR query. "
+                        "Examples: 'healthcare', 'technology', 'Thoma Bravo', 'Francisco Partners'."
+                    ),
+                },
+                "new_filings_only": {
+                    "type": "boolean",
+                    "description": "If true (default), exclude D/A amendments and return only new fund launches.",
+                    "default": True,
+                },
+                "max_results": {
+                    "type": "integer",
+                    "description": "Maximum results to return (default 40, max 100).",
+                    "default": 40,
+                },
+                "parse_xml": {
+                    "type": "boolean",
+                    "description": (
+                        "If true, fetch and parse Form D XML for each result — returns offering sizes, "
+                        "investor counts, exemptions, and key persons. Slower (~1s per result). "
+                        "Use false (default) for fast index browsing, then call form_d_filing_detail "
+                        "on specific accession_nos for full detail."
+                    ),
+                    "default": False,
+                },
+            },
+            "required": [],
+        },
+    },
+    {
+        "name": "form_d_filing_detail",
+        "description": (
+            "Fetch and fully parse a specific Form D XML filing from SEC EDGAR. "
+            "Returns complete structured data: total offering amount, amount already sold, "
+            "remaining, minimum investment, number of investors, date of first sale, "
+            "Rule 506(b)/(c) exemption status, securities type, and key persons (GPs / officers). "
+            "Use this after form_d_live_feed to deep-dive on a specific filing. "
+            "Requires cik and accession_no from feed results."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "cik": {
+                    "type": "string",
+                    "description": "EDGAR CIK number (from form_d_live_feed results, e.g. '1234567').",
+                },
+                "accession_no": {
+                    "type": "string",
+                    "description": "Accession number from form_d_live_feed results, e.g. '0001234567-25-000001'.",
+                },
+            },
+            "required": ["cik", "accession_no"],
+        },
+    },
+    {
+        "name": "form_d_manager_history",
+        "description": (
+            "Search all Form D filings for a specific GP firm — tracks their complete fund family "
+            "and raise trajectory over time. Returns all fund vehicles (each fund series is a "
+            "separate Form D filer), offering sizes across vintages, and an offering_trajectory "
+            "summary showing fund size growth. Use this to: "
+            "(a) identify all fund vehicles in a GP's history; "
+            "(b) track fund size from Fund I through current vintage; "
+            "(c) spot new fund series before public announcement; "
+            "(d) see how frequently a GP returns to market."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "manager_name": {
+                    "type": "string",
+                    "description": (
+                        "GP firm name or partial name. Use the firm family name, not a specific fund. "
+                        "Examples: 'Vista Equity', 'Thoma Bravo', 'Francisco Partners', "
+                        "'Hellman Friedman', 'General Atlantic', 'Warburg Pincus'."
+                    ),
+                },
+                "days_back": {
+                    "type": "integer",
+                    "description": "Look-back window in days (default 1825 = ~5 years for full vintage history).",
+                    "default": 1825,
+                },
+                "max_results": {
+                    "type": "integer",
+                    "description": "Maximum number of filings to return (default 25).",
+                    "default": 25,
+                },
+                "parse_xml": {
+                    "type": "boolean",
+                    "description": "If true (default), parse each Form D XML to get offering sizes and key persons.",
+                    "default": True,
+                },
+            },
+            "required": ["manager_name"],
+        },
+    },
+    {
         "name": "scan_ivy_hospital_990s",
         "description": (
             "Batch scan IRS 990 filings for ALL Ivy League endowments and "
@@ -333,6 +473,9 @@ def execute_tool(name: str, tool_input: dict) -> str:
         "lp_evaluation_framework": _tool_lp_evaluation_framework,
         "search_990_lp_investments": _tool_search_990_lp_investments,
         "scan_ivy_hospital_990s": _tool_scan_ivy_hospital_990s,
+        "form_d_live_feed": _tool_form_d_live_feed,
+        "form_d_filing_detail": _tool_form_d_filing_detail,
+        "form_d_manager_history": _tool_form_d_manager_history,
     }
     fn = dispatch.get(name)
     if fn is None:
@@ -589,3 +732,31 @@ def _tool_search_990_lp_investments(inp: dict) -> dict:
 def _tool_scan_ivy_hospital_990s(inp: dict) -> dict:
     years = inp.get("years", [2024, 2023, 2022])
     return batch_search_ivy_lps(years=years)
+
+
+def _tool_form_d_live_feed(inp: dict) -> dict:
+    return search_form_d_feed(
+        days_back=int(inp.get("days_back", 90)),
+        fund_type=inp.get("fund_type") or None,
+        min_offering_usd=inp.get("min_offering_usd"),
+        max_offering_usd=inp.get("max_offering_usd"),
+        keywords=inp.get("keywords"),
+        new_filings_only=bool(inp.get("new_filings_only", True)),
+        max_results=min(int(inp.get("max_results", 40)), 100),
+        parse_xml=bool(inp.get("parse_xml", False)),
+    )
+
+
+def _tool_form_d_filing_detail(inp: dict) -> dict:
+    cik = str(inp["cik"]).strip()
+    accession = str(inp["accession_no"]).strip()
+    return get_form_d_detail(cik, accession)
+
+
+def _tool_form_d_manager_history(inp: dict) -> dict:
+    return search_form_d_by_manager(
+        manager_name=inp["manager_name"],
+        days_back=int(inp.get("days_back", 1825)),
+        max_results=min(int(inp.get("max_results", 25)), 50),
+        parse_xml=bool(inp.get("parse_xml", True)),
+    )

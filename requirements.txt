@@ -6,3 +6,4 @@ requests>=2.32.0
 rich>=13.0.0
 python-dotenv>=1.0.0
 lxml>=5.0.0
+ddgs>=1.0.0

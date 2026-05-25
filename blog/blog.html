@@ -14,7 +14,7 @@
 <nav class="nav">
   <div class="nav-inner">
     <a href="index.html" class="nav-logo">
-      <div class="nav-logo-icon">M</div>
+      <div class="nav-logo-icon"><svg width="20" height="20" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg" fill="white"><path d="M25 24 Q34 18 30 10 Q28 5 23 8" stroke="white" stroke-width="2.5" stroke-linecap="round" fill="none"/><circle cx="29" cy="9" r="3.5"/><ellipse cx="17" cy="25" rx="6" ry="5"/><circle cx="12" cy="30" r="3"/><circle cx="21" cy="30" r="3"/><circle cx="17" cy="15" r="9"/><ellipse cx="9" cy="8" rx="3" ry="4.5" transform="rotate(-20 9 8)"/><ellipse cx="25" cy="8" rx="3" ry="4.5" transform="rotate(20 25 8)"/><circle cx="13.5" cy="14" r="2.5" fill="#7c3aed"/><circle cx="20.5" cy="14" r="2.5" fill="#7c3aed"/><circle cx="14" cy="13.5" r="0.9"/><circle cx="21" cy="13.5" r="0.9"/></svg></div>
       <span class="nav-logo-text">1<span>5</span>1</span>
     </a>
     <ul class="nav-links">
@@ -67,145 +67,32 @@
       <button class="category-pill" data-filter="crypto">₿ Crypto</button>
     </div>
 
-    <!-- Post list -->
-    <div class="post-list">
+    <!-- Post list — add real posts here as you publish them -->
+    <div class="post-list" id="post-list">
 
-      <!-- Post 1 -->
-      <a href="posts/fed-hiking-cycle.html" class="post-list-item" data-category="macro"
-         data-title="The Fed Is Playing a Game Nobody Has the Rules For"
-         data-excerpt="What a structurally higher rate environment means for your portfolio"
+      <!-- TEMPLATE: copy this block for each new post you publish
+      <a href="posts/YOUR-POST-SLUG.html" class="post-list-item" data-category="macro"
+         data-title="Your Post Title Here"
+         data-excerpt="Short description for search"
          style="text-decoration:none; color:inherit;">
         <div>
           <div class="post-list-meta">
-            <span class="tag tag-purple">Macro</span>
-            <span class="tag tag-gold">Featured</span>
-            <span style="font-size:0.78rem; color:var(--text-muted);">May 20, 2025 · 11 min read</span>
+            <span class="tag tag-purple">Category</span>
+            <span style="font-size:0.78rem; color:var(--text-muted);">Date · X min read</span>
           </div>
-          <div class="post-list-title">The Fed Is Playing a Game Nobody Has the Rules For</div>
-          <p class="post-list-excerpt">Everyone's waiting for the pivot. But what if the pivot isn't coming? A look at what a structurally higher rate environment means for your portfolio — and why the 2010s playbook is dead.</p>
+          <div class="post-list-title">Your Post Title Here</div>
+          <p class="post-list-excerpt">Short description of the post.</p>
         </div>
-        <div class="post-list-img">📈</div>
+        <div class="post-list-img">📊</div>
       </a>
-
-      <!-- Post 2 -->
-      <a href="posts/nvidia-overextended.html" class="post-list-item" data-category="stocks"
-         data-title="Nvidia at $1,100: Still a Buy or a Crowded Trade?"
-         data-excerpt="Everyone owns it. Everyone loves it."
-         style="text-decoration:none; color:inherit;">
-        <div>
-          <div class="post-list-meta">
-            <span class="tag tag-gold">Stock Ideas</span>
-            <span style="font-size:0.78rem; color:var(--text-muted);">May 18, 2025 · 7 min read</span>
-          </div>
-          <div class="post-list-title">Nvidia at $1,100: Still a Buy or a Crowded Trade?</div>
-          <p class="post-list-excerpt">Everyone owns it. Everyone loves it. Which historically is the moment you should start asking questions about what's already priced in.</p>
-        </div>
-        <div class="post-list-img gold">🧠</div>
-      </a>
-
-      <!-- Post 3 -->
-      <a href="posts/dollar-dominance.html" class="post-list-item" data-category="current-affairs"
-         data-title="Dollar Dominance Is Not Dying. Stop Writing Its Obituary."
-         data-excerpt="Every five years, someone writes the end of the dollar piece."
-         style="text-decoration:none; color:inherit;">
-        <div>
-          <div class="post-list-meta">
-            <span class="tag tag-purple">Current Affairs</span>
-            <span style="font-size:0.78rem; color:var(--text-muted);">May 12, 2025 · 9 min read</span>
-          </div>
-          <div class="post-list-title">Dollar Dominance Is Not Dying. Stop Writing Its Obituary.</div>
-          <p class="post-list-excerpt">Every five years, someone writes the "end of the dollar" piece. Every five years, they are wrong. Here's why — and what the actual risks are.</p>
-        </div>
-        <div class="post-list-img slate">🌐</div>
-      </a>
-
-      <!-- Post 4 - Premium -->
-      <a href="premium.html" class="post-list-item" data-category="macro"
-         data-title="Private Credit Is $1.7 Trillion of Risk Nobody Is Pricing Right"
-         data-excerpt="The fastest-growing corner of finance operates with minimal transparency"
-         style="text-decoration:none; color:inherit;">
-        <div>
-          <div class="post-list-meta">
-            <span class="tag tag-purple">Macro</span>
-            <span class="ai-badge">✦ AI Analysis</span>
-            <span style="background:var(--gold-light); color:var(--gold); font-size:0.72rem; font-weight:700; padding:3px 8px; border-radius:100px;">✦ Premium</span>
-            <span style="font-size:0.78rem; color:var(--text-muted);">May 5, 2025 · 12 min read</span>
-          </div>
-          <div class="post-list-title">Private Credit Is $1.7 Trillion of Risk Nobody Is Pricing Right</div>
-          <p class="post-list-excerpt">The fastest-growing corner of finance operates with minimal transparency. Here's what we actually know — and why that should worry you.</p>
-        </div>
-        <div class="post-list-img" style="background: linear-gradient(135deg, #dc2626, #f87171);">⚠️</div>
-      </a>
-
-      <!-- Post 5 -->
-      <a href="#" class="post-list-item" data-category="ai"
-         data-title="What Jensen Huang Actually Said That Nobody Quoted Correctly"
-         data-excerpt="The Nvidia CEO gave a 3-hour keynote. Here's the part that mattered."
-         style="text-decoration:none; color:inherit;">
-        <div>
-          <div class="post-list-meta">
-            <span class="tag tag-purple">AI & Tech</span>
-            <span style="font-size:0.78rem; color:var(--text-muted);">Apr 28, 2025 · 6 min read</span>
-          </div>
-          <div class="post-list-title">What Jensen Huang Actually Said That Nobody Quoted Correctly</div>
-          <p class="post-list-excerpt">The Nvidia CEO gave a 3-hour keynote. Everyone focused on the big chip announcement. Here's the part that actually mattered for the next two years.</p>
-        </div>
-        <div class="post-list-img" style="background: linear-gradient(135deg, #059669, #34d399);">🤖</div>
-      </a>
-
-      <!-- Post 6 - Premium -->
-      <a href="premium.html" class="post-list-item" data-category="stocks"
-         data-title="Three Undervalued Financials You've Never Heard Of"
-         data-excerpt="Premium content — unlock with subscription"
-         style="text-decoration:none; color:inherit;">
-        <div>
-          <div class="post-list-meta">
-            <span class="tag tag-gold">Stock Ideas</span>
-            <span style="background:var(--gold-light); color:var(--gold); font-size:0.72rem; font-weight:700; padding:3px 8px; border-radius:100px;">✦ Premium</span>
-            <span style="font-size:0.78rem; color:var(--text-muted);">Apr 21, 2025 · 15 min read</span>
-          </div>
-          <div class="post-list-title">Three Undervalued Financials You've Never Heard Of</div>
-          <p class="post-list-excerpt">Small-cap financials are criminally ignored. Deep dive into three names with strong fundamentals, low analyst coverage, and catalysts that could move them 40–80% over 18 months.</p>
-        </div>
-        <div class="post-list-img gold">💰</div>
-      </a>
-
-      <!-- Post 7 -->
-      <a href="#" class="post-list-item" data-category="current-affairs"
-         data-title="The Taiwan Playbook: What Happens to Markets If China Moves"
-         data-excerpt="War scenarios are back on the table. Let's think about this carefully."
-         style="text-decoration:none; color:inherit;">
-        <div>
-          <div class="post-list-meta">
-            <span class="tag tag-purple">Current Affairs</span>
-            <span style="font-size:0.78rem; color:var(--text-muted);">Apr 15, 2025 · 14 min read</span>
-          </div>
-          <div class="post-list-title">The Taiwan Playbook: What Happens to Markets If China Moves</div>
-          <p class="post-list-excerpt">War scenarios are back on the table. Here's a careful, calm analysis of what the market impact would actually look like across asset classes — and how to think about hedging it.</p>
-        </div>
-        <div class="post-list-img slate">🗺️</div>
-      </a>
-
-      <!-- Post 8 -->
-      <a href="#" class="post-list-item" data-category="crypto"
-         data-title="Bitcoin at $100k Is Meaningless. Bitcoin's Role in the System Is Not."
-         data-excerpt="The price is not the point. The structural shift is."
-         style="text-decoration:none; color:inherit;">
-        <div>
-          <div class="post-list-meta">
-            <span class="tag tag-purple">Crypto</span>
-            <span style="font-size:0.78rem; color:var(--text-muted);">Apr 8, 2025 · 8 min read</span>
-          </div>
-          <div class="post-list-title">Bitcoin at $100k Is Meaningless. Bitcoin's Role in the System Is Not.</div>
-          <p class="post-list-excerpt">The price is not the point. The question is whether BTC is becoming a legitimately separate asset class — and what that means for portfolio construction.</p>
-        </div>
-        <div class="post-list-img" style="background: linear-gradient(135deg, #92400e, #d97706);">₿</div>
-      </a>
+      -->
 
     </div>
 
-    <div style="text-align:center; margin-top:48px;">
-      <button class="btn btn-outline" onclick="showToast('More posts coming soon!')">Load more posts</button>
+    <div style="text-align:center; padding:64px 0; color:var(--text-muted);">
+      <div style="font-size:40px; margin-bottom:16px;">✦</div>
+      <div style="font-family:var(--font-serif); font-size:1.2rem; margin-bottom:8px; color:var(--text-secondary);">No posts yet</div>
+      <p style="font-size:0.9rem;">The first piece of research is on its way. Subscribe below so you don't miss it.</p>
     </div>
 
   </div>
@@ -217,7 +104,7 @@
     <div class="footer-top">
       <div>
         <a href="index.html" class="nav-logo" style="display:inline-flex;">
-          <div class="nav-logo-icon">M</div>
+          <div class="nav-logo-icon"><svg width="20" height="20" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg" fill="white"><path d="M25 24 Q34 18 30 10 Q28 5 23 8" stroke="white" stroke-width="2.5" stroke-linecap="round" fill="none"/><circle cx="29" cy="9" r="3.5"/><ellipse cx="17" cy="25" rx="6" ry="5"/><circle cx="12" cy="30" r="3"/><circle cx="21" cy="30" r="3"/><circle cx="17" cy="15" r="9"/><ellipse cx="9" cy="8" rx="3" ry="4.5" transform="rotate(-20 9 8)"/><ellipse cx="25" cy="8" rx="3" ry="4.5" transform="rotate(20 25 8)"/><circle cx="13.5" cy="14" r="2.5" fill="#7c3aed"/><circle cx="20.5" cy="14" r="2.5" fill="#7c3aed"/><circle cx="14" cy="13.5" r="0.9"/><circle cx="21" cy="13.5" r="0.9"/></svg></div>
           <span class="nav-logo-text">1<span>5</span>1</span>
         </a>
         <p class="footer-brand-desc">Independent investment research and market commentary.</p>

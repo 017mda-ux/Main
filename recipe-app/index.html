@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Our Weekly Menu 🍽️</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <h1 class="logo" id="logo-home">🍽️ Our Weekly Menu</h1>
+      <nav class="nav">
+        <button class="nav-btn active" data-view="week">📅 This Week</button>
+        <button class="nav-btn" data-view="list">🛒 Shopping List</button>
+        <button class="nav-btn" data-view="all">📖 All Recipes</button>
+      </nav>
+    </div>
+  </header>
+
+  <main id="app" class="container"></main>
+
+  <footer class="footer">
+    <p>Made with ❤️ for two. Ingredient links open Publix.com — use the in-store
+    item locator on the Publix app for exact aisle numbers at your store.</p>
+  </footer>
+
+  <script src="recipes.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

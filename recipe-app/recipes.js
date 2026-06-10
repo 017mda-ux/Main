@@ -3,7 +3,8 @@
 // Add your own recipes here! Each recipe needs:
 //   id        - unique string
 //   name      - display name
-//   emoji     - shown on the card
+//   calories  - estimated calories per serving
+//   health    - "healthy" | "balanced" | "indulgent" (Gnommy)
 //   time      - total cook time in minutes
 //   tags      - array of labels shown on the card
 //   steps     - array of instruction strings
@@ -16,37 +17,48 @@
 
 // Common allergens used for filtering. Each recipe lists which of
 // these it contains in its `allergens` array (use the lowercase keys).
+// Filter chips in the app are generated dynamically from whatever
+// allergens actually appear in the recipe list below.
 const ALLERGENS = {
-  shellfish: { label: "Shellfish", emoji: "🦐" },
-  nuts:      { label: "Nuts",      emoji: "🥜" },
-  fish:      { label: "Fish",      emoji: "🐟" },
-  dairy:     { label: "Dairy",     emoji: "🥛" },
-  gluten:    { label: "Gluten",    emoji: "🌾" },
-  eggs:      { label: "Eggs",      emoji: "🥚" },
-  soy:       { label: "Soy",       emoji: "🫘" },
+  shellfish: "Shellfish",
+  nuts: "Nuts",
+  fish: "Fish",
+  dairy: "Dairy",
+  gluten: "Gluten",
+  eggs: "Eggs",
+  soy: "Soy",
+};
+
+// Health styles. "indulgent" is Gnommy mode: maximum tastiness,
+// calories optional reading.
+const HEALTH_LEVELS = {
+  healthy:   { label: "Healthy" },
+  balanced:  { label: "Balanced" },
+  indulgent: { label: "Gnommy" },
 };
 
 // Departments in roughly the order you'd walk a Publix,
 // used to group/sort the weekly shopping list.
 const DEPARTMENTS = {
-  "Produce":        { emoji: "🥬", order: 1 },
-  "Bakery":         { emoji: "🥖", order: 2 },
-  "Deli":           { emoji: "🥪", order: 3 },
-  "Meat":           { emoji: "🥩", order: 4 },
-  "Seafood":        { emoji: "🐟", order: 5 },
-  "Dairy":          { emoji: "🥛", order: 6 },
-  "Frozen":         { emoji: "🧊", order: 7 },
-  "Pantry":         { emoji: "🥫", order: 8 },
-  "Spices":         { emoji: "🧂", order: 9 },
-  "International":  { emoji: "🌎", order: 10 },
+  "Produce":        { order: 1 },
+  "Bakery":         { order: 2 },
+  "Deli":           { order: 3 },
+  "Meat":           { order: 4 },
+  "Seafood":        { order: 5 },
+  "Dairy":          { order: 6 },
+  "Frozen":         { order: 7 },
+  "Pantry":         { order: 8 },
+  "Spices":         { order: 9 },
+  "International":  { order: 10 },
 };
 
 const RECIPES = [
   {
     id: "lemon-garlic-salmon",
+    calories: 520,
+    health: "healthy",
     allergens: ["fish", "dairy"],
     name: "Lemon Garlic Butter Salmon",
-    emoji: "🐟",
     time: 25,
     tags: ["Seafood", "One Pan", "Light"],
     ingredients: [
@@ -68,9 +80,10 @@ const RECIPES = [
   },
   {
     id: "chicken-fajita-skillet",
+    calories: 640,
+    health: "balanced",
     allergens: ["dairy", "gluten"],
     name: "Chicken Fajita Skillet",
-    emoji: "🌮",
     time: 30,
     tags: ["Mexican", "One Pan"],
     ingredients: [
@@ -93,9 +106,10 @@ const RECIPES = [
   },
   {
     id: "creamy-tuscan-pasta",
+    calories: 790,
+    health: "indulgent",
     allergens: ["dairy", "gluten"],
     name: "Creamy Tuscan Chicken Pasta",
-    emoji: "🍝",
     time: 35,
     tags: ["Italian", "Comfort"],
     ingredients: [
@@ -118,9 +132,10 @@ const RECIPES = [
   },
   {
     id: "sheet-pan-sausage",
+    calories: 620,
+    health: "balanced",
     allergens: [],
     name: "Sheet Pan Sausage & Veggies",
-    emoji: "🍳",
     time: 35,
     tags: ["One Pan", "Easy Cleanup"],
     ingredients: [
@@ -141,9 +156,10 @@ const RECIPES = [
   },
   {
     id: "honey-garlic-shrimp",
+    calories: 540,
+    health: "balanced",
     allergens: ["shellfish", "soy"],
     name: "Honey Garlic Shrimp Stir-Fry",
-    emoji: "🍤",
     time: 20,
     tags: ["Seafood", "Quick", "Asian"],
     ingredients: [
@@ -166,9 +182,10 @@ const RECIPES = [
   },
   {
     id: "turkey-burgers",
+    calories: 730,
+    health: "balanced",
     allergens: ["dairy", "gluten", "eggs"],
     name: "Juicy Turkey Burgers",
-    emoji: "🍔",
     time: 25,
     tags: ["American", "Grill"],
     ingredients: [
@@ -191,9 +208,10 @@ const RECIPES = [
   },
   {
     id: "veggie-stir-fry-noodles",
+    calories: 490,
+    health: "healthy",
     allergens: ["gluten", "soy", "eggs"],
     name: "Veggie Lo Mein Night",
-    emoji: "🥡",
     time: 25,
     tags: ["Vegetarian", "Asian", "Quick"],
     ingredients: [
@@ -216,9 +234,10 @@ const RECIPES = [
   },
   {
     id: "slow-cooker-chili",
+    calories: 740,
+    health: "indulgent",
     allergens: ["dairy", "gluten"],
     name: "Cozy Beef Chili",
-    emoji: "🍲",
     time: 45,
     tags: ["Comfort", "Make Ahead"],
     ingredients: [
@@ -242,9 +261,10 @@ const RECIPES = [
   },
   {
     id: "caprese-chicken",
+    calories: 450,
+    health: "healthy",
     allergens: ["dairy"],
     name: "Caprese Chicken",
-    emoji: "🍅",
     time: 30,
     tags: ["Italian", "Light"],
     ingredients: [
@@ -265,9 +285,10 @@ const RECIPES = [
   },
   {
     id: "shrimp-tacos",
+    calories: 510,
+    health: "healthy",
     allergens: ["shellfish", "dairy"],
     name: "Blackened Shrimp Tacos",
-    emoji: "🌮",
     time: 25,
     tags: ["Seafood", "Mexican", "Quick"],
     ingredients: [
@@ -289,9 +310,10 @@ const RECIPES = [
   },
   {
     id: "baked-ziti",
+    calories: 860,
+    health: "indulgent",
     allergens: ["dairy", "gluten"],
     name: "Weeknight Baked Ziti",
-    emoji: "🧀",
     time: 45,
     tags: ["Italian", "Comfort", "Leftovers"],
     ingredients: [
@@ -313,9 +335,10 @@ const RECIPES = [
   },
   {
     id: "greek-chicken-bowls",
+    calories: 560,
+    health: "healthy",
     allergens: ["dairy", "gluten"],
     name: "Greek Chicken Bowls",
-    emoji: "🥗",
     time: 30,
     tags: ["Mediterranean", "Healthy"],
     ingredients: [
@@ -340,9 +363,10 @@ const RECIPES = [
   },
   {
     id: "pork-chops-apples",
+    calories: 680,
+    health: "balanced",
     allergens: ["dairy"],
     name: "Skillet Pork Chops & Apples",
-    emoji: "🍎",
     time: 30,
     tags: ["American", "Fall Favorite"],
     ingredients: [
@@ -363,9 +387,10 @@ const RECIPES = [
   },
   {
     id: "margherita-flatbreads",
+    calories: 620,
+    health: "balanced",
     allergens: ["dairy", "gluten"],
     name: "Margherita Flatbreads & Salad",
-    emoji: "🍕",
     time: 20,
     tags: ["Vegetarian", "Quick", "Date Night"],
     ingredients: [
@@ -383,6 +408,60 @@ const RECIPES = [
       "Bake 8–10 minutes until cheese bubbles and edges crisp.",
       "Toss spring mix with vinaigrette.",
       "Scatter basil over the flatbreads, slice, and serve with salad.",
+    ],
+  },
+  {
+    id: "loaded-bacon-mac",
+    calories: 950,
+    health: "indulgent",
+    allergens: ["dairy", "gluten"],
+    name: "Loaded Bacon Mac & Cheese",
+    time: 40,
+    tags: ["Comfort", "Crowd Pleaser"],
+    ingredients: [
+      { item: "Cavatappi pasta", amount: "12 oz", dept: "Pantry", search: "cavatappi pasta" },
+      { item: "Bacon", amount: "8 slices", dept: "Meat", search: "thick cut bacon" },
+      { item: "Sharp cheddar", amount: "2 cups, shredded", dept: "Dairy", search: "sharp cheddar block" },
+      { item: "Monterey jack", amount: "1 cup, shredded", dept: "Dairy", search: "monterey jack cheese" },
+      { item: "Whole milk", amount: "2 cups", dept: "Dairy" },
+      { item: "Butter", amount: "3 tbsp", dept: "Dairy", search: "unsalted butter" },
+      { item: "All-purpose flour", amount: "3 tbsp", dept: "Pantry" },
+      { item: "Panko breadcrumbs", amount: "1/2 cup", dept: "Pantry", search: "panko breadcrumbs" },
+      { item: "Green onions", amount: "2, sliced", dept: "Produce" },
+    ],
+    steps: [
+      "Cook pasta 2 minutes shy of al dente; drain.",
+      "Crisp the bacon; crumble and reserve, keeping 1 tbsp of the fat.",
+      "Melt butter with the bacon fat, whisk in flour 1 minute, then slowly whisk in milk until thickened.",
+      "Off heat, stir in cheeses until smooth; fold in pasta and half the bacon.",
+      "Top with panko and remaining bacon; broil 2–3 minutes until golden. Finish with green onions.",
+    ],
+  },
+  {
+    id: "buffalo-chicken-sandwiches",
+    calories: 880,
+    health: "indulgent",
+    allergens: ["dairy", "gluten", "eggs"],
+    name: "Crispy Buffalo Chicken Sandwiches",
+    time: 35,
+    tags: ["Comfort", "Weekend"],
+    ingredients: [
+      { item: "Chicken breasts", amount: "2, halved flat", dept: "Meat", search: "boneless chicken breast" },
+      { item: "Buttermilk", amount: "1 cup", dept: "Dairy" },
+      { item: "All-purpose flour", amount: "1 cup", dept: "Pantry" },
+      { item: "Buffalo sauce", amount: "1/2 cup", dept: "Pantry", search: "franks redhot buffalo sauce" },
+      { item: "Brioche buns", amount: "2", dept: "Bakery", search: "brioche hamburger buns" },
+      { item: "Blue cheese dressing", amount: "1/4 cup", dept: "Pantry", search: "blue cheese dressing" },
+      { item: "Dill pickle chips", amount: "1/2 cup", dept: "Pantry", search: "dill pickle chips" },
+      { item: "Shredded lettuce", amount: "1 cup", dept: "Produce", search: "shredded lettuce" },
+      { item: "Vegetable oil", amount: "for frying", dept: "Pantry", search: "vegetable oil" },
+    ],
+    steps: [
+      "Soak chicken in buttermilk with salt and pepper, 15+ minutes.",
+      "Dredge in seasoned flour, pressing so it sticks.",
+      "Shallow-fry in 1/2 inch of oil, 4–5 minutes per side, to 165°F.",
+      "Toss the hot chicken in buffalo sauce.",
+      "Build on toasted buns with blue cheese dressing, pickles, and lettuce.",
     ],
   },
 ];

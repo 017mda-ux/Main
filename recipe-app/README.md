@@ -1,21 +1,24 @@
-# 🍽️ Our Weekly Menu
+# Peebs Weekly Menu
 
 A simple weekly dinner planner for two, with one-tap Publix ingredient links.
 
 ## Features
 
-- **📅 This Week** — A Monday–Sunday board of dinners. Today's card is
-  highlighted ("Tonight!"). Shuffle the whole week, swap any single night,
-  or clear a night for date night out. Your plan is saved automatically in
+- **This Week** — A Monday–Sunday board of dinners with a preferences bar:
+  pick a style (Healthy / Balanced / Gnommy), a calorie cap, and a cook-time
+  cap, and the whole week regenerates to match. The dice button reshuffles
+  (with a shake). Swap or clear any single night. Saved automatically in
   the browser (localStorage).
-- **🍳 Recipe view** — Click any meal to see ingredients (portioned for two)
-  and numbered steps. Every ingredient has a **Find at Publix** button that
-  opens a Publix.com product search, plus its typical department
-  (Produce, Dairy, Meat, …).
-- **🛒 Shopping List** — Combines all ingredients across the week's dinners,
+- **Recipe view** — Ingredients (portioned for two) with **Find at Publix**
+  links, numbered steps, calories per serving, allergen notes, a favorite
+  heart, and a review box (taste + quick/easy star ratings with notes).
+- **Shopping List** — Combines all ingredients across the week's dinners,
   de-duplicates them, and groups them by Publix department in roughly the
   order you'd walk the store. Checkboxes persist while you shop.
-- **📖 All Recipes** — Browse the full collection and jump into any recipe.
+- **All Recipes** — Sort by quickest, lowest calories, top rated, easiest,
+  or favorites. Filter chips for style and allergens are generated
+  dynamically from the recipe data. Allergy exclusions (shellfish and nuts
+  by default) also apply to shuffle and swap.
 
 ## Running it
 
@@ -41,9 +44,11 @@ Edit `recipes.js` — each recipe is a plain object:
 {
   id: "my-new-dish",          // unique string
   name: "My New Dish",
-  emoji: "🍜",
+  calories: 600,               // estimated, per serving
+  health: "balanced",          // "healthy" | "balanced" | "indulgent" (Gnommy)
   time: 30,                    // minutes
   tags: ["Comfort"],
+  allergens: ["gluten"],       // keys from ALLERGENS, or []
   ingredients: [
     { item: "Egg noodles", amount: "8 oz", dept: "Pantry",
       search: "wide egg noodles" },  // optional: better Publix search term

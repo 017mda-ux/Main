@@ -358,6 +358,136 @@ h1, h2, h3 { font-family: "Fraunces", Georgia, serif; }
 .picker-item:hover { border-color: var(--accent); background: var(--accent-soft); }
 .picker-item .emoji { font-size: 1.5rem; }
 
+/* ---------- Favorites ---------- */
+.fav-btn {
+  border: none;
+  background: none;
+  font-size: 1.3rem;
+  cursor: pointer;
+  line-height: 1;
+  padding: 4px;
+  border-radius: 50%;
+  transition: transform 0.12s ease;
+  flex-shrink: 0;
+}
+.fav-btn:hover { transform: scale(1.2); }
+.fav-btn.big { font-size: 1.9rem; margin-left: auto; }
+.card-top { display: flex; justify-content: space-between; align-items: flex-start; }
+.detail-title { flex: 1; }
+
+/* ---------- Ratings ---------- */
+.rating-chip {
+  font-size: 0.78rem;
+  color: var(--gold);
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+}
+.rating-row { min-height: 1.2em; }
+.rating-row.unrated { font-size: 0.78rem; color: var(--ink-soft); font-style: italic; }
+
+/* ---------- Review box ---------- */
+.review-box {
+  margin-top: 28px;
+  padding: 20px;
+  background: var(--bg);
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+}
+.review-box h3 { font-size: 1.15rem; margin-bottom: 14px; }
+.review-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+.review-label { font-weight: 600; font-size: 0.92rem; }
+.star-input { display: flex; gap: 2px; }
+.star {
+  border: none;
+  background: none;
+  font-size: 1.5rem;
+  color: #d8d2c6;
+  cursor: pointer;
+  padding: 0 2px;
+  transition: color 0.1s ease, transform 0.1s ease;
+}
+.star:hover { transform: scale(1.15); }
+.star.filled { color: var(--gold); }
+.review-note {
+  width: 100%;
+  font: inherit;
+  font-size: 0.9rem;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px 12px;
+  resize: vertical;
+  margin: 8px 0 12px;
+  background: var(--card);
+  color: var(--ink);
+}
+.review-note:focus { outline: 2px solid var(--accent); border-color: transparent; }
+.review-actions { display: flex; align-items: center; gap: 12px; }
+.save-confirm { color: var(--accent-dark); font-weight: 600; font-size: 0.9rem; }
+
+/* ---------- Allergens & filters ---------- */
+.allergen-badge {
+  font-size: 0.72rem;
+  font-weight: 600;
+  background: #f3ece1;
+  color: var(--ink-soft);
+  padding: 3px 9px;
+  border-radius: 999px;
+}
+.allergen-badge.danger { background: #fdebea; color: #b3362c; }
+.allergy-warning {
+  font-size: 0.8rem;
+  color: #b3362c;
+  background: #fdebea;
+  padding: 6px 10px;
+  border-radius: 8px;
+}
+.toolbar {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  margin-bottom: 14px;
+}
+.toolbar-group { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.toolbar-label { font-size: 0.82rem; font-weight: 600; color: var(--ink-soft); }
+.sort-select {
+  font: inherit;
+  font-size: 0.85rem;
+  padding: 7px 10px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--card);
+  color: var(--ink);
+  cursor: pointer;
+}
+.chip {
+  border: 1px solid var(--border);
+  background: var(--card);
+  color: var(--ink);
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 500;
+  padding: 6px 12px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: all 0.12s ease;
+}
+.chip:hover { border-color: var(--accent); }
+.chip.on { background: var(--accent); border-color: var(--accent); color: #fff; }
+.chip.allergy.on { background: #b3362c; border-color: #b3362c; }
+.filter-note { font-size: 0.84rem; color: var(--ink-soft); margin-bottom: 16px; }
+
 /* ---------- Footer ---------- */
 .footer {
   border-top: 1px solid var(--border);

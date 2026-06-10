@@ -14,6 +14,18 @@
 //     search - (optional) term used for the Publix link; defaults to item
 // ============================================================
 
+// Common allergens used for filtering. Each recipe lists which of
+// these it contains in its `allergens` array (use the lowercase keys).
+const ALLERGENS = {
+  shellfish: { label: "Shellfish", emoji: "🦐" },
+  nuts:      { label: "Nuts",      emoji: "🥜" },
+  fish:      { label: "Fish",      emoji: "🐟" },
+  dairy:     { label: "Dairy",     emoji: "🥛" },
+  gluten:    { label: "Gluten",    emoji: "🌾" },
+  eggs:      { label: "Eggs",      emoji: "🥚" },
+  soy:       { label: "Soy",       emoji: "🫘" },
+};
+
 // Departments in roughly the order you'd walk a Publix,
 // used to group/sort the weekly shopping list.
 const DEPARTMENTS = {
@@ -32,6 +44,7 @@ const DEPARTMENTS = {
 const RECIPES = [
   {
     id: "lemon-garlic-salmon",
+    allergens: ["fish", "dairy"],
     name: "Lemon Garlic Butter Salmon",
     emoji: "🐟",
     time: 25,
@@ -55,6 +68,7 @@ const RECIPES = [
   },
   {
     id: "chicken-fajita-skillet",
+    allergens: ["dairy", "gluten"],
     name: "Chicken Fajita Skillet",
     emoji: "🌮",
     time: 30,
@@ -79,6 +93,7 @@ const RECIPES = [
   },
   {
     id: "creamy-tuscan-pasta",
+    allergens: ["dairy", "gluten"],
     name: "Creamy Tuscan Chicken Pasta",
     emoji: "🍝",
     time: 35,
@@ -103,6 +118,7 @@ const RECIPES = [
   },
   {
     id: "sheet-pan-sausage",
+    allergens: [],
     name: "Sheet Pan Sausage & Veggies",
     emoji: "🍳",
     time: 35,
@@ -125,6 +141,7 @@ const RECIPES = [
   },
   {
     id: "honey-garlic-shrimp",
+    allergens: ["shellfish", "soy"],
     name: "Honey Garlic Shrimp Stir-Fry",
     emoji: "🍤",
     time: 20,
@@ -149,6 +166,7 @@ const RECIPES = [
   },
   {
     id: "turkey-burgers",
+    allergens: ["dairy", "gluten", "eggs"],
     name: "Juicy Turkey Burgers",
     emoji: "🍔",
     time: 25,
@@ -173,6 +191,7 @@ const RECIPES = [
   },
   {
     id: "veggie-stir-fry-noodles",
+    allergens: ["gluten", "soy", "eggs"],
     name: "Veggie Lo Mein Night",
     emoji: "🥡",
     time: 25,
@@ -197,6 +216,7 @@ const RECIPES = [
   },
   {
     id: "slow-cooker-chili",
+    allergens: ["dairy", "gluten"],
     name: "Cozy Beef Chili",
     emoji: "🍲",
     time: 45,
@@ -222,6 +242,7 @@ const RECIPES = [
   },
   {
     id: "caprese-chicken",
+    allergens: ["dairy"],
     name: "Caprese Chicken",
     emoji: "🍅",
     time: 30,
@@ -244,6 +265,7 @@ const RECIPES = [
   },
   {
     id: "shrimp-tacos",
+    allergens: ["shellfish", "dairy"],
     name: "Blackened Shrimp Tacos",
     emoji: "🌮",
     time: 25,
@@ -267,6 +289,7 @@ const RECIPES = [
   },
   {
     id: "baked-ziti",
+    allergens: ["dairy", "gluten"],
     name: "Weeknight Baked Ziti",
     emoji: "🧀",
     time: 45,
@@ -290,6 +313,7 @@ const RECIPES = [
   },
   {
     id: "greek-chicken-bowls",
+    allergens: ["dairy", "gluten"],
     name: "Greek Chicken Bowls",
     emoji: "🥗",
     time: 30,
@@ -316,6 +340,7 @@ const RECIPES = [
   },
   {
     id: "pork-chops-apples",
+    allergens: ["dairy"],
     name: "Skillet Pork Chops & Apples",
     emoji: "🍎",
     time: 30,
@@ -338,6 +363,7 @@ const RECIPES = [
   },
   {
     id: "margherita-flatbreads",
+    allergens: ["dairy", "gluten"],
     name: "Margherita Flatbreads & Salad",
     emoji: "🍕",
     time: 20,

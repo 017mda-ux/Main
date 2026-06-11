@@ -7,6 +7,7 @@ Run:  python -m gp_sourcer.dashboard
 from __future__ import annotations
 
 from .deal_feed import build_deal_feed
+from .fundraise_cycle import forecast_market
 from .lp_watch import WATCHED_LPS, get_lp_signals
 from .pipeline import get_pipeline
 from .placement_agents import get_offerings
@@ -105,6 +106,43 @@ def render_agent_offerings() -> str:
     return "\n".join(lines)
 
 
+_STATUS_LABEL = {
+    "in_market_now": "IN MARKET NOW",
+    "imminent": "IMMINENT (<12mo)",
+    "monitor": "MONITOR",
+}
+
+
+def render_reup_radar(strategy: str | None = None) -> str:
+    fc = forecast_market(strategy=strategy)
+    c = fc["counts"]
+    lines = [
+        "=" * 78,
+        "  RE-UP RADAR — predicted fundraise windows"
+        + (f"  ·  strategy={strategy}" if strategy else ""),
+        f"  as of {fc['as_of']}  ·  {c['in_market_now']} in market now  ·  "
+        f"{c['imminent']} imminent  ·  {c['monitor']} monitor",
+        f"  model: {fc['model']}",
+        "=" * 78,
+    ]
+    for r in fc["forecasts"]:
+        if r["status"] == "monitor":
+            continue
+        est = f"  ·  est. next size ~{_fmt_usd(r['est_next_size_usd'])}" if r["est_next_size_usd"] else ""
+        conf = "  ·  UNVERIFIED VINTAGE DATA" if r["confidence"] == "memory" else ""
+        lines += [
+            "",
+            f"  [{_STATUS_LABEL[r['status']]}]  {r['gp']}  ·  {r['strategy']}",
+            f"    Last: {r['last_fund']} closed {r['last_close']} at {_fmt_usd(r['last_size_usd'])}",
+            f"    Cycle: {r['cycle_years']}y ({r['cycle_basis']})  ·  window opens "
+            f"{r['window_opens']}  ·  close due ~{r['next_close_due']}{est}{conf}",
+        ]
+        if r["note"]:
+            lines.append(f"    note: {r['note']}")
+        lines.append(f"    verify: {r['verify_with']}")
+    return "\n".join(lines)
+
+
 def render_pipeline() -> str:
     lines = ["=" * 78, "  PIPELINE", "=" * 78]
     board = get_pipeline()
@@ -125,6 +163,7 @@ def render_pipeline() -> str:
 def render_dashboard() -> str:
     return "\n\n".join([
         render_deal_feed(include_outside_mandate=False),
+        render_reup_radar(),
         render_lp_watch(),
         render_talent_signals(),
         render_agent_offerings(),

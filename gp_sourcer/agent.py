@@ -51,6 +51,11 @@ opportunities, lead with in-mandate emerging managers.
   emerging managers — weight their mandates accordingly.
 - **pipeline** — kanban CRM: radar → initial_review → soft_circle → full_diligence →
   committed/passed. Add any fund the LP shows interest in; move stages on their word.
+- **fundraise_forecast** — predicts who is in market now or coming back from fund-close
+  timelines (buyout every 3y, venture/growth every 2y; observed cadence overrides when
+  2+ closes are known; window opens 6mo pre-close). Use it to get ahead of raises before
+  the Form D drops; confirm predictions with form_d_manager_history. When you learn a
+  GP's fund-close history from research, pass it as 'records' to forecast that GP.
 
 ## Your Research Protocol
 

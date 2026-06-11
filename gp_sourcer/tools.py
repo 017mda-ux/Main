@@ -22,6 +22,7 @@ Tools:
  16.  talent_signals              — Log/view departures & spinouts; weekly sweep queries
  17.  placement_agents            — Log/view offerings from watched placement agents
  18.  pipeline                    — Kanban: add/move/view fund opportunities
+ 19.  fundraise_forecast          — Predict which GPs are in market now / coming back
 """
 
 from __future__ import annotations
@@ -40,6 +41,7 @@ from .talent_signals import (WATCHED_FIRMS, log_talent_signal, get_talent_signal
                              departure_sweep_queries, spinout_check_queries)
 from .placement_agents import WATCHED_AGENTS, log_offering, get_offerings, agent_sweep_queries
 from .pipeline import STAGES, add_to_pipeline, move_stage, get_pipeline
+from .fundraise_cycle import forecast_market, forecast_gp
 
 # ──────────────────────────────────────────────────────────────────────
 #  Tool JSON schema definitions
@@ -627,6 +629,43 @@ TOOL_DEFINITIONS = [
             "required": ["action"],
         },
     },
+    {
+        "name": "fundraise_forecast",
+        "description": (
+            "Predict which GPs are in market now or coming back, from fund-close "
+            "timelines. Model: buyout raises every 3 years, venture/growth every 2; "
+            "if a GP has 2+ known closes the observed cadence overrides the default; "
+            "the market window opens 6 months before the predicted close (pre-marketing). "
+            "Pass 'records' to forecast custom GPs (e.g. built from form_d_manager_history "
+            "results), or omit to use the built-in registry of known closes. "
+            "Always verify in_market_now predictions with form_d_manager_history — a new "
+            "Form D filing is confirmation. Entries flagged confidence='memory' have "
+            "unverified vintage dates."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "status": {
+                    "type": "string",
+                    "enum": ["in_market_now", "imminent", "monitor"],
+                    "description": "Filter to one prediction status.",
+                },
+                "strategy": {
+                    "type": "string",
+                    "enum": ["buyout", "venture", "growth", "credit", "real_assets"],
+                },
+                "records": {
+                    "type": "array",
+                    "items": {"type": "object"},
+                    "description": (
+                        "Optional custom GP records: {gp, strategy, funds: [{name, close "
+                        "(YYYY-MM-DD), size_usd}], note}. Omit to use the built-in registry."
+                    ),
+                },
+            },
+            "required": [],
+        },
+    },
 ]
 
 
@@ -655,6 +694,7 @@ def execute_tool(name: str, tool_input: dict) -> str:
         "talent_signals": _tool_talent_signals,
         "placement_agents": _tool_placement_agents,
         "pipeline": _tool_pipeline,
+        "fundraise_forecast": _tool_fundraise_forecast,
     }
     fn = dispatch.get(name)
     if fn is None:
@@ -1037,3 +1077,11 @@ def _tool_pipeline(inp: dict) -> dict:
     if action == "move":
         return move_stage(inp["fund_name"], inp["stage"], inp.get("note", ""))
     return {"error": f"Unknown action '{action}'"}
+
+
+def _tool_fundraise_forecast(inp: dict) -> dict:
+    return forecast_market(
+        status=inp.get("status"),
+        strategy=inp.get("strategy"),
+        records=inp.get("records"),
+    )

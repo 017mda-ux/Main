@@ -8,5 +8,45 @@
     "evidence": "Debut PE fund closed at $5.9B, May 2026 \u2014 model spinout outcome",
     "signal_date": "2026-05-10",
     "status": "spinout_confirmed"
+  },
+  {
+    "person": "Arif Janmohamed + Trevor Oelschig",
+    "prior_firm": "Lightspeed / General Catalyst",
+    "prior_title": "Partner / Managing Director",
+    "signal_type": "spinout",
+    "new_firm": "Duration Ventures",
+    "evidence": "$375M debut enterprise-AI fund in market, no close yet (Edgen/Dakota, May 2026)",
+    "signal_date": "2026-05-15",
+    "status": "spinout_confirmed"
+  },
+  {
+    "person": "Steve Liff, Daniel Florian, Jeremy Stone",
+    "prior_firm": "Sun Capital Partners",
+    "prior_title": "Managing Directors",
+    "signal_type": "spinout",
+    "new_firm": "Palm Peak Capital",
+    "evidence": "Fund I closed oversubscribed at $374M hard cap, Feb 2026 (BusinessWire)",
+    "signal_date": "2026-02-19",
+    "status": "spinout_confirmed"
+  },
+  {
+    "person": "Rob Wolfson",
+    "prior_firm": "H.I.G. Capital",
+    "prior_title": "Head of Healthcare",
+    "signal_type": "spinout",
+    "new_firm": "Aphias Capital",
+    "evidence": "Targeting $900M for Fund I (Buyouts Insider, Apr 2026)",
+    "signal_date": "2026-04-15",
+    "status": "spinout_confirmed"
+  },
+  {
+    "person": "Michael Livanos, David Waxman",
+    "prior_firm": "Stellex Capital Management",
+    "prior_title": "Executives",
+    "signal_type": "spinout",
+    "new_firm": "Altair Industries",
+    "evidence": "Fund I in market seeking up to $550M (Buyouts Insider)",
+    "signal_date": "2026-05-01",
+    "status": "spinout_confirmed"
   }
 ]

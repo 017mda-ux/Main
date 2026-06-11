@@ -28,5 +28,15 @@
     "source": "Press, April 2026",
     "signal_date": "2026-04-28",
     "note": "Record $15.6B Asia-Pacific close"
+  },
+  {
+    "lp_id": "cppib",
+    "lp_name": "CPP Investments (CPPIB)",
+    "fund_name": "Multiple funds \u2014 $1.6B+ committed Q1 FY2026 (Apr-Jun)",
+    "gp_name": "",
+    "commitment_usd": null,
+    "source": "Pensions & Investments",
+    "signal_date": "2026-06-05",
+    "note": "Per P&I: CPPIB committed >$1.6B in PE in fiscal Q1 2026"
   }
 ]

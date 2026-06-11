@@ -10,5 +10,17 @@
     "received_date": "2026-06-01",
     "status": "teaser_received",
     "note": "Pacenote focus = spinouts/Fund I \u2014 matches emerging-manager target"
+  },
+  {
+    "agent_id": "pacenote",
+    "agent_name": "Pacenote Capital",
+    "fund_name": "Seven Hills Capital Fund II",
+    "gp_name": "Seven Hills Capital",
+    "strategy": "buyout",
+    "target_usd": 235000000,
+    "expected_close": "Closed Feb 2026",
+    "received_date": "2026-02-27",
+    "status": "progressed",
+    "note": "Closed at $235M hard cap in <3 months, oversubscribed. Healthcare LMM, Nashville. Pacenote exclusive agent Funds I+II. LPs: endowments, foundations, OCIOs. Watch Fund III."
   }
 ]

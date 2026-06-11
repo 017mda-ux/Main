@@ -37,5 +37,70 @@
     "note": "Fund III lower-MM buyout \u2014 last emerging vintage, confirm size in $200M-1B band",
     "added": "2026-06-11",
     "last_action": "2026-06-11"
+  },
+  {
+    "fund_name": "Altair Industries Fund I",
+    "gp_name": "Altair Industries (ex-Stellex)",
+    "strategy": "buyout",
+    "size_usd": 550000000,
+    "fund_number": 1,
+    "source": "talent_signal",
+    "stage": "initial_review",
+    "conviction": "medium",
+    "note": "Stellex spinout, $550M target \u2014 in small buyout band, in market now",
+    "added": "2026-06-11",
+    "last_action": "2026-06-11"
+  },
+  {
+    "fund_name": "Aphias Capital Fund I",
+    "gp_name": "Aphias Capital (ex-H.I.G.)",
+    "strategy": "buyout",
+    "size_usd": 900000000,
+    "fund_number": 1,
+    "source": "talent_signal",
+    "stage": "initial_review",
+    "conviction": "medium",
+    "note": "H.I.G. healthcare head spinout, $900M target \u2014 small buyout band, healthcare",
+    "added": "2026-06-11",
+    "last_action": "2026-06-11"
+  },
+  {
+    "fund_name": "Duration Ventures Fund I",
+    "gp_name": "Duration Ventures (ex-Lightspeed/GC)",
+    "strategy": "venture",
+    "size_usd": 375000000,
+    "fund_number": 1,
+    "source": "talent_signal",
+    "stage": "radar",
+    "conviction": "",
+    "note": "$375M enterprise AI, early-stage \u2014 above $200M floor but early-stage = deprioritised; pedigree strong (Moveworks seed -> $2.85B exit)",
+    "added": "2026-06-11",
+    "last_action": "2026-06-11"
+  },
+  {
+    "fund_name": "Palm Peak Capital Fund II (future)",
+    "gp_name": "Palm Peak Capital (ex-Sun Capital)",
+    "strategy": "buyout",
+    "size_usd": null,
+    "fund_number": 2,
+    "source": "talent_signal",
+    "stage": "radar",
+    "conviction": "",
+    "note": "Fund I closed $374M oversubscribed Feb 2026 \u2014 build relationship ahead of Fund II",
+    "added": "2026-06-11",
+    "last_action": "2026-06-11"
+  },
+  {
+    "fund_name": "Seven Hills Capital Fund III (future)",
+    "gp_name": "Seven Hills Capital",
+    "strategy": "buyout",
+    "size_usd": null,
+    "fund_number": 3,
+    "source": "placement_agent",
+    "stage": "radar",
+    "conviction": "",
+    "note": "Fund II $235M closed <3mo oversubscribed via Pacenote; Fund I $125M 2024. Healthcare LMM \u2014 get on Pacenote's list early for Fund III",
+    "added": "2026-06-11",
+    "last_action": "2026-06-11"
   }
 ]

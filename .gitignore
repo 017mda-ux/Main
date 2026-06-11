@@ -13,6 +13,7 @@ build/
 # Data (large, generated)
 data/chroma_db/
 data/transcripts/
+data/gp_pipeline.json
 
 # OS
 .DS_Store

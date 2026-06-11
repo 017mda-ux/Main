@@ -1,0 +1,41 @@
+[
+  {
+    "fund_name": "Hughes Growth Equity Fund II",
+    "gp_name": "Hughes & Company",
+    "strategy": "growth",
+    "size_usd": null,
+    "fund_number": 2,
+    "source": "form_d",
+    "stage": "initial_review",
+    "conviction": "medium",
+    "note": "Fund II growth, healthcare+software \u2014 emerging, in-mandate pending size | test move",
+    "added": "2026-06-11",
+    "last_action": "2026-06-11"
+  },
+  {
+    "fund_name": "Crosscourt Ventures II, LP",
+    "gp_name": "Crosscourt",
+    "strategy": "venture",
+    "size_usd": null,
+    "fund_number": 2,
+    "source": "form_d",
+    "stage": "radar",
+    "conviction": "",
+    "note": "Early-stage AI/defense \u2014 deprioritised unless >$200M; confirm size",
+    "added": "2026-06-11",
+    "last_action": "2026-06-11"
+  },
+  {
+    "fund_name": "Benford Capital Partners III UGM CIV-A, L.P.",
+    "gp_name": "Benford Capital Partners",
+    "strategy": "buyout",
+    "size_usd": null,
+    "fund_number": 3,
+    "source": "form_d",
+    "stage": "radar",
+    "conviction": "",
+    "note": "Fund III lower-MM buyout \u2014 last emerging vintage, confirm size in $200M-1B band",
+    "added": "2026-06-11",
+    "last_action": "2026-06-11"
+  }
+]

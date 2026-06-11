@@ -1,0 +1,14 @@
+[
+  {
+    "agent_id": "pacenote",
+    "agent_name": "Pacenote Capital",
+    "fund_name": "TBD \u2014 emerging buyout mandate",
+    "gp_name": "Undisclosed",
+    "strategy": "buyout",
+    "target_usd": null,
+    "expected_close": "Q4 2026",
+    "received_date": "2026-06-01",
+    "status": "teaser_received",
+    "note": "Pacenote focus = spinouts/Fund I \u2014 matches emerging-manager target"
+  }
+]

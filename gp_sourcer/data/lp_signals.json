@@ -1,0 +1,32 @@
+[
+  {
+    "lp_id": "yale",
+    "lp_name": "Yale University Investments Office",
+    "fund_name": "Bain Capital Funds IX-XIII (secondary sale)",
+    "gp_name": "Bain Capital",
+    "commitment_usd": null,
+    "source": "Project Gatsby reporting",
+    "signal_date": "2026-05-15",
+    "note": "Yale selling ~$2.5B of PE positions incl. Bain, Golden Gate, CD&R, Insight, General Catalyst"
+  },
+  {
+    "lp_id": "swib",
+    "lp_name": "State of Wisconsin Investment Board (SWIB)",
+    "fund_name": "Energy Capital Partners ECP VI",
+    "gp_name": "Energy Capital Partners",
+    "commitment_usd": null,
+    "source": "Dakota May 2026 fund report",
+    "signal_date": "2026-05-20",
+    "note": "Among backers tracking toward $4.8B summer close"
+  },
+  {
+    "lp_id": "cppib",
+    "lp_name": "CPP Investments (CPPIB)",
+    "fund_name": "EQT BPEA Private Equity Fund IX",
+    "gp_name": "EQT / BPEA",
+    "commitment_usd": null,
+    "source": "Press, April 2026",
+    "signal_date": "2026-04-28",
+    "note": "Record $15.6B Asia-Pacific close"
+  }
+]

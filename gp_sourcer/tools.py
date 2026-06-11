@@ -17,6 +17,11 @@ Tools:
  11.  form_d_live_feed            — Live Form D feed: new private fund raises by date/type/size
  12.  form_d_filing_detail        — Parse a specific Form D XML: size, persons, exemptions
  13.  form_d_manager_history      — All Form D filings for a GP — fund family + raise trajectory
+ 14.  mandate_deal_feed           — Form D feed scored against the LP's mandate bands
+ 15.  lp_watch                    — Log/view commitments from the 8 reference LPs
+ 16.  talent_signals              — Log/view departures & spinouts; weekly sweep queries
+ 17.  placement_agents            — Log/view offerings from watched placement agents
+ 18.  pipeline                    — Kanban: add/move/view fund opportunities
 """
 
 from __future__ import annotations
@@ -29,6 +34,12 @@ from .nonprofits import search_institutional_lps, get_lp_financials
 from .web import search_web, scrape_webpage
 from .irs_990 import get_lp_investments_from_990, batch_search_ivy_lps, KNOWN_LP_ENTITIES
 from .form_d_feed import search_form_d_feed, get_form_d_detail, search_form_d_by_manager
+from .deal_feed import build_deal_feed
+from .lp_watch import WATCHED_LPS, log_lp_signal, get_lp_signals, lp_sweep_queries
+from .talent_signals import (WATCHED_FIRMS, log_talent_signal, get_talent_signals,
+                             departure_sweep_queries, spinout_check_queries)
+from .placement_agents import WATCHED_AGENTS, log_offering, get_offerings, agent_sweep_queries
+from .pipeline import STAGES, add_to_pipeline, move_stage, get_pipeline
 
 # ──────────────────────────────────────────────────────────────────────
 #  Tool JSON schema definitions
@@ -453,6 +464,169 @@ TOOL_DEFINITIONS = [
             "required": [],
         },
     },
+    {
+        "name": "mandate_deal_feed",
+        "description": (
+            "Deal flow feed scored against the LP's mandate: small buyout $200M-1B, "
+            "mid buyout $2-5B, large buyout $5B+, growth $200M+, mid/late venture $200M+, "
+            "early venture deprioritised, Fund I-III flagged as emerging. "
+            "Pass live Form D results via 'filings', or omit to use the seeded current "
+            "dataset (Dakota-sourced, March-June 2026). Cards are ranked: in-mandate "
+            "emerging managers first."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "strategy": {
+                    "type": "string",
+                    "enum": ["buyout", "growth", "venture", "credit", "real_estate"],
+                    "description": "Filter to one strategy.",
+                },
+                "fit": {
+                    "type": "string",
+                    "enum": ["in_mandate", "near_mandate", "outside_mandate", "size_unknown"],
+                    "description": "Filter to one mandate-fit level.",
+                },
+                "emerging_only": {
+                    "type": "boolean",
+                    "description": "Only Fund I-III managers (new-relationship targets).",
+                    "default": False,
+                },
+                "include_outside_mandate": {
+                    "type": "boolean",
+                    "description": "Include funds outside all mandate bands (default true).",
+                    "default": True,
+                },
+                "filings": {
+                    "type": "array",
+                    "items": {"type": "object"},
+                    "description": (
+                        "Optional live filings to score (e.g. from form_d_live_feed). Each needs "
+                        "fund_name, strategy; optional size_usd, description, fund_number, file_date, source."
+                    ),
+                },
+                "limit": {"type": "integer", "default": 50},
+            },
+            "required": [],
+        },
+    },
+    {
+        "name": "lp_watch",
+        "description": (
+            "Track the 8 reference LPs (WashU, CPPIB, Yale, Michigan, UNC, SWIB, MITIMCo, "
+            "SCS Financial). Actions: 'view' lists logged signals; 'log' records a new "
+            "commitment/signal; 'sweep_queries' returns the weekly web-search query batch "
+            "to run via web_search."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "action": {"type": "string", "enum": ["view", "log", "sweep_queries"]},
+                "lp_id": {
+                    "type": "string",
+                    "enum": ["washu", "cppib", "yale", "michigan", "unc", "swib", "mitimco", "scs"],
+                    "description": "Required for 'log'; optional filter for 'view'.",
+                },
+                "fund_name": {"type": "string", "description": "For 'log': the fund committed to."},
+                "gp_name": {"type": "string"},
+                "commitment_usd": {"type": "integer"},
+                "source": {"type": "string", "description": "Citation: press, 990, board minutes."},
+                "signal_date": {"type": "string", "description": "YYYY-MM-DD."},
+                "note": {"type": "string"},
+            },
+            "required": ["action"],
+        },
+    },
+    {
+        "name": "talent_signals",
+        "description": (
+            "Spinout/departure tracker for partners, MDs, and VPs leaving watched firms "
+            "(KKR, Blackstone, Sequoia, etc.). Actions: 'view' lists signals; 'log' records "
+            "a departure or confirmed spinout; 'sweep_queries' returns weekly departure-sweep "
+            "web searches; 'spinout_check' returns queries to confirm whether a logged "
+            "departure is forming a fund."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "action": {"type": "string", "enum": ["view", "log", "sweep_queries", "spinout_check"]},
+                "person": {"type": "string", "description": "For 'log'/'spinout_check'."},
+                "prior_firm": {"type": "string"},
+                "prior_title": {"type": "string"},
+                "signal_type": {"type": "string", "enum": ["departure", "spinout"], "default": "departure"},
+                "new_firm": {"type": "string"},
+                "evidence": {"type": "string", "description": "LinkedIn status change, press link, etc."},
+                "signal_date": {"type": "string"},
+                "firms": {
+                    "type": "array", "items": {"type": "string"},
+                    "description": "For 'sweep_queries': limit to specific firms.",
+                },
+            },
+            "required": ["action"],
+        },
+    },
+    {
+        "name": "placement_agents",
+        "description": (
+            "Offerings from watched placement agents (Shannon, Pacenote, Acalyx, Lazard, "
+            "Park Hill, Evercore, Campbell Lutyens, Rede, MVision, Asante). Actions: 'view' "
+            "lists logged offerings; 'log' records a received teaser/mandate; 'sweep_queries' "
+            "returns the weekly agent-mandate web searches."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "action": {"type": "string", "enum": ["view", "log", "sweep_queries"]},
+                "agent_id": {
+                    "type": "string",
+                    "enum": ["shannon", "pacenote", "acalyx", "lazard", "parkhill", "evercore",
+                             "campbell_lutyens", "rede", "mvision", "asante"],
+                },
+                "fund_name": {"type": "string"},
+                "gp_name": {"type": "string"},
+                "strategy": {"type": "string"},
+                "target_usd": {"type": "integer"},
+                "expected_close": {"type": "string"},
+                "status": {
+                    "type": "string",
+                    "enum": ["teaser_received", "reviewing", "meeting_set", "passed", "progressed"],
+                },
+                "note": {"type": "string"},
+            },
+            "required": ["action"],
+        },
+    },
+    {
+        "name": "pipeline",
+        "description": (
+            "Fund opportunity kanban: radar -> initial_review -> soft_circle -> "
+            "full_diligence -> committed | passed. Actions: 'view' shows the board; "
+            "'add' creates a card; 'move' advances a fund to a new stage."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "action": {"type": "string", "enum": ["view", "add", "move"]},
+                "fund_name": {"type": "string", "description": "Required for 'add'/'move'."},
+                "gp_name": {"type": "string"},
+                "strategy": {"type": "string"},
+                "size_usd": {"type": "integer"},
+                "fund_number": {"type": "integer"},
+                "source": {
+                    "type": "string",
+                    "enum": ["form_d", "lp_watch", "talent_signal", "placement_agent", "manual"],
+                },
+                "stage": {
+                    "type": "string",
+                    "enum": ["radar", "initial_review", "soft_circle", "full_diligence",
+                             "committed", "passed"],
+                },
+                "conviction": {"type": "string", "enum": ["high", "medium", "low"]},
+                "note": {"type": "string"},
+            },
+            "required": ["action"],
+        },
+    },
 ]
 
 
@@ -476,6 +650,11 @@ def execute_tool(name: str, tool_input: dict) -> str:
         "form_d_live_feed": _tool_form_d_live_feed,
         "form_d_filing_detail": _tool_form_d_filing_detail,
         "form_d_manager_history": _tool_form_d_manager_history,
+        "mandate_deal_feed": _tool_mandate_deal_feed,
+        "lp_watch": _tool_lp_watch,
+        "talent_signals": _tool_talent_signals,
+        "placement_agents": _tool_placement_agents,
+        "pipeline": _tool_pipeline,
     }
     fn = dispatch.get(name)
     if fn is None:
@@ -760,3 +939,101 @@ def _tool_form_d_manager_history(inp: dict) -> dict:
         max_results=min(int(inp.get("max_results", 25)), 50),
         parse_xml=bool(inp.get("parse_xml", True)),
     )
+
+
+def _tool_mandate_deal_feed(inp: dict) -> dict:
+    return build_deal_feed(
+        filings=inp.get("filings"),
+        strategy=inp.get("strategy"),
+        fit=inp.get("fit"),
+        emerging_only=bool(inp.get("emerging_only", False)),
+        include_outside_mandate=bool(inp.get("include_outside_mandate", True)),
+        limit=min(int(inp.get("limit", 50)), 100),
+    )
+
+
+def _tool_lp_watch(inp: dict) -> dict:
+    action = inp["action"]
+    if action == "view":
+        return {"watched_lps": WATCHED_LPS, "signals": get_lp_signals(inp.get("lp_id"))}
+    if action == "log":
+        return log_lp_signal(
+            lp_id=inp["lp_id"],
+            fund_name=inp["fund_name"],
+            gp_name=inp.get("gp_name", ""),
+            commitment_usd=inp.get("commitment_usd"),
+            source=inp.get("source", ""),
+            signal_date=inp.get("signal_date", ""),
+            note=inp.get("note", ""),
+        )
+    if action == "sweep_queries":
+        return {"sweep": lp_sweep_queries(),
+                "instruction": "Run each query via web_search; log hits with action='log'."}
+    return {"error": f"Unknown action '{action}'"}
+
+
+def _tool_talent_signals(inp: dict) -> dict:
+    action = inp["action"]
+    if action == "view":
+        return {"watched_firms": WATCHED_FIRMS, "signals": get_talent_signals()}
+    if action == "log":
+        return log_talent_signal(
+            person=inp["person"],
+            prior_firm=inp.get("prior_firm", ""),
+            prior_title=inp.get("prior_title", ""),
+            signal_type=inp.get("signal_type", "departure"),
+            new_firm=inp.get("new_firm", ""),
+            evidence=inp.get("evidence", ""),
+            signal_date=inp.get("signal_date", ""),
+        )
+    if action == "sweep_queries":
+        return {"sweep": departure_sweep_queries(inp.get("firms")),
+                "instruction": "Run each query via web_search; log departures with action='log'."}
+    if action == "spinout_check":
+        return {"queries": spinout_check_queries(inp["person"], inp.get("prior_firm", "")),
+                "instruction": "Run via web_search; if a fund is forming, log signal_type='spinout' "
+                               "and check form_d_manager_history for the new firm."}
+    return {"error": f"Unknown action '{action}'"}
+
+
+def _tool_placement_agents(inp: dict) -> dict:
+    action = inp["action"]
+    if action == "view":
+        return {"watched_agents": WATCHED_AGENTS,
+                "offerings": get_offerings(inp.get("agent_id"), inp.get("status"))}
+    if action == "log":
+        return log_offering(
+            agent_id=inp["agent_id"],
+            fund_name=inp["fund_name"],
+            gp_name=inp.get("gp_name", ""),
+            strategy=inp.get("strategy", ""),
+            target_usd=inp.get("target_usd"),
+            expected_close=inp.get("expected_close", ""),
+            status=inp.get("status", "teaser_received"),
+            note=inp.get("note", ""),
+        )
+    if action == "sweep_queries":
+        return {"sweep": agent_sweep_queries(),
+                "instruction": "Run each query via web_search; log mandates with action='log'."}
+    return {"error": f"Unknown action '{action}'"}
+
+
+def _tool_pipeline(inp: dict) -> dict:
+    action = inp["action"]
+    if action == "view":
+        return {"stages": STAGES, "board": get_pipeline(inp.get("stage"))}
+    if action == "add":
+        return add_to_pipeline(
+            fund_name=inp["fund_name"],
+            gp_name=inp.get("gp_name", ""),
+            strategy=inp.get("strategy", ""),
+            size_usd=inp.get("size_usd"),
+            fund_number=inp.get("fund_number"),
+            source=inp.get("source", "manual"),
+            stage=inp.get("stage", "radar"),
+            conviction=inp.get("conviction", ""),
+            note=inp.get("note", ""),
+        )
+    if action == "move":
+        return move_stage(inp["fund_name"], inp["stage"], inp.get("note", ""))
+    return {"error": f"Unknown action '{action}'"}

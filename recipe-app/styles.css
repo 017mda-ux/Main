@@ -506,6 +506,21 @@ svg { display: block; }
 .chip.allergy.on { background: var(--danger); border-color: var(--danger); }
 .filter-note { font-size: 0.82rem; color: var(--ink-soft); margin-bottom: 16px; }
 
+.search-input {
+  min-width: 260px;
+  flex: 1;
+  max-width: 420px;
+  cursor: text;
+}
+.show-more-row { display: flex; justify-content: center; margin-top: 20px; }
+.picker-more {
+  text-align: center;
+  font-size: 0.82rem;
+  color: var(--ink-faint);
+  padding: 10px;
+}
+.modal .search-input { width: 100%; max-width: none; margin-top: 4px; }
+
 /* ---------- Allergen warnings ---------- */
 .allergy-warning {
   font-size: 0.78rem;

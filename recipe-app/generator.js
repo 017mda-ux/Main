@@ -8,6 +8,9 @@
 // Generated recipe ids are stable ("gen-<protein>-<prep>-<format>")
 // so favorites, reviews, and the weekly plan survive updates.
 //
+// Combos where both the protein and the format are flat-top friendly
+// are flagged griddle: true for the Blackstone filter.
+//
 // ALL_RECIPES = curated house recipes (recipes.js) + generated ideas.
 // ============================================================
 
@@ -16,10 +19,10 @@
 // as = asian, it = italian, md = mediterranean.
 
 const GEN_PROTEINS = [
-  { id: "chicken-breast", label: "Chicken", short: "chicken", cal: 280, time: 20, allergens: [],
+  { id: "chicken-breast", griddle: true, label: "Chicken", short: "chicken", cal: 280, time: 20, allergens: [],
     items: [{ item: "Chicken breasts", amount: "1 lb", dept: "Meat", search: "boneless chicken breast" }],
     cook: "Cook the chicken in a hot, oiled skillet, 5–6 minutes per side, until it reaches 165°F; rest and slice." },
-  { id: "chicken-thighs", label: "Chicken Thighs", short: "chicken", cal: 340, time: 25, allergens: [],
+  { id: "chicken-thighs", griddle: true, label: "Chicken Thighs", short: "chicken", cal: 340, time: 25, allergens: [],
     items: [{ item: "Chicken thighs", amount: "1 lb, boneless", dept: "Meat", search: "boneless chicken thighs" }],
     cook: "Sear the chicken thighs 6–7 minutes per side until deeply golden and cooked through; rest and slice." },
   { id: "crispy-chicken", label: "Crispy Chicken", short: "chicken", cal: 600, time: 35, allergens: ["gluten", "dairy"],
@@ -30,34 +33,34 @@ const GEN_PROTEINS = [
       { item: "Vegetable oil", amount: "for frying", dept: "Pantry", search: "vegetable oil" },
     ],
     cook: "Soak the chicken in buttermilk, dredge in seasoned flour, and shallow-fry 4–5 minutes per side to 165°F." },
-  { id: "ground-beef", label: "Beef", short: "beef", cal: 380, time: 15, allergens: [],
+  { id: "ground-beef", griddle: true, label: "Beef", short: "beef", cal: 380, time: 15, allergens: [],
     items: [{ item: "Ground beef", amount: "1 lb", dept: "Meat", search: "ground beef 80/20" }],
     cook: "Brown the beef in a hot skillet, breaking it up, 6–8 minutes; drain excess fat." },
-  { id: "ground-turkey", label: "Turkey", short: "turkey", cal: 300, time: 15, allergens: [],
+  { id: "ground-turkey", griddle: true, label: "Turkey", short: "turkey", cal: 300, time: 15, allergens: [],
     items: [{ item: "Ground turkey", amount: "1 lb", dept: "Meat", search: "93% lean ground turkey" }],
     cook: "Brown the turkey in a hot, oiled skillet, breaking it up, 6–8 minutes." },
-  { id: "italian-sausage", label: "Sausage", short: "sausage", cal: 420, time: 20, allergens: [],
+  { id: "italian-sausage", griddle: true, label: "Sausage", short: "sausage", cal: 420, time: 20, allergens: [],
     items: [{ item: "Italian sausage", amount: "1 lb", dept: "Meat", search: "italian sausage" }],
     cook: "Brown the sausage over medium-high heat until cooked through, about 8–10 minutes." },
-  { id: "smoked-sausage", label: "Smoked Sausage", short: "sausage", cal: 400, time: 15, allergens: [],
+  { id: "smoked-sausage", griddle: true, label: "Smoked Sausage", short: "sausage", cal: 400, time: 15, allergens: [],
     items: [{ item: "Smoked sausage", amount: "14 oz, sliced", dept: "Meat", search: "smoked sausage" }],
     cook: "Sear the sausage slices until browned at the edges, 5–6 minutes." },
-  { id: "pork-chops", label: "Pork Chops", short: "pork", cal: 360, time: 25, allergens: [],
+  { id: "pork-chops", griddle: true, label: "Pork Chops", short: "pork", cal: 360, time: 25, allergens: [],
     items: [{ item: "Pork chops", amount: "2 bone-in", dept: "Meat", search: "bone-in pork chops" }],
     cook: "Sear the pork chops 4–5 minutes per side to 145°F; rest 5 minutes." },
-  { id: "pork-tenderloin", label: "Pork Tenderloin", short: "pork", cal: 300, time: 30, allergens: [],
+  { id: "pork-tenderloin", griddle: true, label: "Pork Tenderloin", short: "pork", cal: 300, time: 30, allergens: [],
     items: [{ item: "Pork tenderloin", amount: "1 lb", dept: "Meat", search: "pork tenderloin" }],
     cook: "Sear the tenderloin on all sides, then roast at 400°F for 15–18 minutes to 145°F; rest and slice." },
-  { id: "sirloin-steak", label: "Steak", short: "steak", cal: 400, time: 20, allergens: [],
+  { id: "sirloin-steak", griddle: true, label: "Steak", short: "steak", cal: 400, time: 20, allergens: [],
     items: [{ item: "Sirloin steak", amount: "1 lb", dept: "Meat", search: "sirloin steak" }],
     cook: "Sear the steak in a screaming-hot pan, 3–4 minutes per side for medium; rest, then slice against the grain." },
-  { id: "salmon", label: "Salmon", short: "salmon", cal: 350, time: 20, allergens: ["fish"],
+  { id: "salmon", griddle: true, label: "Salmon", short: "salmon", cal: 350, time: 20, allergens: ["fish"],
     items: [{ item: "Salmon fillets", amount: "2 (6 oz each)", dept: "Seafood", search: "fresh salmon fillet" }],
     cook: "Cook the salmon skin-side down 4 minutes, flip, and cook 2–3 more until it flakes easily." },
-  { id: "white-fish", label: "White Fish", short: "fish", cal: 220, time: 15, allergens: ["fish"],
+  { id: "white-fish", griddle: true, label: "White Fish", short: "fish", cal: 220, time: 15, allergens: ["fish"],
     items: [{ item: "Mahi or tilapia fillets", amount: "2 (6 oz each)", dept: "Seafood", search: "mahi mahi fillet" }],
     cook: "Cook the fish 3–4 minutes per side until opaque and flaky." },
-  { id: "shrimp", label: "Shrimp", short: "shrimp", cal: 240, time: 10, allergens: ["shellfish"],
+  { id: "shrimp", griddle: true, label: "Shrimp", short: "shrimp", cal: 240, time: 10, allergens: ["shellfish"],
     items: [{ item: "Large shrimp", amount: "1 lb, peeled", dept: "Seafood", search: "raw shrimp peeled" }],
     cook: "Sear the shrimp 1–2 minutes per side until pink and just cooked through." },
   { id: "meatballs", label: "Meatballs", short: "meatballs", cal: 450, time: 25, allergens: ["gluten", "eggs"],
@@ -67,7 +70,7 @@ const GEN_PROTEINS = [
       { item: "Egg", amount: "1", dept: "Dairy", search: "large eggs" },
     ],
     cook: "Mix the beef with breadcrumbs, egg, salt, and pepper; roll into meatballs and brown on all sides, 10–12 minutes." },
-  { id: "tofu", label: "Crispy Tofu", short: "tofu", cal: 220, time: 20, allergens: ["soy"],
+  { id: "tofu", griddle: true, label: "Crispy Tofu", short: "tofu", cal: 220, time: 20, allergens: ["soy"],
     items: [
       { item: "Extra-firm tofu", amount: "14 oz, pressed", dept: "Produce", search: "extra firm tofu" },
       { item: "Cornstarch", amount: "2 tbsp", dept: "Pantry" },
@@ -186,14 +189,14 @@ const GEN_PREPS = [
 ];
 
 const GEN_FORMATS = [
-  { id: "rice-bowl", suffix: "Rice Bowl", profiles: ["as", "fresh", "mx", "md", "so", "am"], cal: 320, time: 20, allergens: [], lean: true,
+  { id: "rice-bowl", griddle: true, suffix: "Rice Bowl", profiles: ["as", "fresh", "mx", "md", "so", "am"], cal: 320, time: 20, allergens: [], lean: true,
     items: [
       { item: "Jasmine rice", amount: "1 cup, uncooked", dept: "International", search: "jasmine rice" },
       { item: "Broccoli", amount: "2 cups florets", dept: "Produce", search: "broccoli crowns" },
       { item: "Green onions", amount: "2, sliced", dept: "Produce" },
     ],
     steps: ["Start the rice per package directions.", "Steam the broccoli until crisp-tender, 4–5 minutes.", "Build bowls: rice, broccoli, and the {protein}; top with sliced green onions."] },
-  { id: "power-bowl", suffix: "Power Bowl", profiles: ["fresh", "md", "mx", "am"], cal: 280, time: 20, allergens: [], lean: true,
+  { id: "power-bowl", griddle: true, suffix: "Power Bowl", profiles: ["fresh", "md", "mx", "am"], cal: 280, time: 20, allergens: [], lean: true,
     items: [
       { item: "Quinoa", amount: "1 cup, uncooked", dept: "Pantry", search: "quinoa" },
       { item: "Baby spinach", amount: "3 cups", dept: "Produce" },
@@ -208,7 +211,7 @@ const GEN_FORMATS = [
       { item: "Heavy cream", amount: "3/4 cup", dept: "Dairy" },
     ],
     steps: ["Boil the pasta to al dente; reserve 1/2 cup pasta water.", "Warm the cream in the empty pot, stir in parmesan, and toss with the pasta, loosening with pasta water.", "Fold in the {protein} and serve with extra parmesan."] },
-  { id: "tacos", suffix: "Tacos", profiles: ["mx", "so", "as", "am"], cal: 350, time: 10, allergens: [],
+  { id: "tacos", griddle: true, suffix: "Tacos", profiles: ["mx", "so", "as", "am"], cal: 350, time: 10, allergens: [],
     items: [
       { item: "Corn tortillas", amount: "8 small", dept: "International", search: "corn tortillas" },
       { item: "Coleslaw mix", amount: "1 bag", dept: "Produce", search: "coleslaw mix" },
@@ -216,7 +219,7 @@ const GEN_FORMATS = [
       { item: "Cilantro", amount: "1/2 bunch", dept: "Produce", search: "fresh cilantro" },
     ],
     steps: ["Toss the slaw mix with a squeeze of lime and a pinch of salt.", "Warm the tortillas in a dry skillet.", "Build tacos: slaw, the {protein}, avocado slices, and cilantro."] },
-  { id: "sandwiches", suffix: "Sandwiches", profiles: ["am", "so"], cal: 420, time: 10, allergens: ["gluten"],
+  { id: "sandwiches", griddle: true, suffix: "Sandwiches", profiles: ["am", "so"], cal: 420, time: 10, allergens: ["gluten"],
     items: [
       { item: "Brioche buns", amount: "2", dept: "Bakery", search: "brioche hamburger buns" },
       { item: "Romaine lettuce", amount: "2 leaves", dept: "Produce", search: "romaine lettuce" },
@@ -232,7 +235,7 @@ const GEN_FORMATS = [
       { item: "Olive oil", amount: "3 tbsp", dept: "Pantry" },
     ],
     steps: ["Preheat the oven to 425°F. Toss the potatoes with oil, salt, and pepper; roast 15 minutes.", "Add the broccoli, onion, and the {protein} to the pan.", "Roast 15–18 more minutes until the vegetables are browned and everything is cooked through."] },
-  { id: "chopped-salad", suffix: "Chopped Salad", profiles: ["fresh", "md", "mx", "am", "as", "so"], cal: 220, time: 10, allergens: [], lean: true,
+  { id: "chopped-salad", griddle: true, suffix: "Chopped Salad", profiles: ["fresh", "md", "mx", "am", "as", "so"], cal: 220, time: 10, allergens: [], lean: true,
     items: [
       { item: "Romaine hearts", amount: "2, chopped", dept: "Produce", search: "romaine hearts" },
       { item: "Cherry tomatoes", amount: "1 cup", dept: "Produce" },
@@ -240,7 +243,7 @@ const GEN_FORMATS = [
       { item: "Vinaigrette", amount: "1/4 cup", dept: "Pantry", search: "balsamic vinaigrette" },
     ],
     steps: ["Chop and toss the romaine, tomatoes, and cucumber with the vinaigrette.", "Top the salad with the warm {protein}."] },
-  { id: "noodle-stir-fry", suffix: "Noodle Stir-Fry", profiles: ["as"], cal: 420, time: 15, allergens: ["gluten"],
+  { id: "noodle-stir-fry", griddle: true, suffix: "Noodle Stir-Fry", profiles: ["as"], cal: 420, time: 15, allergens: ["gluten"],
     items: [
       { item: "Lo mein noodles", amount: "8 oz", dept: "International", search: "lo mein noodles" },
       { item: "Snow peas", amount: "2 cups", dept: "Produce" },
@@ -253,7 +256,7 @@ const GEN_FORMATS = [
       { item: "Fresh green beans", amount: "12 oz", dept: "Produce", search: "fresh green beans" },
     ],
     steps: ["Heat the mashed potatoes per the package.", "Steam the green beans 4–5 minutes until crisp-tender.", "Plate the {protein} over the potatoes with the green beans alongside, spooning over any pan sauce."] },
-  { id: "wraps", suffix: "Wraps", profiles: ["mx", "am", "md", "so"], cal: 380, time: 10, allergens: ["gluten"],
+  { id: "wraps", griddle: true, suffix: "Wraps", profiles: ["mx", "am", "md", "so"], cal: 380, time: 10, allergens: ["gluten"],
     items: [
       { item: "Flour tortillas", amount: "4 large", dept: "International", search: "flour tortillas burrito size" },
       { item: "Shredded lettuce", amount: "2 cups", dept: "Produce", search: "shredded lettuce" },
@@ -327,6 +330,7 @@ function generateRecipes() {
         out.push({
           id: `gen-${protein.id}-${prep.id}-${format.id}`,
           generated: true,
+          griddle: !!(protein.griddle && format.griddle),
           name: `${prep.name} ${protein.label} ${format.suffix}`,
           calories,
           health,

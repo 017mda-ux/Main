@@ -55,12 +55,13 @@ let sortMode = loadJSON(SORT_KEY, "quickest");
 let checks = loadJSON(CHECKS_KEY, {});
 // Week preferences: style = any|healthy|balanced|indulgent,
 // cal = "any" | "u<N>" (under N) | "o<N>" (over N), maxTime = 0 means no limit.
-let prefs = loadJSON(PREFS_KEY, { style: "any", cal: "any", maxTime: 0 });
+let prefs = loadJSON(PREFS_KEY, { style: "any", cal: "any", maxTime: 0, equipment: "any" });
 // Migrate older saved prefs that used a numeric maxCal cap.
 if (prefs.cal === undefined) {
   prefs.cal = prefs.maxCal ? "u" + prefs.maxCal : "any";
   delete prefs.maxCal;
 }
+if (prefs.equipment === undefined) prefs.equipment = "any";
 
 // Parse a cal preference into a test function.
 function calTest(cal) {
@@ -80,7 +81,8 @@ function eligibleRecipes() {
   return safeRecipes().filter((r) =>
     (prefs.style === "any" || r.health === prefs.style) &&
     inCalRange(r.calories) &&
-    (!prefs.maxTime || r.time <= prefs.maxTime)
+    (!prefs.maxTime || r.time <= prefs.maxTime) &&
+    (prefs.equipment !== "griddle" || r.griddle)
   );
 }
 
@@ -136,7 +138,8 @@ function ratingSummary(id) {
 }
 
 function healthPill(r) {
-  return `<span class="health-pill ${r.health}">${HEALTH_LEVELS[r.health].label}</span>`;
+  return `<span class="health-pill ${r.health}">${HEALTH_LEVELS[r.health].label}</span>` +
+    (r.griddle ? '<span class="health-pill griddle">Griddle</span>' : "");
 }
 
 function mealMeta(r) {
@@ -209,6 +212,10 @@ const TIME_OPTIONS = [
   { value: 25, label: "25 min or less" },
   { value: 35, label: "35 min or less" },
 ];
+const EQUIPMENT_OPTIONS = [
+  { value: "any", label: "Anything in the kitchen" },
+  { value: "griddle", label: "Blackstone griddle" },
+];
 
 function renderWeek() {
   const today = todayIndex();
@@ -237,6 +244,12 @@ function renderWeek() {
         <span class="pref-label">Cook time</span>
         <select class="pref-select" id="pref-time">
           ${TIME_OPTIONS.map((o) => `<option value="${o.value}" ${prefs.maxTime === o.value ? "selected" : ""}>${o.label}</option>`).join("")}
+        </select>
+      </div>
+      <div class="pref-field">
+        <span class="pref-label">Cook on</span>
+        <select class="pref-select" id="pref-equipment">
+          ${EQUIPMENT_OPTIONS.map((o) => `<option value="${o.value}" ${prefs.equipment === o.value ? "selected" : ""}>${o.label}</option>`).join("")}
         </select>
       </div>
       <span class="prefs-meta">${matchCount.toLocaleString()} of ${ALL_RECIPES.length.toLocaleString()} ideas match</span>
@@ -288,13 +301,14 @@ function renderWeek() {
       style: document.getElementById("pref-style").value,
       cal: document.getElementById("pref-cal").value,
       maxTime: Number(document.getElementById("pref-time").value),
+      equipment: document.getElementById("pref-equipment").value,
     };
     saveJSON(PREFS_KEY, prefs);
     plan = shuffledPlan();
     savePlan();
     renderWeek();
   };
-  ["pref-style", "pref-cal", "pref-time"].forEach((id) => {
+  ["pref-style", "pref-cal", "pref-time", "pref-equipment"].forEach((id) => {
     document.getElementById(id).addEventListener("change", onPrefChange);
   });
 
@@ -554,6 +568,7 @@ const SORT_MODES = {
 };
 
 let favoritesOnly = false;
+let griddleOnly = false;
 let styleFilter = "all"; // local filter on All Recipes, separate from week prefs
 let searchQuery = "";
 let visibleLimit = 48;   // pagination for the large generated library
@@ -578,6 +593,7 @@ function sortedRecipes() {
   let list = safeRecipes();
   if (styleFilter !== "all") list = list.filter((r) => r.health === styleFilter);
   if (favoritesOnly) list = list.filter((r) => favorites[r.id]);
+  if (griddleOnly) list = list.filter((r) => r.griddle);
   if (searchQuery) list = list.filter((r) => matchesSearch(r, searchQuery));
   return list.slice().sort((a, b) => {
     switch (sortMode) {
@@ -613,6 +629,7 @@ function renderAllRecipes() {
           ${Object.entries(SORT_MODES).map(([k, v]) => `<option value="${k}" ${k === sortMode ? "selected" : ""}>${v.label}</option>`).join("")}
         </select>
         <button class="chip ${favoritesOnly ? "on" : ""}" id="favs-only">Favorites only</button>
+        <button class="chip ${griddleOnly ? "on" : ""}" id="griddle-only">Blackstone griddle</button>
       </div>
       <div class="toolbar-group">
         <span class="toolbar-label">Style</span>
@@ -676,6 +693,11 @@ function renderAllRecipes() {
   });
   document.getElementById("favs-only").addEventListener("click", () => {
     favoritesOnly = !favoritesOnly;
+    visibleLimit = PAGE_SIZE;
+    renderAllRecipes();
+  });
+  document.getElementById("griddle-only").addEventListener("click", () => {
+    griddleOnly = !griddleOnly;
     visibleLimit = PAGE_SIZE;
     renderAllRecipes();
   });

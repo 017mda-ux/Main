@@ -1,7 +1,9 @@
 # Peebs Weekly Menu
 
 A weekly dinner planner for two with one-tap Publix ingredient links and
-1,300+ dinner ideas: 16 curated house recipes plus a meal generator
+1,300+ dinner ideas: 26 curated house recipes (including 10 Blackstone
+griddle classics like smash burgers, hibachi fried rice, and Philly
+cheesesteaks) plus a meal generator
 (`generator.js`) that composes coherent dinners from proteins, flavor
 preps, and serving formats, with incompatible combinations pruned.
 
@@ -9,8 +11,9 @@ preps, and serving formats, with incompatible combinations pruned.
 
 - **This Week** — A Monday–Sunday board of dinners with a preferences bar:
   pick a style (Healthy / Balanced / Gnommy), a calorie range (under
-  500/650/800, or over 850/1500 for feast nights), and a cook-time cap,
-  and the whole week regenerates to match. The dice button reshuffles with
+  500/650/800, or over 850/1500 for feast nights), a cook-time cap, and
+  what you're cooking on (anything, or Blackstone griddle only), and the
+  whole week regenerates to match. The dice button reshuffles with
   a shake and never repeats the current week. Swap or clear any single
   night. Saved automatically in the browser (localStorage).
 - **Recipe view** — Ingredients (portioned for two) with **Find at Publix**
@@ -51,6 +54,7 @@ Edit `recipes.js` — each recipe is a plain object:
   name: "My New Dish",
   calories: 600,               // estimated, per serving
   health: "balanced",          // "healthy" | "balanced" | "indulgent" (Gnommy)
+  griddle: true,               // optional: cooks on the Blackstone flat-top
   time: 30,                    // minutes
   tags: ["Comfort"],
   allergens: ["gluten"],       // keys from ALLERGENS, or []

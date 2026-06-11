@@ -265,6 +265,7 @@ svg { display: block; }
 .health-pill.healthy   { background: #e7f1ec; color: var(--healthy); }
 .health-pill.balanced  { background: #f6efe0; color: var(--balanced); }
 .health-pill.indulgent { background: #f7e9e4; color: var(--indulgent); }
+.health-pill.griddle   { background: #16191c; color: #f6f6f4; margin-left: 6px; }
 
 /* ---------- Recipe cards (All Recipes) ---------- */
 .recipe-grid {

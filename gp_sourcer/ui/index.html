@@ -1,0 +1,798 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>GP Sourcing — LP Dashboard</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+<script>
+tailwind.config = {
+  theme: {
+    extend: {
+      fontFamily: { sans: ['Inter', 'system-ui', 'sans-serif'] },
+      colors: {
+        navy: { 900: '#0b1628', 800: '#112240', 700: '#1a3358', 600: '#1e4080' }
+      }
+    }
+  }
+}
+</script>
+<style>
+  :root { --sidebar-w: 220px; --chat-w: 380px; }
+  body { font-family: 'Inter', sans-serif; background: #f1f5f9; color: #1e293b; }
+  .sidebar { width: var(--sidebar-w); min-height: 100vh; }
+  .main { margin-left: var(--sidebar-w); transition: margin-right .3s; }
+  .main.chat-open { margin-right: var(--chat-w); }
+  .chat-panel { width: var(--chat-w); right: calc(-1 * var(--chat-w)); transition: right .3s; }
+  .chat-panel.open { right: 0; }
+  .nav-item { @apply flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium text-slate-300 cursor-pointer transition-all; }
+  .nav-item:hover { @apply bg-navy-700 text-white; }
+  .nav-item.active { @apply bg-blue-600 text-white; }
+  .card { @apply bg-white rounded-xl border border-slate-200 p-5 hover:shadow-md transition-shadow; }
+  .badge { @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold; }
+  .badge-green   { @apply bg-emerald-100 text-emerald-800; }
+  .badge-yellow  { @apply bg-amber-100 text-amber-800; }
+  .badge-orange  { @apply bg-orange-100 text-orange-800; }
+  .badge-grey    { @apply bg-slate-100 text-slate-500; }
+  .badge-violet  { @apply bg-violet-100 text-violet-800; }
+  .badge-red     { @apply bg-red-100 text-red-700; }
+  .badge-blue    { @apply bg-blue-100 text-blue-700; }
+  .badge-navy    { @apply bg-slate-800 text-white; }
+  .btn { @apply inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium cursor-pointer transition-colors; }
+  .btn-primary { @apply bg-blue-600 text-white hover:bg-blue-700; }
+  .btn-ghost   { @apply border border-slate-200 text-slate-600 hover:bg-slate-50; }
+  .btn-danger  { @apply border border-red-200 text-red-600 hover:bg-red-50; }
+  .filter-bar  { @apply flex items-center gap-2 flex-wrap; }
+  .filter-btn  { @apply px-3 py-1.5 rounded-lg text-xs font-medium cursor-pointer border transition-colors; }
+  .filter-btn.active  { @apply bg-slate-900 text-white border-slate-900; }
+  .filter-btn.inactive { @apply bg-white text-slate-600 border-slate-200 hover:border-slate-400; }
+  .stage-col { @apply flex-1 min-w-48 bg-slate-50 rounded-xl p-3; }
+  .stage-col .stage-card { @apply bg-white rounded-lg border border-slate-200 p-3 mb-2 text-sm cursor-grab; }
+  .msg-user { @apply bg-blue-600 text-white rounded-2xl rounded-br-md px-4 py-2.5 text-sm max-w-xs ml-auto; }
+  .msg-agent { @apply bg-white border border-slate-200 rounded-2xl rounded-bl-md px-4 py-2.5 text-sm max-w-sm prose prose-sm; }
+  .section { display: none; }
+  .section.active { display: block; }
+  #chat-messages { height: calc(100vh - 160px); overflow-y: auto; }
+  .chat-messages::-webkit-scrollbar { width: 4px; }
+  .skeleton { @apply animate-pulse bg-slate-200 rounded; }
+  /* agent tool indicator */
+  .tool-ping { @apply text-xs text-slate-400 italic; }
+  pre { white-space: pre-wrap; word-break: break-word; }
+</style>
+</head>
+<body class="antialiased">
+
+<!-- ═══════════════════════ SIDEBAR ═══════════════════════ -->
+<aside class="sidebar fixed top-0 left-0 h-screen bg-navy-900 flex flex-col z-30 overflow-hidden">
+  <!-- Logo -->
+  <div class="px-5 pt-6 pb-5 border-b border-navy-700">
+    <div class="text-white font-bold text-base tracking-tight">GP Sourcer</div>
+    <div class="text-slate-400 text-xs mt-0.5">LP Research Platform</div>
+  </div>
+
+  <!-- Nav -->
+  <nav class="flex-1 p-3 space-y-0.5 overflow-y-auto">
+    <div class="nav-item active" onclick="showSection('feed')" id="nav-feed">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+      Deal Feed
+      <span id="feed-count" class="ml-auto text-xs bg-blue-500 text-white rounded-full px-1.5 py-0.5 hidden"></span>
+    </div>
+    <div class="nav-item" onclick="showSection('reup')" id="nav-reup">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
+      Re-Up Radar
+    </div>
+    <div class="nav-item" onclick="showSection('lp')" id="nav-lp">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-2 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+      LP Watch
+    </div>
+    <div class="nav-item" onclick="showSection('talent')" id="nav-talent">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+      Talent Signals
+      <span id="talent-count" class="ml-auto text-xs bg-orange-500 text-white rounded-full px-1.5 py-0.5 hidden"></span>
+    </div>
+    <div class="nav-item" onclick="showSection('agents')" id="nav-agents">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+      Placement Agents
+    </div>
+    <div class="nav-item" onclick="showSection('pipeline')" id="nav-pipeline">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2"/></svg>
+      Pipeline
+    </div>
+  </nav>
+
+  <!-- Chat toggle -->
+  <div class="p-3 border-t border-navy-700">
+    <button onclick="toggleChat()" class="w-full flex items-center gap-2.5 px-4 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium transition-colors">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+      Research Agent
+    </button>
+  </div>
+</aside>
+
+<!-- ═══════════════════════ MAIN CONTENT ═══════════════════════ -->
+<div class="main min-h-screen" id="main">
+
+  <!-- ── DEAL FEED ── -->
+  <section class="section active p-8" id="section-feed">
+    <div class="flex items-center justify-between mb-6">
+      <div>
+        <h1 class="text-2xl font-bold text-slate-900">Deal Flow Feed</h1>
+        <p class="text-sm text-slate-500 mt-0.5" id="feed-subtitle">Loading...</p>
+      </div>
+      <label class="flex items-center gap-2 text-sm text-slate-600 cursor-pointer">
+        <input type="checkbox" id="emerging-toggle" class="rounded" onchange="loadFeed()"/>
+        Emerging only
+      </label>
+    </div>
+    <!-- Strategy filters -->
+    <div class="filter-bar mb-4">
+      <span class="text-xs font-semibold text-slate-400 uppercase tracking-wide mr-1">Strategy</span>
+      <button class="filter-btn active" data-filter="strategy" data-value="" onclick="setFilter('strategy','',this)">All</button>
+      <button class="filter-btn inactive" data-filter="strategy" data-value="buyout" onclick="setFilter('strategy','buyout',this)">Buyout</button>
+      <button class="filter-btn inactive" data-filter="strategy" data-value="growth" onclick="setFilter('strategy','growth',this)">Growth</button>
+      <button class="filter-btn inactive" data-filter="strategy" data-value="venture" onclick="setFilter('strategy','venture',this)">Venture</button>
+    </div>
+    <div class="filter-bar mb-6">
+      <span class="text-xs font-semibold text-slate-400 uppercase tracking-wide mr-1">Mandate fit</span>
+      <button class="filter-btn active" data-filter="fit" data-value="" onclick="setFilter('fit','',this)">All</button>
+      <button class="filter-btn inactive" data-filter="fit" data-value="in_mandate" onclick="setFilter('fit','in_mandate',this)">In Mandate</button>
+      <button class="filter-btn inactive" data-filter="fit" data-value="size_unknown" onclick="setFilter('fit','size_unknown',this)">Size TBC</button>
+      <button class="filter-btn inactive" data-filter="fit" data-value="near_mandate" onclick="setFilter('fit','near_mandate',this)">Near Mandate</button>
+    </div>
+    <div id="feed-grid" class="grid grid-cols-1 xl:grid-cols-2 gap-4"></div>
+  </section>
+
+  <!-- ── RE-UP RADAR ── -->
+  <section class="section p-8" id="section-reup">
+    <div class="mb-6">
+      <h1 class="text-2xl font-bold text-slate-900">Re-Up Radar</h1>
+      <p class="text-sm text-slate-500 mt-0.5">Predicted fundraise windows from fund-close timelines</p>
+    </div>
+    <div class="flex items-center gap-3 mb-2">
+      <div class="card flex-1 py-4 text-center" id="stat-inmarket">
+        <div class="text-3xl font-bold text-red-600">—</div>
+        <div class="text-xs text-slate-500 mt-1 font-medium uppercase tracking-wide">In Market Now</div>
+      </div>
+      <div class="card flex-1 py-4 text-center" id="stat-imminent">
+        <div class="text-3xl font-bold text-amber-600">—</div>
+        <div class="text-xs text-slate-500 mt-1 font-medium uppercase tracking-wide">Imminent (&lt;12mo)</div>
+      </div>
+      <div class="card flex-1 py-4 text-center" id="stat-monitor">
+        <div class="text-3xl font-bold text-blue-600">—</div>
+        <div class="text-xs text-slate-500 mt-1 font-medium uppercase tracking-wide">Monitor</div>
+      </div>
+    </div>
+    <!-- filters -->
+    <div class="filter-bar mb-5 mt-4">
+      <span class="text-xs font-semibold text-slate-400 uppercase tracking-wide mr-1">Status</span>
+      <button class="filter-btn active" data-rf="status" data-rv="" onclick="setReupFilter('status','',this)">All</button>
+      <button class="filter-btn inactive" data-rf="status" data-rv="in_market_now" onclick="setReupFilter('status','in_market_now',this)">In Market Now</button>
+      <button class="filter-btn inactive" data-rf="status" data-rv="imminent" onclick="setReupFilter('status','imminent',this)">Imminent</button>
+      <button class="filter-btn inactive" data-rf="status" data-rv="monitor" onclick="setReupFilter('status','monitor',this)">Monitor</button>
+      <span class="text-xs font-semibold text-slate-400 uppercase tracking-wide mr-1 ml-3">Strategy</span>
+      <button class="filter-btn active" data-rf="rstrategy" data-rv="" onclick="setReupFilter('rstrategy','',this)">All</button>
+      <button class="filter-btn inactive" data-rf="rstrategy" data-rv="buyout" onclick="setReupFilter('rstrategy','buyout',this)">Buyout</button>
+      <button class="filter-btn inactive" data-rf="rstrategy" data-rv="growth" onclick="setReupFilter('rstrategy','growth',this)">Growth</button>
+      <button class="filter-btn inactive" data-rf="rstrategy" data-rv="venture" onclick="setReupFilter('rstrategy','venture',this)">Venture</button>
+    </div>
+    <div id="reup-list" class="space-y-3"></div>
+  </section>
+
+  <!-- ── LP WATCH ── -->
+  <section class="section p-8" id="section-lp">
+    <div class="mb-6">
+      <h1 class="text-2xl font-bold text-slate-900">LP Watch</h1>
+      <p class="text-sm text-slate-500 mt-0.5">8 reference LPs — their commitments are quality signals</p>
+    </div>
+    <div id="lp-grid" class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4"></div>
+  </section>
+
+  <!-- ── TALENT SIGNALS ── -->
+  <section class="section p-8" id="section-talent">
+    <div class="mb-6">
+      <h1 class="text-2xl font-bold text-slate-900">Talent Signals</h1>
+      <p class="text-sm text-slate-500 mt-0.5">Partner & MD departures from watched firms — spinout tracking</p>
+    </div>
+    <div class="filter-bar mb-6">
+      <button class="filter-btn active" data-tf="type" data-tv="" onclick="setTalentFilter('type','',this)">All</button>
+      <button class="filter-btn inactive" data-tf="type" data-tv="spinout" onclick="setTalentFilter('type','spinout',this)">Spinouts</button>
+      <button class="filter-btn inactive" data-tf="type" data-tv="departure" onclick="setTalentFilter('type','departure',this)">Departures</button>
+    </div>
+    <div id="talent-list" class="space-y-3"></div>
+  </section>
+
+  <!-- ── PLACEMENT AGENTS ── -->
+  <section class="section p-8" id="section-agents">
+    <div class="mb-6">
+      <h1 class="text-2xl font-bold text-slate-900">Placement Agents</h1>
+      <p class="text-sm text-slate-500 mt-0.5">Offerings via Shannon, Pacenote, Acalyx, Lazard and others</p>
+    </div>
+    <div id="agents-list" class="space-y-4">
+      <div class="card border-dashed border-slate-300 text-center py-10 text-slate-400 text-sm">
+        <svg class="w-8 h-8 mx-auto mb-2 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        Add offerings as teasers arrive
+      </div>
+    </div>
+  </section>
+
+  <!-- ── PIPELINE ── -->
+  <section class="section p-8" id="section-pipeline">
+    <div class="flex items-center justify-between mb-6">
+      <div>
+        <h1 class="text-2xl font-bold text-slate-900">Pipeline</h1>
+        <p class="text-sm text-slate-500 mt-0.5">Drag funds through stages to track conviction</p>
+      </div>
+    </div>
+    <div id="pipeline-board" class="flex gap-4 overflow-x-auto pb-4"></div>
+  </section>
+
+</div><!-- /main -->
+
+<!-- ═══════════════════════ CHAT PANEL ═══════════════════════ -->
+<div class="chat-panel fixed top-0 right-0 h-screen bg-white border-l border-slate-200 flex flex-col z-40 shadow-2xl" id="chat-panel">
+  <!-- Header -->
+  <div class="flex items-center justify-between px-5 py-4 border-b border-slate-200 bg-slate-50">
+    <div>
+      <div class="font-semibold text-slate-900 text-sm">Research Agent</div>
+      <div class="text-xs text-slate-400">Powered by Claude</div>
+    </div>
+    <div class="flex items-center gap-2">
+      <button onclick="resetChat()" class="text-xs text-slate-400 hover:text-slate-600 px-2 py-1 rounded hover:bg-slate-100">New chat</button>
+      <button onclick="toggleChat()" class="text-slate-400 hover:text-slate-600 p-1 rounded hover:bg-slate-100">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+      </button>
+    </div>
+  </div>
+  <!-- Messages -->
+  <div class="flex-1 overflow-y-auto p-4 space-y-4" id="chat-messages">
+    <div class="msg-agent">
+      <p class="text-sm text-slate-600">Hello. I'm your GP sourcing analyst. Ask me to profile a manager, run a sweep, forecast a fund's next raise, or add something to your pipeline.</p>
+      <p class="text-xs text-slate-400 mt-2">Try: <em>"Profile Permira"</em> or <em>"What emerging buyout funds are in mandate?"</em></p>
+    </div>
+  </div>
+  <!-- Input -->
+  <div class="p-4 border-t border-slate-200">
+    <div class="flex gap-2">
+      <input
+        id="chat-input"
+        type="text"
+        placeholder="Ask about any GP, fund, or market..."
+        class="flex-1 text-sm border border-slate-200 rounded-xl px-4 py-2.5 outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+        onkeydown="if(event.key==='Enter')sendChat()"
+      />
+      <button onclick="sendChat()" id="chat-send"
+        class="btn btn-primary px-4 py-2.5 rounded-xl disabled:opacity-50">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════ JAVASCRIPT ═══════════════════════ -->
+<script>
+
+// ── State ──────────────────────────────────────────────────────────────────
+
+const filters = { strategy: '', fit: '', emerging_only: false };
+const reupFilters = { status: '', rstrategy: '' };
+const talentFilters = { type: '' };
+let chatOpen = false;
+
+// ── Utilities ──────────────────────────────────────────────────────────────
+
+const $ = id => document.getElementById(id);
+
+function fmtUSD(n) {
+  if (!n) return 'Undisclosed';
+  if (n >= 1e9) return `$${(n/1e9).toFixed(1)}B`;
+  return `$${(n/1e6).toFixed(0)}M`;
+}
+
+function fitBadge(fit) {
+  const map = {
+    in_mandate: ['badge-green', 'IN MANDATE'],
+    size_unknown: ['badge-yellow', 'SIZE TBC'],
+    near_mandate: ['badge-orange', 'NEAR MANDATE'],
+    outside_mandate: ['badge-grey', 'OUTSIDE'],
+  };
+  const [cls, label] = map[fit] || ['badge-grey', fit];
+  return `<span class="badge ${cls}">${label}</span>`;
+}
+
+function statusBadge(status) {
+  const map = {
+    in_market_now: ['badge-red', 'IN MARKET NOW'],
+    imminent: ['badge-orange', 'IMMINENT'],
+    monitor: ['badge-blue', 'MONITOR'],
+    spinout_confirmed: ['badge-green', 'SPINOUT CONFIRMED'],
+    watching: ['badge-yellow', 'WATCHING'],
+    departure: ['badge-yellow', 'DEPARTURE'],
+  };
+  const [cls, label] = map[status] || ['badge-grey', status];
+  return `<span class="badge ${cls}">${label}</span>`;
+}
+
+function stratBadge(s) {
+  const map = {
+    buyout: 'bg-slate-800 text-white',
+    growth: 'bg-teal-700 text-white',
+    venture: 'bg-violet-700 text-white',
+    credit: 'bg-blue-700 text-white',
+    real_assets: 'bg-green-700 text-white',
+  };
+  return `<span class="badge ${map[s]||'badge-grey'}">${(s||'').replace('_',' ')}</span>`;
+}
+
+function emergingBadge(fn) {
+  if (!fn || fn > 3) return '';
+  return `<span class="badge badge-violet">★ Fund ${fn}</span>`;
+}
+
+function convictionDot(c) {
+  const map = { high: 'bg-emerald-500', medium: 'bg-amber-400', low: 'bg-slate-300' };
+  if (!c) return '';
+  return `<span class="inline-block w-2 h-2 rounded-full ${map[c]||'bg-slate-300'}" title="${c} conviction"></span>`;
+}
+
+function addToPipelineBtn(fundName, strategy, size, fn) {
+  const data = JSON.stringify({fund_name:fundName,strategy:strategy,size_usd:size,fund_number:fn,source:'feed'}).replace(/"/g,'&quot;');
+  return `<button class="btn btn-ghost text-xs" onclick='addToPipeline(${JSON.stringify({fund_name:fundName,strategy:strategy,size_usd:size,fund_number:fn})})'>+ Pipeline</button>`;
+}
+
+// ── Navigation ─────────────────────────────────────────────────────────────
+
+function showSection(name) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  $(`section-${name}`).classList.add('active');
+  $(`nav-${name}`).classList.add('active');
+  loadSection(name);
+}
+
+function loadSection(name) {
+  if (name === 'feed') loadFeed();
+  else if (name === 'reup') loadReup();
+  else if (name === 'lp') loadLP();
+  else if (name === 'talent') loadTalent();
+  else if (name === 'agents') loadAgents();
+  else if (name === 'pipeline') loadPipeline();
+}
+
+// ── Filters ────────────────────────────────────────────────────────────────
+
+function setFilter(key, val, btn) {
+  filters[key] = val;
+  document.querySelectorAll(`[data-filter="${key}"]`).forEach(b => {
+    b.classList.toggle('active', b.dataset.value === val);
+    b.classList.toggle('inactive', b.dataset.value !== val);
+  });
+  loadFeed();
+}
+
+function setReupFilter(key, val, btn) {
+  if (key === 'status') reupFilters.status = val;
+  else reupFilters.rstrategy = val;
+  document.querySelectorAll(`[data-rf="${key}"]`).forEach(b => {
+    b.classList.toggle('active', b.dataset.rv === val);
+    b.classList.toggle('inactive', b.dataset.rv !== val);
+  });
+  loadReup();
+}
+
+function setTalentFilter(key, val, btn) {
+  talentFilters[key] = val;
+  document.querySelectorAll(`[data-tf="${key}"]`).forEach(b => {
+    b.classList.toggle('active', b.dataset.tv === val);
+    b.classList.toggle('inactive', b.dataset.tv !== val);
+  });
+  renderTalent(window._talentData);
+}
+
+// ── Deal Feed ──────────────────────────────────────────────────────────────
+
+async function loadFeed() {
+  const emerging = $('emerging-toggle').checked;
+  const params = new URLSearchParams({ include_outside: 'false', emerging_only: emerging });
+  if (filters.strategy) params.set('strategy', filters.strategy);
+  if (filters.fit) params.set('fit', filters.fit);
+  const res = await fetch('/api/feed?' + params);
+  const data = await res.json();
+  renderFeed(data);
+}
+
+function renderFeed(data) {
+  const s = data.summary;
+  $('feed-subtitle').textContent = `${s.total} funds  ·  ${s.emerging} emerging  ·  ${s.in_mandate_or_pending} in-mandate / pending  ·  ${data.data_source}`;
+  const count = $('feed-count');
+  if (s.emerging > 0) { count.textContent = s.emerging; count.classList.remove('hidden'); }
+
+  $('feed-grid').innerHTML = data.cards.map(c => `
+    <div class="card group">
+      <div class="flex items-start justify-between gap-3 mb-3">
+        <div class="flex-1 min-w-0">
+          <h3 class="font-semibold text-slate-900 text-sm leading-snug">${c.fund_name}</h3>
+          <p class="text-xs text-slate-500 mt-0.5">${c.gp_name}</p>
+        </div>
+        <div class="flex flex-col items-end gap-1 shrink-0">
+          ${fitBadge(c.fit)}
+          ${stratBadge(c.strategy)}
+        </div>
+      </div>
+      ${c.emerging ? `<div class="mb-2">${emergingBadge(c.fund_number)}</div>` : ''}
+      <p class="text-xs text-slate-600 leading-relaxed mb-3">${c.description || ''}</p>
+      <div class="flex items-center justify-between">
+        <div class="flex flex-wrap gap-x-3 gap-y-1 text-xs text-slate-400">
+          <span>${fmtUSD(c.size_usd)}</span>
+          <span>${c.file_date || ''}</span>
+          <span class="hidden group-hover:inline">${c.source || ''}</span>
+        </div>
+        <div class="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+          ${addToPipelineBtn(c.fund_name, c.strategy, c.size_usd, c.fund_number)}
+          <button class="btn btn-primary text-xs" onclick="askAbout('${c.fund_name.replace(/'/g,"\\'")}')">Profile GP</button>
+        </div>
+      </div>
+      ${c.flags && c.flags.length ? `
+        <div class="mt-3 pt-3 border-t border-slate-100 space-y-0.5">
+          ${c.flags.map(f => `<p class="text-xs text-slate-400">— ${f}</p>`).join('')}
+        </div>` : ''}
+    </div>
+  `).join('') || '<p class="text-sm text-slate-400 col-span-2 text-center py-10">No funds match this filter.</p>';
+}
+
+// ── Re-Up Radar ────────────────────────────────────────────────────────────
+
+async function loadReup() {
+  const params = new URLSearchParams();
+  if (reupFilters.status) params.set('status', reupFilters.status);
+  if (reupFilters.rstrategy) params.set('strategy', reupFilters.rstrategy);
+  const res = await fetch('/api/reup?' + params);
+  const data = await res.json();
+  renderReup(data);
+}
+
+function renderReup(data) {
+  const c = data.counts;
+  $('stat-inmarket').querySelector('div').textContent = c.in_market_now;
+  $('stat-imminent').querySelector('div').textContent = c.imminent;
+  $('stat-monitor').querySelector('div').textContent = c.monitor;
+
+  $('reup-list').innerHTML = data.forecasts.map(r => {
+    const statusColors = {
+      in_market_now: 'border-l-red-500 bg-red-50',
+      imminent: 'border-l-amber-500 bg-amber-50',
+      monitor: 'border-l-blue-400 bg-blue-50',
+    };
+    const borderColor = statusColors[r.status] || 'border-l-slate-300';
+    const unverified = r.confidence === 'memory'
+      ? '<span class="badge badge-orange ml-1">UNVERIFIED VINTAGES</span>' : '';
+    return `
+      <div class="card border-l-4 ${borderColor} py-4">
+        <div class="flex items-start justify-between gap-4">
+          <div class="flex-1 min-w-0">
+            <div class="flex flex-wrap items-center gap-2 mb-1">
+              ${statusBadge(r.status)}
+              ${stratBadge(r.strategy)}
+              ${unverified}
+            </div>
+            <h3 class="font-semibold text-slate-900">${r.gp}</h3>
+            <p class="text-xs text-slate-500 mt-0.5">
+              Last: ${r.last_fund} · closed ${r.last_close} · ${fmtUSD(r.last_size_usd)}
+            </p>
+          </div>
+          <div class="text-right text-xs text-slate-500 shrink-0">
+            <div class="font-medium text-slate-700">Window opens</div>
+            <div class="text-base font-bold text-slate-900">${r.window_opens}</div>
+            <div class="mt-0.5">Close due ~${r.next_close_due}</div>
+            ${r.est_next_size_usd ? `<div class="mt-0.5 text-slate-600">Est. ${fmtUSD(r.est_next_size_usd)}</div>` : ''}
+          </div>
+        </div>
+        <div class="mt-2 flex items-center justify-between">
+          <p class="text-xs text-slate-400">Cycle: ${r.cycle_years}y (${r.cycle_basis})${r.note ? ' — ' + r.note : ''}</p>
+          <button class="btn btn-primary text-xs opacity-0 hover:opacity-100 focus:opacity-100 group-hover:opacity-100" onclick="askAbout('${r.gp.replace(/'/g,"\\'")}')">Profile GP</button>
+        </div>
+      </div>`;
+  }).join('') || '<p class="text-sm text-slate-400 text-center py-10">No results for this filter.</p>';
+
+  // Make profile buttons visible on card hover
+  $('reup-list').querySelectorAll('.card').forEach(card => {
+    const btn = card.querySelector('.btn-primary');
+    if (!btn) return;
+    btn.style.opacity = '0';
+    card.addEventListener('mouseenter', () => btn.style.opacity = '1');
+    card.addEventListener('mouseleave', () => btn.style.opacity = '0');
+  });
+}
+
+// ── LP Watch ───────────────────────────────────────────────────────────────
+
+async function loadLP() {
+  const res = await fetch('/api/lp');
+  const data = await res.json();
+  $('lp-grid').innerHTML = Object.entries(data).map(([id, lp]) => {
+    const typeLabel = (lp.type||'').replace(/_/g,' ');
+    const signals = (lp.signals||[]).slice(0,3);
+    return `
+      <div class="card">
+        <div class="flex items-start justify-between mb-3">
+          <div>
+            <h3 class="font-semibold text-slate-900 text-sm">${lp.name}</h3>
+            <p class="text-xs text-slate-400 mt-0.5">${fmtUSD((lp.aum_bn||0)*1e9)} AUM · ${typeLabel}</p>
+          </div>
+          <span class="badge badge-grey text-xs">${id.toUpperCase()}</span>
+        </div>
+        ${signals.length ? `
+          <div class="space-y-2 mt-3 pt-3 border-t border-slate-100">
+            ${signals.map(s => `
+              <div class="flex items-start gap-2">
+                <div class="w-1.5 h-1.5 rounded-full bg-emerald-500 mt-1.5 shrink-0"></div>
+                <div>
+                  <p class="text-xs text-slate-700 font-medium">${s.fund_name}</p>
+                  <p class="text-xs text-slate-400">${s.signal_date} · ${s.source}</p>
+                </div>
+              </div>
+            `).join('')}
+          </div>` : `
+          <div class="mt-3 pt-3 border-t border-slate-100">
+            <p class="text-xs text-slate-400 italic">No signals logged</p>
+            <p class="text-xs text-slate-400 mt-0.5">${lp.disclosure||''}</p>
+          </div>`}
+      </div>`;
+  }).join('');
+}
+
+// ── Talent Signals ─────────────────────────────────────────────────────────
+
+async function loadTalent() {
+  const res = await fetch('/api/talent');
+  const data = await res.json();
+  window._talentData = data;
+  renderTalent(data);
+}
+
+function renderTalent(data) {
+  const signals = (data.signals||[]).filter(s =>
+    !talentFilters.type || s.signal_type === talentFilters.type
+  );
+  const count = $('talent-count');
+  count.textContent = signals.length;
+  count.classList.toggle('hidden', signals.length === 0);
+
+  $('talent-list').innerHTML = signals.length ? signals.map(s => `
+    <div class="card flex items-start gap-4">
+      <div class="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${s.signal_type==='spinout' ? 'bg-emerald-100' : 'bg-amber-100'}">
+        ${s.signal_type==='spinout'
+          ? '<svg class="w-5 h-5 text-emerald-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>'
+          : '<svg class="w-5 h-5 text-amber-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>'}
+      </div>
+      <div class="flex-1 min-w-0">
+        <div class="flex flex-wrap items-center gap-2 mb-1">
+          ${statusBadge(s.signal_type === 'spinout' ? (s.status === 'spinout_confirmed' ? 'spinout_confirmed' : 'watching') : 'departure')}
+          <span class="text-xs text-slate-400">${s.signal_date}</span>
+        </div>
+        <h3 class="font-semibold text-slate-900 text-sm">${s.person}</h3>
+        <p class="text-xs text-slate-500">ex-${s.prior_firm}${s.prior_title ? ' · ' + s.prior_title : ''}${s.new_firm ? ' → ' + s.new_firm : ''}</p>
+        <p class="text-xs text-slate-400 mt-1.5">${s.evidence}</p>
+        ${s.new_firm ? `<button class="btn btn-primary text-xs mt-2" onclick="askAbout('${s.new_firm.replace(/'/g,"\\'")}')">Profile ${s.new_firm}</button>` : ''}
+      </div>
+    </div>
+  `).join('') : '<p class="text-sm text-slate-400 text-center py-10">No signals match this filter.</p>';
+}
+
+// ── Placement Agents ───────────────────────────────────────────────────────
+
+async function loadAgents() {
+  const res = await fetch('/api/agents');
+  const data = await res.json();
+  const offerings = data.offerings || [];
+  const watched = data.watched || {};
+  if (!offerings.length) return;
+
+  const statusColors = {
+    teaser_received: 'badge-yellow',
+    reviewing: 'badge-blue',
+    meeting_set: 'badge-violet',
+    progressed: 'badge-green',
+    passed: 'badge-grey',
+  };
+
+  $('agents-list').innerHTML = offerings.map(o => `
+    <div class="card">
+      <div class="flex items-start justify-between gap-4 mb-3">
+        <div>
+          <span class="badge ${statusColors[o.status]||'badge-grey'} mb-2">${(o.status||'').replace(/_/g,' ')}</span>
+          <h3 class="font-semibold text-slate-900">${o.fund_name}</h3>
+          <p class="text-xs text-slate-500 mt-0.5">${o.gp_name||'GP undisclosed'}</p>
+        </div>
+        <div class="text-right text-xs text-slate-500 shrink-0">
+          <div class="font-semibold text-slate-700">${o.agent_name}</div>
+          ${o.target_usd ? `<div class="mt-0.5">${fmtUSD(o.target_usd)} target</div>` : ''}
+          ${o.expected_close ? `<div class="mt-0.5">Close: ${o.expected_close}</div>` : ''}
+        </div>
+      </div>
+      ${o.strategy ? `<div class="mb-2">${stratBadge(o.strategy)}</div>` : ''}
+      ${o.note ? `<p class="text-xs text-slate-500 leading-relaxed">${o.note}</p>` : ''}
+    </div>
+  `).join('');
+}
+
+// ── Pipeline ───────────────────────────────────────────────────────────────
+
+async function loadPipeline() {
+  const res = await fetch('/api/pipeline');
+  const data = await res.json();
+  renderPipeline(data);
+}
+
+function renderPipeline(data) {
+  const stageLabels = {
+    radar: 'Radar', initial_review: 'Initial Review', soft_circle: 'Soft Circle',
+    full_diligence: 'Full Diligence', committed: 'Committed', passed: 'Passed'
+  };
+  const stageBg = {
+    radar: 'bg-slate-100', initial_review: 'bg-blue-50', soft_circle: 'bg-violet-50',
+    full_diligence: 'bg-amber-50', committed: 'bg-emerald-50', passed: 'bg-red-50'
+  };
+  const stageHeader = {
+    radar: 'text-slate-600', initial_review: 'text-blue-700', soft_circle: 'text-violet-700',
+    full_diligence: 'text-amber-700', committed: 'text-emerald-700', passed: 'text-red-600'
+  };
+
+  $('pipeline-board').innerHTML = (data.stages||[]).map(stage => {
+    const cards = (data.board||{})[stage] || [];
+    return `
+      <div class="stage-col ${stageBg[stage]||'bg-slate-100'} min-w-52 flex-shrink-0" style="min-width:208px">
+        <div class="flex items-center justify-between px-1 mb-3">
+          <span class="text-xs font-bold uppercase tracking-wide ${stageHeader[stage]||'text-slate-600'}">${stageLabels[stage]||stage}</span>
+          <span class="text-xs text-slate-400 bg-white border border-slate-200 rounded-full px-1.5 py-0.5">${cards.length}</span>
+        </div>
+        ${cards.map(c => `
+          <div class="stage-card">
+            <div class="flex items-start justify-between gap-1 mb-1.5">
+              <div class="font-medium text-xs leading-snug">${c.fund_name}</div>
+              ${convictionDot(c.conviction)}
+            </div>
+            <div class="flex flex-wrap gap-1 mb-1.5">
+              ${stratBadge(c.strategy)}
+              ${c.fund_number ? emergingBadge(c.fund_number) : ''}
+            </div>
+            <div class="text-xs text-slate-400 mb-2">${fmtUSD(c.size_usd)} · via ${c.source}</div>
+            ${c.note ? `<p class="text-xs text-slate-400 italic leading-relaxed mb-2">${c.note}</p>` : ''}
+            <div class="flex gap-1">
+              <button class="btn btn-ghost text-xs" onclick="askAbout('${c.fund_name.replace(/'/g,"\\'")}')">Profile</button>
+              ${stage !== 'committed' && stage !== 'passed' ? `
+                <button class="btn btn-ghost text-xs" onclick="advanceStage('${c.fund_name.replace(/'/g,"\\'")}','${nextStage(stage)}')">→</button>
+                <button class="btn btn-danger text-xs" onclick="advanceStage('${c.fund_name.replace(/'/g,"\\'")}','passed')">Pass</button>
+              ` : ''}
+            </div>
+          </div>`).join('')}
+        ${stage === 'radar' ? `
+          <div class="mt-2 border-2 border-dashed border-slate-300 rounded-lg p-3 text-center cursor-pointer hover:border-slate-400 text-xs text-slate-400" onclick="toggleChat()">
+            + Add via agent
+          </div>` : ''}
+      </div>`;
+  }).join('');
+}
+
+function nextStage(current) {
+  const order = ['radar','initial_review','soft_circle','full_diligence','committed'];
+  const idx = order.indexOf(current);
+  return idx >= 0 && idx < order.length - 1 ? order[idx+1] : current;
+}
+
+async function advanceStage(fundName, stage) {
+  await fetch('/api/pipeline/move', {
+    method: 'POST',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({ fund_name: fundName, stage })
+  });
+  loadPipeline();
+}
+
+async function addToPipeline(opts) {
+  const res = await fetch('/api/pipeline/add', {
+    method: 'POST',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify(opts)
+  });
+  const data = await res.json();
+  if (data.duplicate) {
+    showToast(`${opts.fund_name} already in pipeline`);
+  } else {
+    showToast(`Added to pipeline`);
+  }
+}
+
+// ── Chat ───────────────────────────────────────────────────────────────────
+
+function toggleChat() {
+  chatOpen = !chatOpen;
+  $('chat-panel').classList.toggle('open', chatOpen);
+  $('main').classList.toggle('chat-open', chatOpen);
+}
+
+function resetChat() {
+  fetch('/api/chat', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({message:'', reset:true}) });
+  $('chat-messages').innerHTML = `
+    <div class="msg-agent">
+      <p class="text-sm text-slate-600">Chat reset. How can I help?</p>
+    </div>`;
+}
+
+async function sendChat() {
+  const input = $('chat-input');
+  const msg = input.value.trim();
+  if (!msg) return;
+  input.value = '';
+
+  if (!chatOpen) toggleChat();
+
+  const msgs = $('chat-messages');
+  msgs.innerHTML += `<div class="flex justify-end"><div class="msg-user">${escHtml(msg)}</div></div>`;
+
+  const bubble = document.createElement('div');
+  bubble.className = 'msg-agent whitespace-pre-wrap text-sm text-slate-700';
+  bubble.textContent = '';
+  msgs.appendChild(bubble);
+  msgs.scrollTop = msgs.scrollHeight;
+
+  $('chat-send').disabled = true;
+
+  const res = await fetch('/api/chat', {
+    method: 'POST',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({ message: msg })
+  });
+
+  const reader = res.body.getReader();
+  const decoder = new TextDecoder();
+  let buf = '';
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    buf += decoder.decode(value, { stream: true });
+    const lines = buf.split('\n');
+    buf = lines.pop();
+    for (const line of lines) {
+      if (!line.startsWith('data: ')) continue;
+      const raw = line.slice(6);
+      if (raw === '[DONE]') break;
+      try {
+        const { chunk } = JSON.parse(raw);
+        bubble.textContent += chunk;
+        msgs.scrollTop = msgs.scrollHeight;
+      } catch {}
+    }
+  }
+
+  $('chat-send').disabled = false;
+  msgs.scrollTop = msgs.scrollHeight;
+  loadSection(document.querySelector('.nav-item.active')?.id?.replace('nav-',''));
+}
+
+function askAbout(name) {
+  $('chat-input').value = `Profile ${name}`;
+  sendChat();
+}
+
+function escHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// ── Toast ──────────────────────────────────────────────────────────────────
+
+function showToast(msg) {
+  const t = document.createElement('div');
+  t.className = 'fixed bottom-6 left-1/2 -translate-x-1/2 bg-slate-900 text-white text-sm px-4 py-2 rounded-full shadow-lg z-50 transition-opacity';
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(() => { t.style.opacity='0'; setTimeout(()=>t.remove(),300); }, 2000);
+}
+
+// ── Init ───────────────────────────────────────────────────────────────────
+
+loadFeed();
+</script>
+</body>
+</html>

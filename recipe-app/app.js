@@ -54,19 +54,32 @@ let excludedAllergens = loadJSON(ALLERGY_KEY, ["shellfish", "nuts"]);
 let sortMode = loadJSON(SORT_KEY, "quickest");
 let checks = loadJSON(CHECKS_KEY, {});
 // Week preferences: style = any|healthy|balanced|indulgent,
-// maxCal / maxTime = 0 means no limit.
-let prefs = loadJSON(PREFS_KEY, { style: "any", maxCal: 0, maxTime: 0 });
+// cal = "any" | "u<N>" (under N) | "o<N>" (over N), maxTime = 0 means no limit.
+let prefs = loadJSON(PREFS_KEY, { style: "any", cal: "any", maxTime: 0 });
+// Migrate older saved prefs that used a numeric maxCal cap.
+if (prefs.cal === undefined) {
+  prefs.cal = prefs.maxCal ? "u" + prefs.maxCal : "any";
+  delete prefs.maxCal;
+}
 
-const recipeById = (id) => RECIPES.find((r) => r.id === id);
+// Parse a cal preference into a test function.
+function calTest(cal) {
+  if (!cal || cal === "any") return () => true;
+  const n = Number(cal.slice(1));
+  return cal[0] === "u" ? (c) => c <= n : (c) => c >= n;
+}
+
+const recipeById = (id) => ALL_RECIPES.find((r) => r.id === id);
 const isSafe = (r) => !r.allergens.some((a) => excludedAllergens.includes(a));
-const safeRecipes = () => RECIPES.filter(isSafe);
+const safeRecipes = () => ALL_RECIPES.filter(isSafe);
 const getReview = (id) => reviews[id] || null;
 
 // Recipes matching both allergies and week preferences.
 function eligibleRecipes() {
+  const inCalRange = calTest(prefs.cal);
   return safeRecipes().filter((r) =>
     (prefs.style === "any" || r.health === prefs.style) &&
-    (!prefs.maxCal || r.calories <= prefs.maxCal) &&
+    inCalRange(r.calories) &&
     (!prefs.maxTime || r.time <= prefs.maxTime)
   );
 }
@@ -74,14 +87,21 @@ function eligibleRecipes() {
 function loadPlan() {
   const saved = loadJSON(STORAGE_KEY, null);
   if (Array.isArray(saved) && saved.length === 7 &&
-      saved.every((id) => id === null || RECIPES.some((r) => r.id === id))) {
+      saved.every((id) => id === null || ALL_RECIPES.some((r) => r.id === id))) {
     return saved;
   }
   return shuffledPlan();
 }
 
 function shuffledPlan() {
-  const ids = eligibleRecipes().map((r) => r.id);
+  let ids = eligibleRecipes().map((r) => r.id);
+  // When the pool is deep enough, never repeat anything from the
+  // current week — every roll of the dice is all-new ideas.
+  if (Array.isArray(plan)) {
+    const current = new Set(plan.filter(Boolean));
+    const fresh = ids.filter((id) => !current.has(id));
+    if (fresh.length >= 7) ids = fresh;
+  }
   for (let i = ids.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
     [ids[i], ids[j]] = [ids[j], ids[i]];
@@ -91,7 +111,8 @@ function shuffledPlan() {
   return week;
 }
 
-let plan = loadPlan();
+let plan = null;
+plan = loadPlan();
 const savePlan = () => saveJSON(STORAGE_KEY, plan);
 savePlan();
 
@@ -176,10 +197,12 @@ const STYLE_OPTIONS = [
   { value: "indulgent", label: "Gnommy" },
 ];
 const CAL_OPTIONS = [
-  { value: 0, label: "No limit" },
-  { value: 500, label: "Under 500 cal" },
-  { value: 650, label: "Under 650 cal" },
-  { value: 800, label: "Under 800 cal" },
+  { value: "any", label: "No limit" },
+  { value: "u500", label: "Under 500 cal" },
+  { value: "u650", label: "Under 650 cal" },
+  { value: "u800", label: "Under 800 cal" },
+  { value: "o850", label: "Over 850 cal" },
+  { value: "o1500", label: "Over 1500 cal" },
 ];
 const TIME_OPTIONS = [
   { value: 0, label: "No limit" },
@@ -207,7 +230,7 @@ function renderWeek() {
       <div class="pref-field">
         <span class="pref-label">Calories</span>
         <select class="pref-select" id="pref-cal">
-          ${CAL_OPTIONS.map((o) => `<option value="${o.value}" ${prefs.maxCal === o.value ? "selected" : ""}>${o.label}</option>`).join("")}
+          ${CAL_OPTIONS.map((o) => `<option value="${o.value}" ${prefs.cal === o.value ? "selected" : ""}>${o.label}</option>`).join("")}
         </select>
       </div>
       <div class="pref-field">
@@ -216,7 +239,7 @@ function renderWeek() {
           ${TIME_OPTIONS.map((o) => `<option value="${o.value}" ${prefs.maxTime === o.value ? "selected" : ""}>${o.label}</option>`).join("")}
         </select>
       </div>
-      <span class="prefs-meta">${matchCount} of ${RECIPES.length} recipes match</span>
+      <span class="prefs-meta">${matchCount.toLocaleString()} of ${ALL_RECIPES.length.toLocaleString()} ideas match</span>
     </div>
 
     <div class="week-grid">
@@ -263,7 +286,7 @@ function renderWeek() {
   const onPrefChange = () => {
     prefs = {
       style: document.getElementById("pref-style").value,
-      maxCal: Number(document.getElementById("pref-cal").value),
+      cal: document.getElementById("pref-cal").value,
       maxTime: Number(document.getElementById("pref-time").value),
     };
     saveJSON(PREFS_KEY, prefs);
@@ -297,40 +320,51 @@ function wireRecipeLinks(from) {
 // ---------- Swap picker ----------
 function openSwapPicker(dayIndex) {
   // Favorites first, then top-rated taste, then quickest.
-  const choices = eligibleRecipes().sort((a, b) => {
+  const pool = eligibleRecipes().sort((a, b) => {
     const favDiff = (favorites[b.id] ? 1 : 0) - (favorites[a.id] ? 1 : 0);
     if (favDiff) return favDiff;
     const tasteDiff = ((getReview(b.id) || {}).taste || 0) - ((getReview(a.id) || {}).taste || 0);
     if (tasteDiff) return tasteDiff;
     return a.time - b.time;
   });
+  const PICKER_CAP = 50;
   const backdrop = document.createElement("div");
   backdrop.className = "modal-backdrop";
+
+  const renderChoices = (q) => {
+    const filtered = q ? pool.filter((r) => matchesSearch(r, q)) : pool;
+    const shown = filtered.slice(0, PICKER_CAP);
+    backdrop.querySelector(".picker-list").innerHTML = shown.length ? shown.map((r) => `
+      <li><button class="picker-item" data-pick="${r.id}">
+        <span class="tag-row">${healthPill(r)}${favorites[r.id] ? '<span class="rating-chip">Favorite</span>' : ""}</span>
+        <strong>${r.name}</strong>
+        <span class="meal-meta">${mealMeta(r)} · ${r.tags.join(" · ")}</span>
+        ${ratingSummary(r.id) ? `<span class="rating-row">${ratingSummary(r.id)}</span>` : ""}
+      </button></li>`).join("") +
+      (filtered.length > PICKER_CAP ? `<li class="picker-more">${(filtered.length - PICKER_CAP).toLocaleString()} more match — type to narrow it down</li>` : "")
+      : `<li class="picker-more">Nothing matches that search.</li>`;
+    backdrop.querySelectorAll("[data-pick]").forEach((b) => {
+      b.addEventListener("click", () => {
+        plan[dayIndex] = b.dataset.pick;
+        savePlan();
+        backdrop.remove();
+        renderWeek();
+      });
+    });
+  };
+
   backdrop.innerHTML = `
     <div class="modal">
       <h3>Pick a meal for ${DAYS[dayIndex]}</h3>
       <p class="view-sub">Favorites and top-rated meals first. Allergy and preference filters apply.</p>
-      <ul class="picker-list">
-        ${choices.map((r) => `
-          <li><button class="picker-item" data-pick="${r.id}">
-            <span class="tag-row">${healthPill(r)}${favorites[r.id] ? '<span class="rating-chip">Favorite</span>' : ""}</span>
-            <strong>${r.name}</strong>
-            <span class="meal-meta">${mealMeta(r)} · ${r.tags.join(" · ")}</span>
-            ${ratingSummary(r.id) ? `<span class="rating-row">${ratingSummary(r.id)}</span>` : ""}
-          </button></li>`).join("")}
-      </ul>
+      <input type="search" class="pref-select search-input" id="picker-search" placeholder="Search ${pool.length.toLocaleString()} ideas...">
+      <ul class="picker-list"></ul>
     </div>`;
   backdrop.addEventListener("click", (e) => {
     if (e.target === backdrop) backdrop.remove();
   });
-  backdrop.querySelectorAll("[data-pick]").forEach((b) => {
-    b.addEventListener("click", () => {
-      plan[dayIndex] = b.dataset.pick;
-      savePlan();
-      backdrop.remove();
-      renderWeek();
-    });
-  });
+  backdrop.querySelector("#picker-search").addEventListener("input", (e) => renderChoices(e.target.value.trim()));
+  renderChoices("");
   document.body.appendChild(backdrop);
 }
 
@@ -521,11 +555,21 @@ const SORT_MODES = {
 
 let favoritesOnly = false;
 let styleFilter = "all"; // local filter on All Recipes, separate from week prefs
+let searchQuery = "";
+let visibleLimit = 48;   // pagination for the large generated library
+const PAGE_SIZE = 48;
+
+function matchesSearch(r, q) {
+  if (!q) return true;
+  const hay = (r.name + " " + r.tags.join(" ") + " " +
+    r.ingredients.map((i) => i.item).join(" ")).toLowerCase();
+  return q.toLowerCase().split(/\s+/).every((w) => hay.includes(w));
+}
 
 // Build filter chips from whatever actually appears in the data.
-const allergensInData = [...new Set(RECIPES.flatMap((r) => r.allergens))]
+const allergensInData = [...new Set(ALL_RECIPES.flatMap((r) => r.allergens))]
   .sort((a, b) => Object.keys(ALLERGENS).indexOf(a) - Object.keys(ALLERGENS).indexOf(b));
-const stylesInData = [...new Set(RECIPES.map((r) => r.health))]
+const stylesInData = [...new Set(ALL_RECIPES.map((r) => r.health))]
   .sort((a, b) => Object.keys(HEALTH_LEVELS).indexOf(a) - Object.keys(HEALTH_LEVELS).indexOf(b));
 
 function sortedRecipes() {
@@ -534,6 +578,7 @@ function sortedRecipes() {
   let list = safeRecipes();
   if (styleFilter !== "all") list = list.filter((r) => r.health === styleFilter);
   if (favoritesOnly) list = list.filter((r) => favorites[r.id]);
+  if (searchQuery) list = list.filter((r) => matchesSearch(r, searchQuery));
   return list.slice().sort((a, b) => {
     switch (sortMode) {
       case "calories":  return a.calories - b.calories;
@@ -548,14 +593,20 @@ function sortedRecipes() {
 }
 
 function renderAllRecipes() {
-  const visible = sortedRecipes();
-  const hiddenCount = RECIPES.length - safeRecipes().length;
+  const matching = sortedRecipes();
+  const visible = matching.slice(0, visibleLimit);
+  const hiddenCount = ALL_RECIPES.length - safeRecipes().length;
 
   app.innerHTML = `
     <div class="view-header"><h2>All Recipes</h2></div>
-    <p class="view-sub">Rate meals after you cook them, save favorites with the heart, and sort by whatever fits tonight.</p>
+    <p class="view-sub">${ALL_RECIPES.length.toLocaleString()} dinner ideas — ${RECIPES.length} house recipes plus a generator that mixes proteins, flavors, and formats. Search, sort, and filter; rate meals after you cook them.</p>
 
     <div class="toolbar">
+      <div class="toolbar-group">
+        <input type="search" id="recipe-search" class="pref-select search-input"
+          placeholder="Search ideas (e.g. cajun salmon, tacos)..." value="${searchQuery.replace(/"/g, "&quot;")}">
+        <span class="toolbar-label" style="margin-left:auto">${matching.length.toLocaleString()} match${matching.length === 1 ? "" : "es"}</span>
+      </div>
       <div class="toolbar-group">
         <span class="toolbar-label">Sort</span>
         <select id="sort-select" class="pref-select">
@@ -590,24 +641,48 @@ function renderAllRecipes() {
           ${ratingSummary(r.id) ? `<div class="rating-row">${ratingSummary(r.id)}</div>` : `<div class="rating-row unrated">Not rated yet</div>`}
           <div class="tag-row">${r.tags.map((t) => `<span class="tag">${t}</span>`).join("")}</div>
         </div>`).join("")}
-    </div>` : `
+    </div>
+    ${matching.length > visibleLimit ? `
+    <div class="show-more-row">
+      <button class="btn secondary" id="show-more">Show ${Math.min(PAGE_SIZE, matching.length - visibleLimit)} more of ${(matching.length - visibleLimit).toLocaleString()} remaining</button>
+    </div>` : ""}` : `
     <div class="empty-note">No recipes match these filters${favoritesOnly ? " — try turning off Favorites only" : ""}.</div>`}`;
 
   wireRecipeLinks("all");
   wireFavButtons(renderAllRecipes);
 
+  const searchEl = document.getElementById("recipe-search");
+  searchEl.addEventListener("input", () => {
+    searchQuery = searchEl.value.trim();
+    visibleLimit = PAGE_SIZE;
+    // re-render but keep focus and cursor in the search box
+    const pos = searchEl.selectionStart;
+    renderAllRecipes();
+    const el = document.getElementById("recipe-search");
+    el.focus();
+    el.setSelectionRange(pos, pos);
+  });
+  const showMore = document.getElementById("show-more");
+  if (showMore) showMore.addEventListener("click", () => {
+    visibleLimit += PAGE_SIZE;
+    renderAllRecipes();
+  });
+
   document.getElementById("sort-select").addEventListener("change", (e) => {
     sortMode = e.target.value;
     saveJSON(SORT_KEY, sortMode);
+    visibleLimit = PAGE_SIZE;
     renderAllRecipes();
   });
   document.getElementById("favs-only").addEventListener("click", () => {
     favoritesOnly = !favoritesOnly;
+    visibleLimit = PAGE_SIZE;
     renderAllRecipes();
   });
   app.querySelectorAll("[data-style]").forEach((b) => {
     b.addEventListener("click", () => {
       styleFilter = b.dataset.style;
+      visibleLimit = PAGE_SIZE;
       renderAllRecipes();
     });
   });
@@ -618,6 +693,7 @@ function renderAllRecipes() {
         ? excludedAllergens.filter((x) => x !== a)
         : [...excludedAllergens, a];
       saveJSON(ALLERGY_KEY, excludedAllergens);
+      visibleLimit = PAGE_SIZE;
       renderAllRecipes();
     });
   });

@@ -1,24 +1,29 @@
 # Peebs Weekly Menu
 
-A simple weekly dinner planner for two, with one-tap Publix ingredient links.
+A weekly dinner planner for two with one-tap Publix ingredient links and
+1,300+ dinner ideas: 16 curated house recipes plus a meal generator
+(`generator.js`) that composes coherent dinners from proteins, flavor
+preps, and serving formats, with incompatible combinations pruned.
 
 ## Features
 
 - **This Week** — A Monday–Sunday board of dinners with a preferences bar:
-  pick a style (Healthy / Balanced / Gnommy), a calorie cap, and a cook-time
-  cap, and the whole week regenerates to match. The dice button reshuffles
-  (with a shake). Swap or clear any single night. Saved automatically in
-  the browser (localStorage).
+  pick a style (Healthy / Balanced / Gnommy), a calorie range (under
+  500/650/800, or over 850/1500 for feast nights), and a cook-time cap,
+  and the whole week regenerates to match. The dice button reshuffles with
+  a shake and never repeats the current week. Swap or clear any single
+  night. Saved automatically in the browser (localStorage).
 - **Recipe view** — Ingredients (portioned for two) with **Find at Publix**
   links, numbered steps, calories per serving, allergen notes, a favorite
   heart, and a review box (taste + quick/easy star ratings with notes).
 - **Shopping List** — Combines all ingredients across the week's dinners,
   de-duplicates them, and groups them by Publix department in roughly the
   order you'd walk the store. Checkboxes persist while you shop.
-- **All Recipes** — Sort by quickest, lowest calories, top rated, easiest,
-  or favorites. Filter chips for style and allergens are generated
-  dynamically from the recipe data. Allergy exclusions (shellfish and nuts
-  by default) also apply to shuffle and swap.
+- **All Recipes** — Search the full library; sort by quickest, lowest
+  calories, top rated, easiest, or favorites. Filter chips for style and
+  allergens are generated dynamically from the recipe data. Allergy
+  exclusions (shellfish and nuts by default) also apply to shuffle and
+  swap. Results paginate 48 at a time.
 
 ## Running it
 

@@ -60,23 +60,24 @@ FEATURE_COLS = [
 XGB_PARAMS_WDL = {
     "objective": "multi:softprob",
     "num_class": 3,
-    "n_estimators": 400,
+    "n_estimators": 150,       # right-sized for ~1500-row sports datasets
     "max_depth": 4,
     "learning_rate": 0.05,
     "subsample": 0.8,
     "colsample_bytree": 0.8,
-    "min_child_weight": 10,   # prevents overfitting on small sports datasets
+    "min_child_weight": 10,    # prevents overfitting on small datasets
     "reg_alpha": 0.5,
     "reg_lambda": 1.5,
     "eval_metric": "mlogloss",
-    "tree_method": "hist",
+    "tree_method": "exact",    # faster than hist for <10k rows
+    "nthread": 1,              # single-thread avoids contention in constrained envs
     "random_state": 42,
     "verbosity": 0,
 }
 
 XGB_PARAMS_OU = {
     "objective": "binary:logistic",
-    "n_estimators": 300,
+    "n_estimators": 100,
     "max_depth": 3,
     "learning_rate": 0.05,
     "subsample": 0.8,
@@ -85,7 +86,8 @@ XGB_PARAMS_OU = {
     "reg_alpha": 0.5,
     "reg_lambda": 1.5,
     "eval_metric": "logloss",
-    "tree_method": "hist",
+    "tree_method": "exact",
+    "nthread": 1,
     "random_state": 42,
     "verbosity": 0,
 }
@@ -228,7 +230,7 @@ class SoccerXGBModel:
               elo_ratings: dict = None,
               dc_params: dict = None,
               xg_stats: dict = None,
-              n_cv_splits: int = 5) -> dict:
+              n_cv_splits: int = 3) -> dict:
         """
         Train both WDL and O/U models with time-series cross-validation.
         Returns validation metrics.

@@ -72,10 +72,25 @@ def devig_power(probs: list[float], n: int = None) -> list[float]:
     return [p / total for p in devigged]
 
 
+def closing_line_value(opening_prob: float, closing_prob: float) -> float:
+    """
+    Closing Line Value (CLV): measures how much the market moved toward a team.
+
+    Positive = sharp money pushed the line in team's favor (bullish signal).
+    Negative = line moved away (public/square money or fade by sharps).
+
+    Research (Joseph et al. 2006, Power 2019): closing lines are the sharpest
+    available probability estimate. If your model agrees with CLV direction,
+    that's corroborating evidence. If it disagrees, investigate before betting.
+    """
+    return closing_prob - opening_prob
+
+
 def build_match_features(team_a: str, team_b: str,
                          elo_ratings: dict = None,
                          dc_params: dict = None,
                          match_odds_1x2: dict = None,
+                         opening_odds_1x2: dict = None,
                          xg_stats: dict = None,
                          neutral: bool = True,
                          tournament_stage: str = "group") -> dict:
@@ -168,6 +183,25 @@ def build_match_features(team_a: str, team_b: str,
     xg_net_diff = xg_net_a - xg_net_b
     xg_total = xg_for_a + xg_for_b  # proxy for O/U line
 
+    # Closing Line Value — sharp money direction
+    clv_a = clv_draw = clv_b = 0.0
+    if opening_odds_1x2 and match_odds_1x2:
+        raw_open = [
+            american_to_implied_prob(opening_odds_1x2.get("home", -110)),
+            american_to_implied_prob(opening_odds_1x2.get("draw", 250)),
+            american_to_implied_prob(opening_odds_1x2.get("away", 300)),
+        ]
+        raw_close = [
+            american_to_implied_prob(match_odds_1x2.get("home", -110)),
+            american_to_implied_prob(match_odds_1x2.get("draw", 250)),
+            american_to_implied_prob(match_odds_1x2.get("away", 300)),
+        ]
+        open_dv = devig_power(raw_open)
+        close_dv = devig_power(raw_close)
+        clv_a = closing_line_value(open_dv[0], close_dv[0])
+        clv_draw = closing_line_value(open_dv[1], close_dv[1])
+        clv_b = closing_line_value(open_dv[2], close_dv[2])
+
     # Market implied probabilities (devigged)
     mkt_p_win = mkt_p_draw = mkt_p_loss = None
     mkt_edge_a = mkt_edge_draw = mkt_edge_b = 0.0
@@ -219,6 +253,11 @@ def build_match_features(team_a: str, team_b: str,
         "shots_ot_diff": round(shots_ot_diff, 4),
         "mkt_edge_a": round(mkt_edge_a, 4),
         "mkt_edge_b": round(mkt_edge_b, 4),
+
+        # CLV — line movement (requires opening odds; zero if not provided)
+        "clv_a": round(clv_a, 4),
+        "clv_draw": round(clv_draw, 4),
+        "clv_b": round(clv_b, 4),
 
         # Meta
         "team_a": team_a,

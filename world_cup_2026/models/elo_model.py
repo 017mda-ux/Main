@@ -7,9 +7,15 @@ Based on:
   association football" - confirms Elo outperforms FIFA ranking
 - Club Elo / World Football Elo (eloratings.net) methodology
 - Expected score formula: E = 1 / (1 + 10^(-Δelo/400))
+
+xG-Elo upgrade (Castellano et al. 2012, Caley 2015):
+- Update Elo based on xG differential rather than actual scoreline
+- Strips out finishing luck and goalkeeper variance from rating signal
+- Particularly valuable in low-scoring sports where a 1-0 win tells you little
 """
 
 import math
+import datetime
 from typing import Optional
 from world_cup_2026.config import ELO_K, HOME_ADVANTAGE_ELO
 
@@ -78,6 +84,99 @@ def update_elo(elo_a: float, elo_b: float, result: float,
 
     delta = k * gd_mult * (result - e_a)
     return elo_a + delta, elo_b - delta
+
+
+def update_elo_xg(elo_a: float, elo_b: float,
+                   xg_a: float, xg_b: float,
+                   match_type: str = "qualifier",
+                   home_a: bool = False) -> tuple[float, float]:
+    """
+    xG-Elo: update ratings based on Expected Goals differential, not scoreline.
+
+    Why: In soccer, a 1-0 win where the loser had 3.2 xG and hit the post twice
+    contains almost no information about relative team strength. Updating on xG
+    removes finishing luck and keeper variance from the rating signal.
+
+    xG result encoding (mirrors scoreline Elo):
+      xg_a > xg_b  → result = 1.0 (A "won" on xG)
+      xg_a == xg_b → result = 0.5
+      xg_a < xg_b  → result = 0.0
+
+    Goal-diff multiplier applied to xG margin for proportional rating shifts.
+    """
+    k = ELO_K.get(match_type, 25)
+    home_adv = HOME_ADVANTAGE_ELO if home_a else 0
+    e_a = expected_score(elo_a, elo_b, home_adv)
+
+    xg_margin = abs(xg_a - xg_b)
+    if xg_margin <= 1.0:
+        gd_mult = 1.0
+    elif xg_margin <= 2.0:
+        gd_mult = 1.5
+    else:
+        gd_mult = (11 + xg_margin) / 8.0
+
+    if xg_a > xg_b:
+        xg_result = 1.0
+    elif xg_a < xg_b:
+        xg_result = 0.0
+    else:
+        xg_result = 0.5
+
+    delta = k * gd_mult * (xg_result - e_a)
+    return elo_a + delta, elo_b - delta
+
+
+def build_elo_ratings_xg(match_history: list[dict],
+                          initial_ratings: dict[str, float],
+                          verbose: bool = False) -> dict[str, float]:
+    """
+    Build xG-Elo ratings by replaying match history using xG differentials.
+
+    Matches without xg_home / xg_away fall back to actual scoreline.
+    In production, feed StatsBomb or Opta xG data for each match.
+    """
+    ratings = dict(initial_ratings)
+
+    for match in sorted(match_history, key=lambda x: x["date"]):
+        home = match["home_team"]
+        away = match["away_team"]
+        mtype = match.get("match_type", "qualifier")
+        neutral = match.get("neutral", False)
+
+        if home not in ratings:
+            ratings[home] = 1500
+        if away not in ratings:
+            ratings[away] = 1500
+
+        home_adv = not neutral
+
+        # Use xG if available, fall back to actual goals
+        if "xg_home" in match and "xg_away" in match:
+            new_home, new_away = update_elo_xg(
+                ratings[home], ratings[away],
+                match["xg_home"], match["xg_away"],
+                mtype, home_adv
+            )
+        else:
+            hg, ag = match["home_goals"], match["away_goals"]
+            result = 1.0 if hg > ag else (0.5 if hg == ag else 0.0)
+            gd = abs(hg - ag)
+            new_home, new_away = update_elo(
+                ratings[home], ratings[away], result, mtype, gd, home_adv
+            )
+
+        ratings[home] = new_home
+        ratings[away] = new_away
+
+        if verbose:
+            xg_str = (f"xG {match.get('xg_home', '?'):.1f}-{match.get('xg_away', '?'):.1f}"
+                      if "xg_home" in match else
+                      f"{match['home_goals']}-{match['away_goals']}")
+            print(f"{match['date']} {home} {xg_str} {away} | "
+                  f"{home}: {new_home:.0f}, {away}: {new_away:.0f}")
+
+    return ratings
 
 
 def elo_win_probability_table(elo_diffs: list[float]) -> dict:

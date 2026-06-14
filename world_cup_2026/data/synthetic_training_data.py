@@ -49,12 +49,19 @@ def generate_synthetic_match(team_a: str, team_b: str,
     home_goals = poisson_sample(lambda_)
     away_goals = poisson_sample(mu_)
 
+    # xG: true DC lambda/mu + shot-model noise (~0.25 SD realistic for international data)
+    # This makes xG correlated with but not identical to DC params, reducing circularity
+    xg_home = max(round(lambda_ + rng.gauss(0, 0.25), 2), 0.05)
+    xg_away = max(round(mu_ + rng.gauss(0, 0.25), 2), 0.05)
+
     return {
         "date": match_date,
         "home_team": team_a,
         "away_team": team_b,
         "home_goals": home_goals,
         "away_goals": away_goals,
+        "xg_home": xg_home,
+        "xg_away": xg_away,
         "match_type": match_type,
         "neutral": neutral,
         "stage": "group" if match_type in ("friendly", "qualifier") else "knockout",

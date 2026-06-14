@@ -86,12 +86,23 @@ def closing_line_value(opening_prob: float, closing_prob: float) -> float:
     return closing_prob - opening_prob
 
 
+def xg_overperformance(actual_goals: float, xg: float) -> float:
+    """
+    Ratio of actual goals to xG over recent matches.
+    > 1.0 = team outscoring xG (likely to regress down)
+    < 1.0 = team underscoring xG (likely to regress up)
+    Neutral at 1.0; bounded to avoid extreme values.
+    """
+    return min(max(actual_goals / max(xg, 0.1), 0.2), 3.0)
+
+
 def build_match_features(team_a: str, team_b: str,
                          elo_ratings: dict = None,
                          dc_params: dict = None,
                          match_odds_1x2: dict = None,
                          opening_odds_1x2: dict = None,
                          xg_stats: dict = None,
+                         xg_overperf: dict = None,
                          neutral: bool = True,
                          tournament_stage: str = "group") -> dict:
     """
@@ -258,6 +269,10 @@ def build_match_features(team_a: str, team_b: str,
         "clv_a": round(clv_a, 4),
         "clv_draw": round(clv_draw, 4),
         "clv_b": round(clv_b, 4),
+
+        # xG overperformance — regression-to-mean signal (1.0 = neutral)
+        "xg_overperf_a": round(xg_overperf.get(team_a, 1.0) if xg_overperf else 1.0, 4),
+        "xg_overperf_b": round(xg_overperf.get(team_b, 1.0) if xg_overperf else 1.0, 4),
 
         # Meta
         "team_a": team_a,

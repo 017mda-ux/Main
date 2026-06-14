@@ -33,18 +33,28 @@ try:
 except ImportError:
     XGB_AVAILABLE = False
 
-from world_cup_2026.features.feature_engineer import build_match_features
+from world_cup_2026.features.feature_engineer import build_match_features, xg_overperformance
+from world_cup_2026.models.elo_model import update_elo_xg, update_elo
+from world_cup_2026.config import TEAM_ELO, ELO_K
 
 
 FEATURE_COLS = [
+    # Tier 1
     "elo_diff", "elo_win_prob_a",
     "mkt_implied_win_a", "mkt_implied_draw", "mkt_implied_win_b",
+    # Tier 2
     "dc_lambda", "dc_mu", "dc_expected_total", "dc_expected_diff",
     "dc_attack_diff", "dc_defense_diff",
     "xg_net_diff", "xg_total_proxy",
     "squad_value_log_ratio", "form_gd_diff",
+    # Tier 3
     "continent_adv_diff", "is_knockout",
+    # Tier 4
     "shots_ot_diff", "mkt_edge_a",
+    # New: CLV (line movement — zero when no opening lines provided)
+    "clv_a", "clv_b",
+    # New: xG overperformance (regression-to-mean signal)
+    "xg_overperf_a", "xg_overperf_b",
 ]
 
 XGB_PARAMS_WDL = {
@@ -139,26 +149,79 @@ class SoccerXGBModel:
                            elo_ratings: dict = None,
                            dc_params: dict = None,
                            xg_stats: dict = None) -> pd.DataFrame:
+        """
+        Build feature matrix using walk-forward xG-Elo to avoid lookahead bias.
+
+        For each match (in chronological order):
+          1. Snapshot current xG-Elo ratings as features
+          2. Compute rolling xG overperformance (goals / xG, last 10 matches)
+          3. After feature extraction, update ratings with match result
+        """
         rows = []
-        for m in match_data:
+        # Walk-forward xG-Elo: start from provided ratings or TEAM_ELO
+        live_elo = dict(elo_ratings or TEAM_ELO)
+        # Rolling xG overperformance: team -> deque of (goals, xg) tuples
+        from collections import defaultdict, deque
+        xg_history: dict = defaultdict(lambda: deque(maxlen=10))
+
+        for m in sorted(match_data, key=lambda x: x.get("date", "")):
+            home = m["home_team"]
+            away = m["away_team"]
+            hg = m.get("home_goals", 0)
+            ag = m.get("away_goals", 0)
+            xg_h = m.get("xg_home", None)
+            xg_a = m.get("xg_away", None)
+
+            # Compute rolling xG overperformance from history so far (no lookahead)
+            overperf = {}
+            for team, hist in xg_history.items():
+                if hist:
+                    total_goals = sum(g for g, _ in hist)
+                    total_xg = sum(x for _, x in hist)
+                    overperf[team] = xg_overperformance(total_goals, total_xg)
+
             feats = build_match_features(
-                m["home_team"], m["away_team"],
-                elo_ratings=elo_ratings,
+                home, away,
+                elo_ratings=live_elo,
                 dc_params=dc_params,
                 xg_stats=xg_stats,
+                xg_overperf=overperf,
                 neutral=m.get("neutral", True),
                 tournament_stage=m.get("stage", "group"),
             )
-            hg = m.get("home_goals", 0)
-            ag = m.get("away_goals", 0)
+
             if hg > ag:
-                feats["result"] = 0  # home win
+                feats["result"] = 0
             elif hg == ag:
-                feats["result"] = 1  # draw
+                feats["result"] = 1
             else:
-                feats["result"] = 2  # away win
+                feats["result"] = 2
             feats["over_25"] = int(hg + ag > 2.5)
             rows.append(feats)
+
+            # Update xG-Elo after feature extraction (walk-forward, no lookahead)
+            if home not in live_elo:
+                live_elo[home] = 1500
+            if away not in live_elo:
+                live_elo[away] = 1500
+
+            mtype = m.get("match_type", "qualifier")
+            neutral = m.get("neutral", False)
+            home_adv = not neutral
+
+            if xg_h is not None and xg_a is not None:
+                live_elo[home], live_elo[away] = update_elo_xg(
+                    live_elo[home], live_elo[away], xg_h, xg_a, mtype, home_adv
+                )
+                xg_history[home].append((hg, xg_h))
+                xg_history[away].append((ag, xg_a))
+            else:
+                result = 1.0 if hg > ag else (0.5 if hg == ag else 0.0)
+                live_elo[home], live_elo[away] = update_elo(
+                    live_elo[home], live_elo[away],
+                    result, mtype, abs(hg - ag), home_adv
+                )
+
         return pd.DataFrame(rows)
 
     def train(self, match_data: list[dict],

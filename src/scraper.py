@@ -1058,6 +1058,121 @@ of Invest Like the Best EP.452 — December 2025.  Primary source: Colossus /
 joincolossus.com/episode/man-versus-machine/]
 """,
     },
+    "will-thorndike-joys-of-compounding": {
+        "episode": "Joys of Compounding",
+        "title": "Will Thorndike — Lessons from the Eternal Outsider",
+        "guest": "Will Thorndike",
+        "host": "Rick & Paul (Sator Grove / Joys of Compounding)",
+        "date": "2026",
+        "duration": "~75 min",
+        "url": "https://joincolossus.com/",
+        "content": """\
+[Joys of Compounding — Will Thorndike: Lessons from the Eternal Outsider | Colossus]
+
+EPISODE OVERVIEW
+
+Will Thorndike is the author of "The Outsiders," founder of Housatonic Partners (1994),
+and a pioneer of the modern search-fund / entrepreneurship-through-acquisition (ETA)
+model alongside his Stanford mentor Irv Grousbeck. He now invests through his family
+office, the Cromwell Harbor Partnership, and co-founded Compounding Labs, which is
+helping originate a new category of permanently capitalized, equity-efficient serial
+acquisition holding companies. He also hosts the sporadic deep-dive podcast "50x."
+
+──────────────────────────────────────────────
+THE OUTSIDERS FRAMEWORK — RESOURCE ALLOCATION AS THE CORE LEVER
+──────────────────────────────────────────────
+
+"The Outsiders" profiles eight CEOs who dramatically outperformed peers not through
+charisma but through disciplined, often contrarian capital allocation: opportunistic use
+of leverage, share buybacks executed because the stock was cheap (not for optics),
+decentralized organizational design, unusually low time spent on investor relations,
+deliberately scheduled "white space" for reading and thinking, and — a detail Thorndike
+says he'd emphasize more in a rewrite — exceptionally high retention of key employees
+relative to peers. The book frames capital allocation, talent/culture management, and
+management time as the three resources a CEO actually allocates.
+
+Early in his own investing career, Thorndike adopted two screening lessons from prior
+research: Hellman & Friedman's finding that return on tangible capital (ROTC) was the
+metric most correlated with their best outcomes, and TA Associates' finding that being in
+front of secular market growth was the single most common thread separating their best
+investments from their weaker ones.
+
+──────────────────────────────────────────────
+ASURION — A CASE STUDY IN S-CURVE + EXECUTION
+──────────────────────────────────────────────
+
+Asurion (handset insurance, originally roadside assistance for cellular subscribers) is
+cited as likely the greatest private-equity outcome ever — over a 5,000x multiple on
+invested capital from its 1995 search-fund origin under CEO Kevin Taweel. Thorndike's
+framing: the business sat in front of 10x growth in U.S. cellular subscribers over its
+first dozen years (27 million subscribers in 1995, ~270 million a decade-plus later) with
+an exceptionally capital-efficient, recurring-revenue model — but he stresses that the
+favorable starting backdrop alone would have produced only a fraction of the realized
+outcome. The differentiated result came from execution layered on top of the secular
+tailwind, echoing the same "S-curve plus competitive execution" logic this knowledge base
+already captures from other sources.
+
+──────────────────────────────────────────────
+THE NEW ASSET CLASS — LONG-DURATION SERIAL ACQUISITION HOLDING COMPANIES
+──────────────────────────────────────────────
+
+Through Compounding Labs, Thorndike is helping originate a category of holding companies
+distinct from traditional private equity:
+
+- Capitalized once, at inception, on a deliberately small permanent equity base — often
+  just $10-25 million ("the equity Paleo diet") — with no further primary capital raises.
+- Built to buy and operate recurring-revenue businesses in niche markets forever, never
+  to be sold, growing through a combination of organic improvement and inorganic
+  acquisition.
+- Management compensation tied to net multiple of invested capital (MOIC) rather than
+  IRR, by design — Thorndike notes IRR-based incentives create misalignment as growth
+  mathematically decelerates over a long hold, whereas a MOIC ladder ("system of
+  doubles") keeps management and investors aligned regardless of the calendar.
+- Backed by founder/CEOs given an explicit multi-decade ("decadal") time horizon — board
+  decks at one such company still open with "a 20-year hold from today."
+
+Banyan Software (David Berkal, vertical-market software roll-up) is cited as an early
+example: roughly $17 million of invested equity capital grew into a holding company with
+dozens of subsidiaries, recently recapitalized above a $1 billion valuation.
+
+A related internal study Thorndike's group ran on what happens to search-fund companies
+after they are sold found that next owners earned low-to-mid-30s IRRs and 3.5-4x MOICs on
+average, with zero capital impairment across a 40+ company sample — Thorndike's read is
+that this is evidence search funds are systematically sold too early, reinforcing the
+thesis that duration, not rate, is "by far the most powerful variable in the compound
+interest equation."
+
+──────────────────────────────────────────────
+PUBLIC MARKET VEHICLES THORNDIKE IS CURRENTLY INVOLVED WITH
+──────────────────────────────────────────────
+
+- TransDigm (TDG) — Nick Howley's aerospace aftermarket-parts company, repeatedly cited
+  in "The Outsiders" as a contemporary analog to the book's profiled CEOs; built on
+  disciplined leverage and opportunistic buybacks layered onto sole-source, FAA-certified
+  aftermarket parts monopolies.
+- CNX Resources (CNX) — Appalachian natural gas producer where Thorndike has been board
+  chair for roughly nine years; coal business spun off early, aggressive buyback and
+  compensation redesign since.
+- Perimeter Solutions (PRM) — leading global supplier of wildfire fire retardant, acquired
+  via a UK-domiciled acquisition vehicle (explicitly not a U.S. SPAC) that allowed
+  immediate, uncommitted equity capital and tighter economic alignment; Thorndike is
+  co-board chair alongside Nick DeIuliis.
+
+──────────────────────────────────────────────
+COMPOUNDING BEYOND CAPITAL
+──────────────────────────────────────────────
+
+Thorndike frames financial compounding (net worth, built from the balance sheet rather
+than current income) as one of several "flavors" of compounding that share a common
+mechanism — avoiding churn. Learning, relationships, and reputation compound by the same
+logic: continuity and longevity beat episodic re-starts. An early start is mathematically
+the single biggest lever across all of them.
+
+[Source: Synthesised in this analyst's own words from a Colossus "Joys of Compounding"
+episode transcript (Will Thorndike, host Rick & Paul) supplied directly by the user.
+Original transcript © Colossus, LLC.]
+""",
+    },
 }
 
 # Public-facing podcast index URLs to try before falling back to curated content

@@ -1,19 +1,38 @@
 #!/usr/bin/env python3
 """
-AI Investment Analyst — CLI entrypoint
+AI Strategy & Investment Analyst — CLI entrypoint
+
+Frameworks: 7 Powers · Aggregation Theory · Moat Taxonomy · TPS ·
+            22 Immutable Laws of Marketing · 15 Commitments ·
+            Munger Mental Models · Quantitative PMF ·
+            Paul Graham Essays · Jeff Bezos Letters · Acquired Podcast RAG ·
+            Invest Like the Best (Ellenbogen: 1% Rule, Act Two, DCA-Up)
 
 Commands:
-  build-kb   Scrape Acquired transcripts and build the vector knowledge base
-  chat       Launch the interactive investment analyst chat
-  ask        Ask a single question (non-interactive)
-  status     Show knowledge base stats
+  build-kb      Scrape Acquired transcripts and build the vector knowledge base
+  build-pg      Scrape Paul Graham essays and add them to the knowledge base
+  build-bezos   Scrape Jeff Bezos shareholder letters and add them to the knowledge base
+  build-iltb    Index Invest Like the Best episode transcripts (Ellenbogen EP.452 etc.)
+  chat          Launch the interactive strategy analyst chat
+  ask           Ask a single question (non-interactive)
+  status        Show knowledge base stats
 
 Usage examples:
-  python main.py build-kb                          # full scrape + index
-  python main.py build-kb --max-episodes 20        # quick test with 20 episodes
-  python main.py chat                              # interactive REPL
-  python main.py ask "Analyse Nvidia's moat"       # single question
-  python main.py status                            # KB info
+  python main.py build-kb                                    # full Acquired scrape + index
+  python main.py build-kb --max-episodes 20                  # quick test
+  python main.py build-pg                                    # index all PG essays
+  python main.py build-pg --priority-only                    # index high-signal essays only
+  python main.py build-bezos                                 # index all Bezos letters (1997-2020)
+  python main.py build-bezos --priority-only                 # index the highest-signal letters
+  python main.py build-iltb                                  # index ILTB episodes (EP.452+)
+  python main.py chat                                        # interactive REPL
+  python main.py ask "Analyse Nvidia's moat"
+  python main.py ask "Apply Paul Graham's default alive test to Samsara"
+  python main.py ask "Is this founder in founder mode or manager mode?"
+  python main.py ask "Score Apple on the 22 Laws of Marketing"
+  python main.py ask "What would Bezos think of DoorDash's flywheel?"
+  python main.py ask "Apply Ellenbogen's 1% rule and Act Two framework to Shopify"
+  python main.py status                                      # KB info
 """
 
 import argparse
@@ -52,6 +71,24 @@ def _get_scraper():
     from src.scraper import AcquiredScraper
     transcripts_path = os.getenv("TRANSCRIPTS_PATH", "./data/transcripts")
     return AcquiredScraper(cache_dir=transcripts_path)
+
+
+def _get_pg_scraper():
+    from src.scraper import PaulGrahamScraper
+    pg_path = os.getenv("PG_ESSAYS_PATH", "./data/pg_essays")
+    return PaulGrahamScraper(cache_dir=pg_path)
+
+
+def _get_bezos_scraper():
+    from src.scraper import BezosLetterScraper
+    bezos_path = os.getenv("BEZOS_LETTERS_PATH", "./data/bezos_letters")
+    return BezosLetterScraper(cache_dir=bezos_path)
+
+
+def _get_iltb_scraper():
+    from src.scraper import InvestLikeTheBestScraper
+    iltb_path = os.getenv("ILTB_PATH", "./data/iltb_transcripts")
+    return InvestLikeTheBestScraper(cache_dir=iltb_path)
 
 
 # ──────────────────────────────────────────────────────────────────────
@@ -102,6 +139,140 @@ def cmd_build_kb(args):
     )
 
 
+def cmd_build_pg(args):
+    """Scrape Paul Graham essays and index them into the knowledge base."""
+    console.print(
+        Panel.fit(
+            "[bold cyan]Paul Graham Essay Knowledge Base Builder[/bold cyan]\n"
+            "Scraping essays from paulgraham.com and indexing into ChromaDB…",
+            border_style="cyan",
+        )
+    )
+
+    scraper = _get_pg_scraper()
+    vs = _get_vector_store()
+
+    with Progress(
+        SpinnerColumn(),
+        TextColumn("[progress.description]{task.description}"),
+        console=console,
+    ) as progress:
+        task = progress.add_task("Fetching essay list…", total=None)
+
+        essay_list = scraper.get_essay_list()
+        label = "priority essays" if args.priority_only else "all essays"
+        progress.update(task, description=f"Found {len(essay_list)} essays. Fetching {label}…")
+
+        essays_with_text = []
+        for i, essay in enumerate(essay_list):
+            progress.update(
+                task,
+                description=f"[{i+1}/{len(essay_list)}] {essay['title'][:60]}…",
+            )
+        # Use get_all_essays for caching + filtering
+        essays_with_text = scraper.get_all_essays(
+            priority_only=args.priority_only,
+            max_essays=args.max_essays,
+            verbose=False,
+        )
+
+        progress.update(task, description="Ingesting into vector store…")
+        total_chunks = vs.ingest_pg_essays(essays_with_text, verbose=False)
+
+    console.print(
+        f"\n[bold green]✓ Done![/bold green] "
+        f"Indexed {len(essays_with_text)} essays / "
+        f"{total_chunks} new chunks into the knowledge base.\n"
+        f"Total PG chunks in DB: [bold]{vs.count_pg()}[/bold]"
+    )
+
+
+def cmd_build_bezos(args):
+    """Scrape Jeff Bezos shareholder letters and index them into the knowledge base."""
+    console.print(
+        Panel.fit(
+            "[bold cyan]Jeff Bezos Shareholder Letter Knowledge Base Builder[/bold cyan]\n"
+            "Scraping letters from aboutamazon.com (1997–2020) and indexing into ChromaDB…",
+            border_style="cyan",
+        )
+    )
+
+    scraper = _get_bezos_scraper()
+    vs = _get_vector_store()
+
+    with Progress(
+        SpinnerColumn(),
+        TextColumn("[progress.description]{task.description}"),
+        console=console,
+    ) as progress:
+        task = progress.add_task("Fetching Bezos letters…", total=None)
+
+        letters = scraper.get_all_letters(
+            priority_only=args.priority_only,
+            max_letters=args.max_letters,
+            verbose=False,
+        )
+
+        label = "priority letters" if args.priority_only else "all letters"
+        progress.update(
+            task,
+            description=f"Fetched {len(letters)} {label}. Ingesting into vector store…",
+        )
+
+        total_chunks = vs.ingest_bezos_letters(letters, verbose=False)
+
+    years = [str(l["year"]) for l in letters]
+    console.print(
+        f"\n[bold green]✓ Done![/bold green] "
+        f"Indexed {len(letters)} letters / "
+        f"{total_chunks} new chunks into the knowledge base.\n"
+        f"Years covered: [bold]{', '.join(sorted(years))}[/bold]\n"
+        f"Total Bezos chunks in DB: [bold]{vs.count_bezos()}[/bold]"
+    )
+
+
+def cmd_build_iltb(_args):
+    """Index Invest Like the Best episode transcripts into the knowledge base."""
+    console.print(
+        Panel.fit(
+            "[bold cyan]Invest Like the Best Knowledge Base Builder[/bold cyan]\n"
+            "Loading ILTB transcripts (EP.452 Ellenbogen + future episodes) into ChromaDB…",
+            border_style="cyan",
+        )
+    )
+
+    scraper = _get_iltb_scraper()
+    vs = _get_vector_store()
+
+    with Progress(
+        SpinnerColumn(),
+        TextColumn("[progress.description]{task.description}"),
+        console=console,
+    ) as progress:
+        task = progress.add_task("Fetching ILTB episodes…", total=None)
+
+        episodes = scraper.get_all_episodes(verbose=False)
+
+        progress.update(
+            task,
+            description=f"Fetched {len(episodes)} episode(s). Ingesting into vector store…",
+        )
+
+        total_chunks = vs.ingest_iltb_episodes(episodes, verbose=False)
+
+    titles = [ep["title"] for ep in episodes]
+    console.print(
+        f"\n[bold green]✓ Done![/bold green] "
+        f"Indexed {len(episodes)} episode(s) / "
+        f"{total_chunks} new chunks into the knowledge base.\n"
+        f"Total ILTB chunks in DB: [bold]{vs.count_iltb()}[/bold]"
+    )
+    if titles:
+        console.print("\n[bold]Indexed episodes:[/bold]")
+        for t in titles:
+            console.print(f"  • {t}")
+
+
 def cmd_status(_args):
     """Show knowledge base statistics."""
     vs = _get_vector_store()
@@ -114,12 +285,28 @@ def cmd_status(_args):
         return
 
     slugs = vs.get_episode_slugs()
+    pg_count = vs.count_pg()
+    pg_titles = vs.get_pg_essay_titles() if pg_count > 0 else []
+    bezos_count = vs.count_bezos()
+    bezos_years = vs.get_bezos_letter_years() if bezos_count > 0 else []
+    iltb_count = vs.count_iltb()
+    iltb_titles = vs.get_iltb_episode_titles() if iltb_count > 0 else []
     console.print(
         Panel.fit(
             f"[bold]Knowledge Base Status[/bold]\n\n"
-            f"Chunks indexed : [cyan]{count:,}[/cyan]\n"
-            f"Episodes       : [cyan]{len(slugs)}[/cyan]\n"
-            f"DB path        : [dim]{os.getenv('CHROMA_DB_PATH', './data/chroma_db')}[/dim]",
+            f"[underline]Acquired Podcast[/underline]\n"
+            f"  Chunks indexed : [cyan]{count:,}[/cyan]\n"
+            f"  Episodes       : [cyan]{len(slugs)}[/cyan]\n\n"
+            f"[underline]Paul Graham Essays[/underline]\n"
+            f"  Chunks indexed : [cyan]{pg_count:,}[/cyan]\n"
+            f"  Essays         : [cyan]{len(pg_titles)}[/cyan]\n\n"
+            f"[underline]Jeff Bezos Letters[/underline]\n"
+            f"  Chunks indexed : [cyan]{bezos_count:,}[/cyan]\n"
+            f"  Letters        : [cyan]{len(bezos_years)}[/cyan]\n\n"
+            f"[underline]Invest Like the Best[/underline]\n"
+            f"  Chunks indexed : [cyan]{iltb_count:,}[/cyan]\n"
+            f"  Episodes       : [cyan]{len(iltb_titles)}[/cyan]\n\n"
+            f"DB path          : [dim]{os.getenv('CHROMA_DB_PATH', './data/chroma_db')}[/dim]",
             border_style="green",
         )
     )
@@ -127,6 +314,17 @@ def cmd_status(_args):
         console.print("\n[bold]Indexed episodes:[/bold]")
         for s in slugs:
             console.print(f"  • {s}")
+    if pg_titles:
+        console.print("\n[bold]Indexed PG essays:[/bold]")
+        for t in pg_titles:
+            console.print(f"  • {t}")
+    if bezos_years:
+        console.print("\n[bold]Indexed Bezos letters:[/bold]")
+        console.print(f"  {', '.join(bezos_years)}")
+    if iltb_titles:
+        console.print("\n[bold]Indexed ILTB episodes:[/bold]")
+        for t in iltb_titles:
+            console.print(f"  • {t}")
 
 
 def cmd_chat(_args):
@@ -137,9 +335,12 @@ def cmd_chat(_args):
 
     console.print(
         Panel(
-            "[bold cyan]Acquired Investment Analyst[/bold cyan]\n\n"
-            "Ask me about any company, investment thesis, competitive moat, "
-            "or business model. I'm trained on all Acquired podcast episodes.\n\n"
+            "[bold cyan]AI Strategy & Investment Analyst[/bold cyan]\n\n"
+            "Ask me about any company, moat, business model, marketing strategy, "
+            "leadership health, or investment thesis.\n"
+            "Frameworks: 7 Powers · Aggregation Theory · Moat Taxonomy · TPS · "
+            "22 Laws of Marketing · 15 Commitments · Munger · Quantitative PMF · "
+            "Paul Graham Essays\n\n"
             "[dim]Commands: 'reset' to clear history, 'quit' / 'exit' to leave.[/dim]",
             border_style="cyan",
             expand=False,
@@ -148,9 +349,25 @@ def cmd_chat(_args):
 
     if vs.is_empty():
         console.print(
-            "[yellow]⚠  Knowledge base is empty.[/yellow] "
-            "Run [bold]python main.py build-kb[/bold] first for best results. "
+            "[yellow]⚠  Acquired KB is empty.[/yellow] "
+            "Run [bold]python main.py build-kb[/bold] for Acquired transcripts. "
             "Continuing with base model knowledge only.\n"
+        )
+    if vs.is_pg_empty():
+        console.print(
+            "[yellow]⚠  Paul Graham KB is empty.[/yellow] "
+            "Run [bold]python main.py build-pg[/bold] to index PG essays.\n"
+        )
+    if vs.is_bezos_empty():
+        console.print(
+            "[yellow]⚠  Bezos Letters KB is empty.[/yellow] "
+            "Run [bold]python main.py build-bezos[/bold] to index Bezos shareholder letters.\n"
+        )
+    if vs.is_iltb_empty():
+        console.print(
+            "[yellow]⚠  Invest Like the Best KB is empty.[/yellow] "
+            "Run [bold]python main.py build-iltb[/bold] to index ILTB transcripts "
+            "(Ellenbogen 1% Rule, Act Two, DCA-Up frameworks).\n"
         )
 
     while True:
@@ -244,6 +461,44 @@ def main():
         help="Limit to N episodes (useful for testing; default: all)",
     )
 
+    # build-pg
+    p_pg = sub.add_parser("build-pg", help="Scrape and index Paul Graham essays")
+    p_pg.add_argument(
+        "--priority-only",
+        action="store_true",
+        default=False,
+        help="Only index the curated high-signal essay list (faster)",
+    )
+    p_pg.add_argument(
+        "--max-essays",
+        type=int,
+        default=None,
+        metavar="N",
+        help="Limit to N essays (useful for testing; default: all)",
+    )
+
+    # build-bezos
+    p_bezos = sub.add_parser("build-bezos", help="Scrape and index Jeff Bezos shareholder letters")
+    p_bezos.add_argument(
+        "--priority-only",
+        action="store_true",
+        default=False,
+        help="Only index the curated high-signal letters (faster)",
+    )
+    p_bezos.add_argument(
+        "--max-letters",
+        type=int,
+        default=None,
+        metavar="N",
+        help="Limit to N letters (useful for testing; default: all)",
+    )
+
+    # build-iltb
+    sub.add_parser(
+        "build-iltb",
+        help="Index Invest Like the Best episode transcripts (Ellenbogen EP.452 etc.)",
+    )
+
     # chat
     sub.add_parser("chat", help="Launch interactive chat")
 
@@ -257,6 +512,9 @@ def main():
     args = parser.parse_args()
     dispatch = {
         "build-kb": cmd_build_kb,
+        "build-pg": cmd_build_pg,
+        "build-bezos": cmd_build_bezos,
+        "build-iltb": cmd_build_iltb,
         "chat": cmd_chat,
         "ask": cmd_ask,
         "status": cmd_status,

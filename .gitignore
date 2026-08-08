@@ -16,3 +16,6 @@ data/transcripts/
 
 # OS
 .DS_Store
+
+# kalshi-ev generated data
+kalshi-ev/data/

@@ -16,3 +16,8 @@ data/transcripts/
 
 # OS
 .DS_Store
+
+# Football forecasting scratch output
+football-forecast/.pytest_cache/
+football-forecast/data/
+*.egg-info/

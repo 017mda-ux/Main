@@ -76,12 +76,13 @@ def _open(url: str, accept: str, ua: str) -> bytes:
 
 
 def get(url: str, accept: str = "*/*") -> bytes:
+    # Retry every HTTP error with the browser string: federalreserve.gov and
+    # EDGAR both rejected the tool User-Agent, with codes that a narrow
+    # allow-list missed.
     try:
         return _open(url, accept, UA)
-    except urllib.error.HTTPError as e:
-        if e.code in (401, 403, 406, 429):
-            return _open(url, accept, UA_FALLBACK)
-        raise
+    except urllib.error.HTTPError:
+        return _open(url, accept, UA_FALLBACK)
 
 
 def describe(e: Exception) -> str:
@@ -344,7 +345,9 @@ def parse_feed(source: str, url: str) -> list[dict]:
         date = None
         for tname in ("pubDate", "published", "updated", "date",
                       ATOM + "published", ATOM + "updated",
-                      "{http://purl.org/dc/elements/1.1/}date"):
+                      "{http://purl.org/dc/elements/1.1/}date",
+                      "{http://purl.org/dc/terms/}date",
+                      "{http://purl.org/rss/1.0/modules/dc/}date"):
             node = it.find(tname)
             if node is not None:
                 date = parse_date(node.text)

@@ -16,3 +16,9 @@ data/transcripts/
 
 # OS
 .DS_Store
+
+# Dashboard
+data/cache/
+data/dashboard.html
+data/snapshot.json
+data/dashboard_state.json

@@ -1,0 +1,318 @@
+{
+  "generated_at": "2026-09-10T12:00:00",
+  "as_of": "2026-09-10",
+  "collection_mode": "research",
+  "collection_note": "Assembled from published reporting because this environment's egress policy blocks direct calls to fred.stlouisfed.org, home.treasury.gov, bls.gov and market data hosts. Run `python -m dashboard build` where those hosts are reachable to replace every figure with a primary-source read.",
+  "thesis": {
+    "headline": "The market is pricing a Fed hike into a CPI print, with Brent through $100 and the Treasury actively fighting the long end.",
+    "body": "Four things are colliding inside six sessions. Warsh's Jackson Hole speech moved September from a hold to a coin-flip-plus on a 25bp hike. August payrolls tripled consensus. Brent cleared $100 for the first time since May on the Iran conflict. And the 10-year sits at its highest since October 2023 even as Treasury doubles long-end buybacks to hold it down. The tell to watch is not the level of any one of these but the fact that the Treasury and the Fed are now pulling in opposite directions on the same part of the curve.",
+    "positioning_note": "Vol is not paid for this. VIX at 15.7 into a CPI print and an FOMC that is genuinely two-sided is the cheapest thing on the screen."
+  },
+  "tape": [
+    {"key": "FF", "label": "Fed funds target", "value": "3.50–3.75%", "sub": "held 9–3 in July", "tone": "neutral", "source": "Federal Reserve"},
+    {"key": "DGS10", "label": "10-year", "value": "4.85%", "sub": "highest since Oct 2023", "tone": "hot", "source": "Treasury / market"},
+    {"key": "BRENT", "label": "Brent", "value": "$101.50", "sub": "first >$100 since May", "tone": "hot", "source": "ICE, reported"},
+    {"key": "GOLD", "label": "Gold", "value": "$4,400", "sub": "3-session slide broken", "tone": "hot", "source": "spot, reported"},
+    {"key": "COPPER", "label": "Copper", "value": "$6.76/lb", "sub": "+46.6% y/y", "tone": "hot", "source": "COMEX, reported"},
+    {"key": "SPX", "label": "S&P 500", "value": "7,636", "sub": "off 2026 highs", "tone": "neutral", "source": "reported"},
+    {"key": "VIX", "label": "VIX", "value": "15.7", "sub": "2026 low was 14.2", "tone": "cool", "source": "Cboe, reported"},
+    {"key": "DXY", "label": "Dollar index", "value": "99.4", "sub": "99.4 pivot holding", "tone": "neutral", "source": "reported"},
+    {"key": "USDJPY", "label": "USD/JPY", "value": "159.8", "sub": "cleared 160 on 28 Aug", "tone": "hot", "source": "reported"},
+    {"key": "EURUSD", "label": "EUR/USD", "value": "1.1622", "sub": "ECB ref rate, 4 Sep", "tone": "neutral", "source": "ECB"}
+  ],
+  "modules": [
+    {
+      "key": "FOMC_SEP",
+      "label": "FOMC, 15–16 September",
+      "bucket": "event",
+      "score": 96.0,
+      "kind": "event",
+      "days_out": 6,
+      "reasons": [
+        "Genuinely two-sided for the first time in this cycle — the market is pricing a hike, not a cut",
+        "Warsh's Jackson Hole remarks moved implied odds from ~36% to the high 50s inside a session"
+      ],
+      "detail": "Market-implied probability of a 25bp hike has run 36% → 56% → 60.4% → 57% since 28 August. A hike would be the first of the cycle's second leg and would land against a Treasury that is publicly trying to cap long yields. The July meeting already carried three dissents against the hold, so the committee is not unified.",
+      "chart": {
+        "type": "path",
+        "title": "Implied probability of a 25bp hike at the September meeting",
+        "unit": "%",
+        "series": [
+          {"date": "2026-08-27", "value": 36.0, "note": "Before Warsh"},
+          {"date": "2026-08-28", "value": 52.0, "note": "Jackson Hole speech"},
+          {"date": "2026-08-31", "value": 58.0, "note": ""},
+          {"date": "2026-09-01", "value": 60.4, "note": "Peak"},
+          {"date": "2026-09-04", "value": 59.0, "note": "Payrolls +162k"},
+          {"date": "2026-09-09", "value": 57.0, "note": "Into CPI"}
+        ],
+        "source": "CME FedWatch, as reported by CNBC and Forbes"
+      },
+      "sources": [
+        {"label": "Warsh sharpens inflation warning at Jackson Hole", "url": "https://www.cnbc.com/2026/08/28/kevin-warsh-jackson-hole-fed-inflation-rate-hike.html"},
+        {"label": "Markets see Warsh endorsing a September hike", "url": "https://www.cnbc.com/2026/08/31/markets-see-warsh-endorsing-a-rate-hike-in-september-not-everyone-is-convinced.html"},
+        {"label": "FOMC minutes, 28–29 July 2026", "url": "https://www.federalreserve.gov/monetarypolicy/fomcminutes20260729.htm"}
+      ]
+    },
+    {
+      "key": "CPI_AUG",
+      "label": "August CPI — tomorrow, 08:30 ET",
+      "bucket": "event",
+      "score": 94.0,
+      "kind": "event",
+      "days_out": 1,
+      "reasons": [
+        "Last read the committee sees before it decides",
+        "Consensus has headline holding at 3.4% y/y with core at 2.5% — both still above target"
+      ],
+      "detail": "Warsh's stated objection is that the softer inflation run has not yet shown a meaningful improvement in the underlying trend. A core print at or above 0.3% m/m makes that argument for him and puts the hike near certain; a 0.1% would be the first real evidence against it. Energy is the wildcard — Brent has gone from the mid-90s to $101 inside the sample window, though the pass-through lands mostly in the September and October prints, not this one.",
+      "expectations": [
+        {"metric": "Headline CPI, m/m", "consensus": "+0.2%", "prior": "+0.3%"},
+        {"metric": "Headline CPI, y/y", "consensus": "+3.4%", "prior": "+3.4%"},
+        {"metric": "Core CPI, m/m", "consensus": "+0.1% to +0.2%", "prior": "+0.2%"},
+        {"metric": "Core CPI, y/y", "consensus": "+2.5%", "prior": "+2.5%"}
+      ],
+      "caveat": "Consensus figures vary by survey — Kiplinger and Babypips carried different headline m/m estimates (+0.4% vs +0.2%). Treat the range, not the point.",
+      "sources": [
+        {"label": "BLS CPI news release schedule", "url": "https://www.bls.gov/cpi/"},
+        {"label": "What the August CPI report is expected to show", "url": "https://www.kiplinger.com/investing/economy/cpi-report-august-2026-what-to-expect"}
+      ]
+    },
+    {
+      "key": "FED_TREASURY_CONFLICT",
+      "label": "Treasury and the Fed are now pulling opposite ways",
+      "bucket": "policy",
+      "score": 89.0,
+      "kind": "analysis",
+      "reasons": [
+        "Treasury doubled long-end buybacks to $4bn effective 9 September, the same week the Fed is being priced to hike",
+        "This is the structural story behind the long end, and it is not a one-meeting event"
+      ],
+      "detail": "Bessent has raised the maximum long-end liquidity-support buyback from $2bn to at least $4bn per operation in the 10–20y and 20–30y sectors, effective 9 September and running through the 4 November refunding. The stated rationale is liquidity support. The market reads it as an attempt to cap term premium. Meanwhile Warsh is signalling tighter policy. One arm of the government is buying duration while the other is repricing it lower. That tension is why the 10-year can sit at cycle highs while official buying steps up, and it is the single most important thing on this page for anyone running duration risk.",
+      "watch": [
+        "Whether buyback operations start clearing at levels that suggest price support rather than liquidity provision",
+        "The 4 November refunding for whether coupon sizes or bill share change",
+        "Any public friction between Treasury and the Fed — Axios has already framed them as at odds"
+      ],
+      "sources": [
+        {"label": "Treasury announces increased long-end buyback sizes", "url": "https://home.treasury.gov/news/press-releases/sb0607"},
+        {"label": "Bessent moves to curb Treasury yields, pressuring Warsh's Fed", "url": "https://www.cnbc.com/2026/08/19/bessent-treasury-buybacks-yields-warsh-fed.html"},
+        {"label": "Fed and Treasury appear at odds", "url": "https://www.axios.com/2026/08/20/bonds-fed-treasury-policy"}
+      ]
+    },
+    {
+      "key": "DGS10",
+      "label": "10-year at 4.85%",
+      "bucket": "curve",
+      "score": 86.0,
+      "kind": "level",
+      "last": 4.85,
+      "unit": "pct",
+      "reasons": [
+        "Highest since October 2023",
+        "Long end leading — this is term premium and supply, not a front-end repricing"
+      ],
+      "detail": "The move is concentrated in the long end. 2s10s is positive but narrow, so the curve is bear-flattening from the back: the market is adding term premium for oil-driven inflation and a fiscal path running above $2tn, while the front end is capped by an FOMC that has not yet moved. If the Fed hikes on the 16th and the long end does not follow, that flattening accelerates.",
+      "sources": [
+        {"label": "Daily Treasury par yield curve rates", "url": "https://home.treasury.gov/resource-center/data-chart-center/interest-rates/TextView?type=daily_treasury_yield_curve&field_tdr_date_value=2026"}
+      ]
+    },
+    {
+      "key": "BRENT",
+      "label": "Brent through $100",
+      "bucket": "commodity",
+      "score": 84.0,
+      "kind": "level",
+      "last": 101.5,
+      "unit": "usd",
+      "reasons": [
+        "First print above $100 since May",
+        "Supply-side, not demand-side — this is the inflation input the Fed cannot look through"
+      ],
+      "detail": "Brent reached roughly $100.76 on 9 September and cleared $101.50 on the 10th; WTI is around $94. The driver is the Iran conflict: reported Iranian attacks on US Navy vessels, and Houthi strikes on Saudi energy facilities that forced temporary shut-ins. Goldman lifted December Brent to $85 but warned of $120+ in 2027 if Gulf output stays 4mb/d below pre-war levels. A supply shock is the worst possible input for a central bank already being pushed to hike — it lifts headline inflation while cutting real income.",
+      "sources": [
+        {"label": "Brent crude hits $100 as Iran war escalates", "url": "https://www.washingtontimes.com/news/2026/sep/9/brent-crude-hits-100-barrel-iran-war-escalates/"},
+        {"label": "Oil rises on report of second Iranian attack on US Navy ships", "url": "https://www.cnbc.com/2026/09/08/oil-prices-today-brent-wti-hormuz-iran-war.html"}
+      ]
+    },
+    {
+      "key": "COPPER_GOLD",
+      "label": "Copper/gold has decoupled from the 10-year",
+      "bucket": "ratio",
+      "score": 81.0,
+      "kind": "ratio",
+      "ratio_value": 1.54,
+      "versus_value": 4.85,
+      "reasons": [
+        "Ratio implies a 10-year far below 4.85% — the widest gap of the cycle",
+        "But the divergence is a denominator story, not a growth warning"
+      ],
+      "detail": "Copper at $6.76/lb over gold at $4,400/oz puts the ratio at 1.54 (×1000). Historically that tracks the 10-year reasonably closely; today the 10-year is at 4.85%. The naive read is that yields are far too high for the growth signal. That read is wrong here. Copper is up 46.6% year-on-year — the growth leg is strong. The gap exists because gold has run harder, and gold is running on a fiscal bid: a deficit tracking above $2tn, rising interest expense, and central bank accumulation. So the ratio is not signalling weak growth. It is signalling debasement, which argues for *higher* long yields, not lower. This is the clearest example on the page of a classic indicator that inverts its meaning when you check which leg actually moved.",
+      "components": [
+        {"label": "Copper", "value": "$6.76/lb", "change": "+46.6% y/y", "tone": "hot"},
+        {"label": "Gold", "value": "$4,400/oz", "change": "above $4,400", "tone": "hot"},
+        {"label": "Ratio ×1000", "value": "1.54", "change": "", "tone": "cool"},
+        {"label": "10-year", "value": "4.85%", "change": "cycle high", "tone": "hot"}
+      ],
+      "sources": [
+        {"label": "Copper price and history", "url": "https://tradingeconomics.com/commodity/copper"},
+        {"label": "Gold price, 9 September 2026", "url": "https://www.cnbc.com/select/the-price-of-gold-today-sept-9-2026/"}
+      ]
+    },
+    {
+      "key": "NFP_AUG",
+      "label": "August payrolls tripled consensus",
+      "bucket": "activity",
+      "score": 76.0,
+      "kind": "surprise",
+      "reasons": [
+        "+162k against a +53k consensus, with June and July both revised up",
+        "Removes the labour-market argument against hiking"
+      ],
+      "detail": "The single largest surprise in the current run. June was revised up 11k to +31k and July from −23k to +21k, a 55k two-month revision that turns a stalling labour market back into a slowly growing one. Unemployment held at 4.1%, in line. Leisure and hospitality added 62k; information and financial activities declined. For the Fed's purposes this closes off the softest branch of the dovish case — it is now an inflation argument alone.",
+      "surprises": [
+        {"metric": "Nonfarm payrolls", "actual": 162.0, "consensus": 53.0, "unit": "k", "direction": "beat"},
+        {"metric": "Unemployment rate", "actual": 4.1, "consensus": 4.1, "unit": "%", "direction": "inline"},
+        {"metric": "June revision", "actual": 31.0, "consensus": 20.0, "unit": "k", "direction": "beat"},
+        {"metric": "July revision", "actual": 21.0, "consensus": -23.0, "unit": "k", "direction": "beat"}
+      ],
+      "sources": [
+        {"label": "BLS Employment Situation, August 2026", "url": "https://www.bls.gov/news.release/empsit.nr0.htm"},
+        {"label": "Payrolls rose 162,000, much more than expected", "url": "https://www.cnbc.com/2026/09/04/jobs-report-august-2026.html"}
+      ]
+    },
+    {
+      "key": "FISCAL",
+      "label": "Deficit on a $2tn+ pace",
+      "bucket": "fiscal",
+      "score": 68.0,
+      "kind": "analysis",
+      "reasons": [
+        "$1.8tn borrowed in the first ten months of FY2026",
+        "Interest expense is now one of the two things driving the spending increase"
+      ],
+      "detail": "Through ten months the deficit stands at $1.8tn and the year is tracking above $2tn. Receipts are up $143bn on stronger individual and payroll collections plus larger customs duties; outlays are up $172bn on entitlements and debt service. Debt stood at $31.7tn at end-June, $2.7tn higher than a year earlier. The feedback loop is the point: higher yields raise interest expense, which widens the deficit, which raises issuance, which pressures term premium. That loop is precisely what Treasury's buyback expansion is trying to interrupt.",
+      "figures": [
+        {"label": "FY26 deficit, 10 months", "value": "$1.8tn"},
+        {"label": "Full-year pace", "value": "> $2tn"},
+        {"label": "Debt outstanding, end-June", "value": "$31.7tn"},
+        {"label": "Year-on-year debt change", "value": "+$2.7tn"}
+      ],
+      "sources": [
+        {"label": "Treasury confirms $1.8tn deficit for first 10 months of FY2026", "url": "https://www.crfb.org/press-releases/treasury-confirms-18-trillion-deficit-first-10-months-fy-2026"},
+        {"label": "Monthly Treasury Statement", "url": "https://fiscaldata.treasury.gov/datasets/monthly-treasury-statement/"}
+      ]
+    },
+    {
+      "key": "USDJPY",
+      "label": "USD/JPY around 160 into a BoJ meeting",
+      "bucket": "fx",
+      "score": 64.0,
+      "kind": "level",
+      "last": 159.8,
+      "unit": "index",
+      "reasons": [
+        "Cleared 160 on 28 August — the level that has historically drawn intervention",
+        "BoJ meets in September with the market pricing some chance of a move"
+      ],
+      "detail": "The pair briefly cleared 160 before easing to 159.7–159.9. The tension: Japan's Q2 was weak — consumption −0.1%, capex down for the third quarter in four — and core inflation has not printed above target all year, which argues against BoJ urgency. But a Fed hike would widen differentials further and push the pair through 160 with force. Watch for verbal intervention before the meeting rather than after.",
+      "sources": [
+        {"label": "September 2026 monthly FX outlook", "url": "https://www.marctomarket.com/2026/08/september-2026-monthly.html"},
+        {"label": "BoJ release schedule", "url": "https://www.boj.or.jp/en/about/calendar/index.htm"}
+      ]
+    },
+    {
+      "key": "GLOBAL_TIGHTENING",
+      "label": "The hiking cycle is going global",
+      "bucket": "policy",
+      "score": 62.0,
+      "kind": "analysis",
+      "reasons": [
+        "The ECB returned to hiking in June 2026 and has kept going",
+        "A synchronised tightening turn is a different regime from a US-only one"
+      ],
+      "detail": "The ECB resumed rate increases in June and continues to tighten; the Fed is now being priced to follow; the BoJ is at least in play. A synchronised turn removes the cross-currency cushion that made the last US-only tightening tolerable for risk assets — there is no obvious easing central bank to offset. It also compresses the rate-differential trade that has driven FX all year, which is why EUR/USD has held a 1.14–1.21 range despite a hawkish Fed repricing.",
+      "sources": [
+        {"label": "September 2026 monthly — central bank divergence", "url": "https://www.marctomarket.com/2026/08/september-2026-monthly.html"}
+      ]
+    },
+    {
+      "key": "VOL",
+      "label": "Vol is not priced for any of this",
+      "bucket": "equity",
+      "score": 58.0,
+      "kind": "analysis",
+      "reasons": [
+        "VIX at 15.7 into a CPI print and a live FOMC",
+        "The 2026 low of 14.2 was set less than a month ago"
+      ],
+      "detail": "The S&P is around 7,636 having been up roughly 16% year-to-date at the August highs, and the VIX printed its 2026 low of 14.2 in mid-August. It has since risen — up 5.5% on 9 September as yields climbed — but 15.7 into a genuinely two-sided FOMC and a CPI release the following morning is the cheapest risk on the screen. Equity index vol is not the only expression: with the Fed and Treasury in opposite corners, rate vol is the more direct trade.",
+      "sources": [
+        {"label": "VIX hits 2026 low", "url": "https://www.cnbc.com/2026/08/17/stock-market-volatility-vix-wall-street.html"}
+      ]
+    }
+  ],
+  "regions": [
+    {
+      "name": "Middle East",
+      "status": "critical",
+      "headline": "Iran conflict is now the primary global inflation input",
+      "items": [
+        "Reported Iranian attempts to strike US Navy vessels, including ballistic missiles targeting a carrier",
+        "Houthi attacks on Saudi energy facilities forced temporary shut-ins",
+        "Brent above $101, first time over $100 since May; Goldman warns of $120+ in 2027 if Gulf output stays 4mb/d below pre-war levels"
+      ],
+      "market_read": "Direct pass-through to headline CPI, and the reason the hawkish case at the Fed is strengthening rather than fading."
+    },
+    {
+      "name": "Europe",
+      "status": "watch",
+      "headline": "ECB tightening while NATO spending resets the fiscal baseline",
+      "items": [
+        "ECB returned to hiking in June 2026 and has continued",
+        "NATO agreed to more than double the defence spending target from 2% to 5% of GDP by 2035",
+        "EUR/USD 1.1622 on the ECB reference rate, holding a 1.14–1.21 range"
+      ],
+      "market_read": "Structurally higher European issuance plus a hiking ECB caps how far the dollar can run on Fed hawkishness alone."
+    },
+    {
+      "name": "Asia",
+      "status": "watch",
+      "headline": "BoJ in play at 160; China holding the yuan steady while easing at the margin",
+      "items": [
+        "USD/JPY cleared 160 on 28 August; BoJ meets in September with weak Q2 growth arguing against urgency",
+        "China expanded interest subsidies for small business and consumers effective 1 August; new lending above ¥20tn in the first seven months",
+        "Policymakers reiterated the pledge to keep the yuan basically stable despite calls to let it strengthen"
+      ],
+      "market_read": "A stable yuan exports disinflation while a weak yen exports competitive pressure — the two largest Asian currencies are pulling in opposite directions."
+    },
+    {
+      "name": "United States",
+      "status": "critical",
+      "headline": "Two arms of policy in open disagreement about the long end",
+      "items": [
+        "Treasury doubled long-end buybacks to $4bn per operation effective 9 September",
+        "Bessent at the G20: 'what happens over a month doesn't matter'",
+        "Fed Chair Warsh reaffirmed 2% PCE as a firm objective and said the softer inflation run has not improved the underlying trend"
+      ],
+      "market_read": "Watch for this to become explicit. A public disagreement between Treasury and the Fed over the curve would itself be the market-moving event."
+    }
+  ],
+  "calendar": [
+    {"date": "2026-09-11", "time": "08:30 ET", "event": "CPI, August", "agency": "BLS", "weight": "high", "consensus": "3.4% y/y headline, 2.5% core"},
+    {"date": "2026-09-15", "time": "", "event": "FOMC meeting begins", "agency": "Federal Reserve", "weight": "high", "consensus": ""},
+    {"date": "2026-09-16", "time": "14:00 ET", "event": "FOMC decision, projections and press conference", "agency": "Federal Reserve", "weight": "high", "consensus": "~57% implied probability of +25bp"},
+    {"date": "2026-11-04", "time": "", "event": "Quarterly refunding announcement", "agency": "U.S. Treasury", "weight": "medium", "consensus": "Buyback sizing guidance expected"}
+  ],
+  "speak": [
+    {"who": "Kevin Warsh", "role": "Chair, Federal Reserve", "when": "28 August, Jackson Hole", "quote": "Reaffirmed 2% PCE as a firm objective, that interest rates remain the primary tool, and that the recent run of softer inflation data has not demonstrated meaningful improvement in the underlying trend.", "impact": "Moved implied September hike odds from roughly 36% to the high 50s.", "tone": "hawkish"},
+    {"who": "Scott Bessent", "role": "Secretary of the Treasury", "when": "1 September, G20", "quote": "What happens over a month doesn't matter — while noting the US bond market has outperformed the rest of the world since the President's return to office.", "impact": "Downplayed the long-end selloff while simultaneously doubling buybacks.", "tone": "supportive"}
+  ],
+  "provenance": {
+    "note": "Every figure on this page carries a source. Nothing is modelled or interpolated. Where surveys disagree, the range is shown rather than a point estimate.",
+    "primary_sources_blocked": ["fred.stlouisfed.org", "home.treasury.gov", "api.bls.gov", "federalreserve.gov", "stooq.com", "query1.finance.yahoo.com"],
+    "conflicts": [
+      "S&P 500 level: 7,686.14 reported for 1 September and 7,635.65 more recently. The lower figure is used.",
+      "August CPI m/m consensus ranges from +0.2% to +0.4% across surveys."
+    ]
+  }
+}

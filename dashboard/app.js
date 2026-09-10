@@ -295,10 +295,12 @@ function buildRead() {
       : `${move} <span class="q">(${sig})</span>${p != null ? `, ${pctText(p)} percentile` : ''}.`);
   }
 
-  /* Curve is always worth a line when it actually moved. */
-  const c2 = H['2usy.b'], c10 = H['10usy.b'];
-  if (c2 && c10) {
-    const now = (last(c10) - last(c2)) * 100, was = (prior(c10) - prior(c2)) * 100;
+  /* Curve is always worth a line when it actually moved. Use the same
+     date-aligned series the signal card uses, so the two never disagree
+     when one leg's last close is a day behind the other's. */
+  const curve = derive('10usy.b', '2usy.b', (a, b) => (a - b) * 100);
+  if (curve) {
+    const now = last(curve), was = prior(curve);
     const dbp = now - was;
     if (Math.abs(dbp) >= 3) {
       out.push(`Curve <b>${dbp > 0 ? 'steepened' : 'flattened'}</b> ${Math.abs(dbp).toFixed(0)}bp — 2s10s at <span class="q">${sign(now)}${Math.abs(now).toFixed(0)}bp</span>.`);

@@ -236,7 +236,7 @@ section { padding-top: 76px; scroll-margin-top: 70px; }
 
 .signals { display: grid; gap: 0; background: var(--surface);
   border: 1px solid var(--hairline-soft); border-radius: var(--r); overflow: hidden;
-  grid-template-columns: repeat(auto-fill, minmax(284px, 1fr)); }
+  grid-template-columns: repeat(auto-fill, minmax(268px, 1fr)); }
 .signal { min-width: 0;
   background: var(--surface); padding: 17px 18px 16px; display: flex; flex-direction: column; gap: 9px;
   box-shadow: 1px 0 0 var(--hairline-soft), 0 1px 0 var(--hairline-soft); }

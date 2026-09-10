@@ -51,14 +51,21 @@ if CONTACT:
 _CTX = ssl.create_default_context()
 
 
-def get(url: str, accept: str = "*/*") -> bytes:
+# Some public endpoints refuse a bare tool User-Agent. Try the descriptive one
+# first (SEC asks for it), then fall back to a browser string.
+UA_FALLBACK = ("Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 "
+               "(KHTML, like Gecko) Chrome/124.0 Safari/537.36")
+
+
+def _open(url: str, accept: str, ua: str) -> bytes:
     req = urllib.request.Request(
         url,
         headers={
-            "User-Agent": UA,
+            "User-Agent": ua,
             "Accept": accept,
             "Accept-Encoding": "gzip",
             "Accept-Language": "en-US,en;q=0.9",
+            "Connection": "close",
         },
     )
     with urllib.request.urlopen(req, timeout=TIMEOUT, context=_CTX) as r:
@@ -66,6 +73,24 @@ def get(url: str, accept: str = "*/*") -> bytes:
     if raw[:2] == b"\x1f\x8b":
         raw = gzip.decompress(raw)
     return raw
+
+
+def get(url: str, accept: str = "*/*") -> bytes:
+    try:
+        return _open(url, accept, UA)
+    except urllib.error.HTTPError as e:
+        if e.code in (401, 403, 406, 429):
+            return _open(url, accept, UA_FALLBACK)
+        raise
+
+
+def describe(e: Exception) -> str:
+    """Say what actually went wrong, so a failed run is diagnosable from the log."""
+    if isinstance(e, urllib.error.HTTPError):
+        return f"HTTP {e.code}"
+    if isinstance(e, urllib.error.URLError):
+        return f"URLError {getattr(e, 'reason', '')}"
+    return type(e).__name__
 
 
 def warn(msg: str) -> None:
@@ -101,21 +126,69 @@ def symbols_from_config() -> list[str]:
     return out
 
 
-def fetch_history(sym: str) -> tuple[str, dict | None]:
+# Stooq refuses this runner outright, so the snapshot needs a server-side
+# source. Yahoo's chart endpoint is JSON, keyless, and covers almost the whole
+# universe. The browser still uses Stooq (Yahoo sends no CORS header), which is
+# why the page treats the live fetch as an upgrade rather than a requirement.
+YAHOO = {
+    '^spx': '^GSPC', '^ndx': '^NDX', '^dji': '^DJI', '^rut': '^RUT',
+    '^sx5e': '^STOXX50E', '^dax': '^GDAXI', '^ukx': '^FTSE', '^nkx': '^N225',
+    '^hsi': '^HSI', '^kospi': '^KS11', '^bvsp': '^BVSP', '^vix': '^VIX',
+    '10usy.b': '^TNX', '5usy.b': '^FVX', '30usy.b': '^TYX', '2usy.b': '2YY=F',
+    'dx.f': 'DX-Y.NYB', 'cl.f': 'CL=F', 'hg.f': 'HG=F',
+    'xauusd': 'GC=F', 'xagusd': 'SI=F',
+    'eurusd': 'EURUSD=X', 'usdjpy': 'USDJPY=X', 'gbpusd': 'GBPUSD=X',
+    'usdchf': 'USDCHF=X', 'usdcnh': 'USDCNH=X', 'audusd': 'AUDUSD=X',
+    'usdkrw': 'USDKRW=X', 'usdmxn': 'USDMXN=X', 'usdinr': 'USDINR=X',
+    'usdbrl': 'USDBRL=X', 'usdcad': 'USDCAD=X', 'eurjpy': 'EURJPY=X',
+    # No free server-side source for foreign benchmark yields; the browser
+    # picks these up from Stooq when it can reach it.
+    '10dey.b': None, '10jpy.b': None, '10uky.b': None,
+}
+
+
+def yahoo_symbol(sym: str) -> str | None:
+    if sym in YAHOO:
+        return YAHOO[sym]
+    if sym.endswith('.us'):
+        return sym[:-3].upper()
+    return None
+
+
+def from_yahoo(sym: str) -> dict | None:
+    y = yahoo_symbol(sym)
+    if not y:
+        return None
+    url = (f"https://query1.finance.yahoo.com/v8/finance/chart/"
+           f"{urllib.parse.quote(y)}?range={HISTORY_YEARS}y&interval=1d")
+    doc = json.loads(get(url, "application/json").decode("utf-8", "replace"))
+    res = (doc.get("chart") or {}).get("result") or []
+    if not res:
+        raise ValueError("empty result")
+    r = res[0]
+    ts = r.get("timestamp") or []
+    quote = ((r.get("indicators") or {}).get("quote") or [{}])[0]
+    closes = quote.get("close") or []
+
+    dates, vals = [], []
+    for t, c in zip(ts, closes):
+        if c is None or c == 0:
+            continue
+        dates.append(datetime.fromtimestamp(t, timezone.utc).strftime("%Y-%m-%d"))
+        vals.append(round(float(c), 4))
+    if len(vals) < 40:
+        raise ValueError(f"only {len(vals)} rows")
+    return {"d": dates, "c": vals}
+
+
+def from_stooq(sym: str) -> dict | None:
     d1 = (datetime.now(timezone.utc) - timedelta(days=365 * HISTORY_YEARS + 30)).strftime("%Y%m%d")
     url = f"https://stooq.com/q/d/l/?s={urllib.parse.quote(sym)}&d1={d1}&i=d"
-    try:
-        text = get(url, "text/csv").decode("utf-8", "replace")
-    except Exception as e:                                    # noqa: BLE001
-        warn(f"{sym}: {type(e).__name__}")
-        return sym, None
-
+    text = get(url, "text/csv").decode("utf-8", "replace")
     lines = text.strip().splitlines()
-    if len(lines) < 40 or not lines[0].lower().startswith("date"):
-        warn(f"{sym}: no usable series")
-        return sym, None
-
-    dates, closes = [], []
+    if not lines or not lines[0].lower().startswith("date"):
+        raise ValueError(f"not CSV: {text.strip()[:60]!r}")
+    dates, vals = [], []
     for line in lines[1:]:
         p = line.split(",")
         if len(p) < 5:
@@ -127,22 +200,45 @@ def fetch_history(sym: str) -> tuple[str, dict | None]:
         if c == 0:
             continue
         dates.append(p[0])
-        closes.append(round(c, 4))
+        vals.append(round(c, 4))
+    if len(vals) < 40:
+        raise ValueError(f"only {len(vals)} rows")
+    return {"d": dates, "c": vals}
 
-    if len(closes) < 40:
-        return sym, None
-    return sym, {"d": dates[-TRIM_ROWS:], "c": closes[-TRIM_ROWS:]}
+
+PROVIDERS = (("yahoo", from_yahoo), ("stooq", from_stooq))
+
+
+def fetch_history(sym: str) -> tuple[str, dict | None, str]:
+    problems = []
+    for name, fn in PROVIDERS:
+        try:
+            series = fn(sym)
+        except Exception as e:                                # noqa: BLE001
+            problems.append(f"{name} {describe(e)}")
+            continue
+        if series:
+            return sym, {"d": series["d"][-TRIM_ROWS:], "c": series["c"][-TRIM_ROWS:]}, name
+    warn(f"{sym}: {'; '.join(problems) or 'no provider'}")
+    return sym, None, ""
 
 
 def build_market() -> dict:
     syms = symbols_from_config()
     print(f"market: {len(syms)} symbols")
     out: dict[str, dict] = {}
+    used: dict[str, int] = {}
     with ThreadPoolExecutor(max_workers=6) as ex:
-        for sym, series in ex.map(fetch_history, syms):
-            if series:
-                out[sym] = series
-    print(f"market: {len(out)}/{len(syms)} resolved")
+        for sym, series, via in ex.map(fetch_history, syms):
+            if not series:
+                continue
+            out[sym] = series
+            used[via] = used.get(via, 0) + 1
+            # Log the last value so a wrong ticker or a scale error (a yield
+            # quoted x10, say) is visible in the run log rather than on the page.
+            print(f"  {sym:9} via {via:5} {len(series['c']):4} rows  last={series['c'][-1]}")
+    via_txt = ", ".join(f"{k} {v}" for k, v in sorted(used.items())) or "none"
+    print(f"market: {len(out)}/{len(syms)} resolved ({via_txt})")
     return out
 
 
@@ -174,7 +270,8 @@ FEEDS: dict[str, list[tuple[str, str]]] = {
     ],
     "allocators": [
         ("SEC 13F", "https://www.sec.gov/cgi-bin/browse-edgar?action=getcurrent&type=13F-HR&dateb=&owner=include&count=40&output=atom"),
-        ("Norges Bank IM", "https://www.nbim.no/en/rss/"),
+        ("SEC 13D/G", "https://www.sec.gov/cgi-bin/browse-edgar?action=getcurrent&type=SC+13D&dateb=&owner=include&count=40&output=atom"),
+        ("SEC Form D/A", "https://www.sec.gov/cgi-bin/browse-edgar?action=getcurrent&type=D%2FA&dateb=&owner=include&count=40&output=atom"),
     ],
     "geo": [
         ("USTR", "https://ustr.gov/rss.xml"),
@@ -219,7 +316,7 @@ def parse_feed(source: str, url: str) -> list[dict]:
         raw = get(url, "application/rss+xml, application/atom+xml, application/xml;q=0.9")
         root = ET.fromstring(raw)
     except Exception as e:                                    # noqa: BLE001
-        warn(f"{source}: {type(e).__name__}")
+        warn(f"{source}: {describe(e)}")
         return []
 
     items: list[dict] = []
@@ -318,7 +415,7 @@ def build_fomc() -> list[str]:
     try:
         html = get(url, "text/html").decode("utf-8", "replace")
     except Exception as e:                                    # noqa: BLE001
-        warn(f"fomc: {type(e).__name__} — page keeps its fallback dates")
+        warn(f"fomc: {describe(e)} — page keeps its fallback dates")
         return []
 
     dates: list[str] = []

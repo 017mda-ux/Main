@@ -43,15 +43,18 @@ jobs:
 
       - name: Commit the snapshot if it changed
         run: |
-          if git diff --quiet -- dashboard/data.json; then
-            echo "no change"
-            exit 0
-          fi
           git config user.name  "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          # Stage first: an untracked data.json shows no diff on the first run,
+          # which silently skipped the commit.
           git add dashboard/data.json
+          if git diff --cached --quiet -- dashboard/data.json; then
+            echo "snapshot unchanged"
+            exit 0
+          fi
           git commit -m "Refresh dashboard snapshot"
-          git push
+          git pull --rebase --autostash origin "${GITHUB_REF_NAME}"
+          git push origin "HEAD:${GITHUB_REF_NAME}"
 
       - uses: actions/upload-pages-artifact@v3
         with:

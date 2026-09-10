@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Vantage — cross-asset daily read</title>
+<meta name="description" content="A single screen of cross-asset indicators for a global allocator: tape, signal crosses, valuation against history, bellwether equities, policy, and primary-source research.">
+<meta name="color-scheme" content="light dark">
+<link rel="stylesheet" href="styles.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><text y='13' font-size='14'>◒</text></svg>">
+</head>
+<body>
+
+<header class="masthead">
+  <div class="masthead-inner">
+    <h1 class="wordmark">Vantage <span>/ cross-asset</span></h1>
+    <div class="stamp num" id="stamp">loading</div>
+    <button class="iconbtn" id="theme" type="button">Theme</button>
+    <button class="iconbtn" id="refresh" type="button" title="Clear cache and refetch">Refresh</button>
+  </div>
+</header>
+
+<main>
+
+  <!-- ───────── The read: the only part that interprets ───────── -->
+  <section class="read" id="s-read" aria-labelledby="h-read">
+    <h2 id="h-read" style="position:absolute;left:-9999px">The read</h2>
+    <ul id="read-list">
+      <li class="empty skeleton">Reading the tape…</li>
+    </ul>
+  </section>
+
+  <!-- ───────── Tape ───────── -->
+  <section id="s-tape">
+    <div class="section-head">
+      <h2>Cross-asset tape</h2>
+      <p>Equities, rates, dollar, commodities, volatility. Change is versus the prior close.</p>
+    </div>
+    <div class="grid" id="tape"></div>
+  </section>
+
+  <!-- ───────── Currencies ───────── -->
+  <section id="s-fx">
+    <div class="section-head">
+      <h2>Currencies</h2>
+      <p>Majors and the funding/EM crosses that carry the most macro information.</p>
+    </div>
+    <div class="grid" id="fx"></div>
+  </section>
+
+  <!-- ───────── Movers ───────── -->
+  <section id="s-movers">
+    <div class="section-head">
+      <h2>What actually moved</h2>
+      <p id="movers-note"></p>
+    </div>
+    <div class="movers" id="movers"></div>
+    <p class="note-inline">Ranked by standard deviations against each instrument’s own trailing 60-day volatility, not by headline percentage — a 0.4% move in the 10-year is a bigger event than a 1.5% move in the Nasdaq.</p>
+  </section>
+
+  <!-- ───────── Signal crosses ───────── -->
+  <section id="s-signals">
+    <div class="section-head">
+      <h2>Signal crosses</h2>
+      <p>Ratios that carry economic information the constituent legs do not.</p>
+    </div>
+    <div class="signals" id="signals"></div>
+    <div id="cross"></div>
+  </section>
+
+  <!-- ───────── Valuation ───────── -->
+  <section id="s-vals">
+    <div class="section-head">
+      <h2>Indices against their own history</h2>
+      <p>Percentile of each index against its own price history, and distance from the 200-day mean. Each row states the window it used.</p>
+    </div>
+    <div class="vals" id="vals"></div>
+    <p class="note-inline">
+      These are price-history percentiles, not forward multiples. No free, keyless, browser-accessible
+      source publishes forward P/E — so this page does not pretend to. For forward multiples against
+      long-run averages, the primary sources are linked under <a href="#s-rail" style="color:var(--accent)">Valuation</a> in the source rail.
+    </p>
+  </section>
+
+  <!-- ───────── Macro from the micro ───────── -->
+  <section id="s-themes">
+    <div class="section-head">
+      <h2>Macro from the micro</h2>
+      <p>A bottom-up read. Each name is here because it is a clean single-variable window onto one part of the real economy.</p>
+    </div>
+    <div class="themes" id="themes"></div>
+  </section>
+
+  <!-- ───────── Policy ───────── -->
+  <section id="s-policy">
+    <div class="section-head">
+      <h2>Policy</h2>
+      <p>The clock, then the primary documents.</p>
+    </div>
+    <div class="policy-top">
+      <div class="countdown" id="countdown"></div>
+      <div>
+        <p class="note-inline" style="margin-top:0">
+          Fed speak, cabinet commentary and fiscal announcements are only worth reading at the source.
+          The refresh job pulls new items from the Federal Reserve, the Treasury and the Federal Register
+          directly; the list sits under <a href="#s-feeds" style="color:var(--accent)">Latest from primary sources</a>.
+          Anything that arrives via an aggregator is deliberately excluded.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ───────── Feeds ───────── -->
+  <section id="s-feeds">
+    <div class="section-head">
+      <h2>Latest from primary sources</h2>
+      <p id="feeds-note"></p>
+    </div>
+    <div class="feeds" id="feeds"></div>
+  </section>
+
+  <!-- ───────── Rail ───────── -->
+  <section id="s-rail">
+    <div class="section-head">
+      <h2>The desk</h2>
+      <p>Deep links to the page that holds the data — never a homepage, never secondary commentary.</p>
+    </div>
+    <div class="rail" id="rail"></div>
+  </section>
+
+</main>
+
+<footer>
+  <p style="margin:0 0 10px">
+    Market series are fetched in your browser from Stooq on each load, and fall back to the
+    snapshot committed by the refresh job. Headlines and filings come only from the issuing
+    institution. Nothing on this page is interpolated, estimated or modelled — if a number could
+    not be sourced it reads “—”.
+  </p>
+  <p style="margin:0">Not investment advice. Verify every figure at its source before you act on it.</p>
+</footer>
+
+<div id="tip" role="status" aria-live="polite"></div>
+<script type="module" src="app.js"></script>
+</body>
+</html>

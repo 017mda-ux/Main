@@ -416,6 +416,34 @@ def parse_feed(source: str, url: str) -> list[dict]:
     return items
 
 
+# The Federal Register is a firehose of procedural filings. These are the
+# document shapes that are never market-moving, dropped by title so the block
+# stays worth reading rather than merely being primary.
+NOISE = re.compile(
+    r"performance review board|senior executive service|privacy act|sunshine act"
+    r"|advisory committee|notice of meeting|meeting notice|request for nominations"
+    r"|agency information collection|paperwork reduction|information collection activit"
+    r"|renewal of the charter|combined notice of filings|membership of the"
+    r"|proposed collection|comment request|correction to|petition for",
+    re.I,
+)
+
+# One source must not crowd out the others in a block: the Federal Register
+# publishes dozens a day, the ECB a handful, and both matter.
+MAX_PER_SOURCE = 3
+
+
+def relevant(item: dict) -> bool:
+    return not NOISE.search(item["t"])
+
+
+def dedupe_key(title: str) -> str:
+    """Near-identical filings (the same sanctions notice, reissued) collapse."""
+    t = re.sub(r"[^a-z0-9 ]", "", title.lower())
+    t = re.sub(r"\s+", " ", t).strip()
+    return t[:45]
+
+
 def build_feeds() -> dict[str, list[dict]]:
     cutoff = (datetime.now(timezone.utc) - timedelta(days=21)).strftime("%Y-%m-%d")
     out: dict[str, list[dict]] = {}
@@ -439,14 +467,20 @@ def build_feeds() -> dict[str, list[dict]]:
 
         # Recent first; undated items sink rather than disappear.
         merged = [m for m in merged if (m["d"] or "9999") >= cutoff or m["d"] is None]
+        merged = [m for m in merged if relevant(m)]
         merged.sort(key=lambda m: m["d"] or "0000-00-00", reverse=True)
 
-        seen, dedup = set(), []
+        seen_url, seen_title, per_source, dedup = set(), set(), {}, []
         for m in merged:
-            key = m["u"]
-            if key in seen:
+            title_key = dedupe_key(m["t"])
+            src = m["s"].split(" · ")[0]
+            if m["u"] in seen_url or title_key in seen_title:
                 continue
-            seen.add(key)
+            if per_source.get(src, 0) >= MAX_PER_SOURCE:
+                continue
+            seen_url.add(m["u"])
+            seen_title.add(title_key)
+            per_source[src] = per_source.get(src, 0) + 1
             dedup.append(m)
 
         out[block] = dedup[:MAX_PER_FEED]

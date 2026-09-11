@@ -424,7 +424,8 @@ NOISE = re.compile(
     r"|advisory committee|notice of meeting|meeting notice|request for nominations"
     r"|agency information collection|paperwork reduction|information collection activit"
     r"|renewal of the charter|combined notice of filings|membership of the"
-    r"|proposed collection|comment request|correction to|petition for",
+    r"|proposed collection|comment request|correction to|petition for"
+    r"|mergers of bank holding|veterans.{0,3} benefits|order of merit|announce agenda",
     re.I,
 )
 
@@ -470,18 +471,26 @@ def build_feeds() -> dict[str, list[dict]]:
         merged = [m for m in merged if relevant(m)]
         merged.sort(key=lambda m: m["d"] or "0000-00-00", reverse=True)
 
-        seen_url, seen_title, per_source, dedup = set(), set(), {}, []
+        seen_url, seen_title, per_source, dedup, spill = set(), set(), {}, [], []
         for m in merged:
             title_key = dedupe_key(m["t"])
-            src = m["s"].split(" · ")[0]
             if m["u"] in seen_url or title_key in seen_title:
-                continue
-            if per_source.get(src, 0) >= MAX_PER_SOURCE:
                 continue
             seen_url.add(m["u"])
             seen_title.add(title_key)
+            src = m["s"].split(" · ")[0]
+            # First pass keeps the block diverse...
+            if per_source.get(src, 0) >= MAX_PER_SOURCE:
+                spill.append(m)
+                continue
             per_source[src] = per_source.get(src, 0) + 1
             dedup.append(m)
+
+        # ...then top up from what the cap held back, so a block with only one
+        # working source is not left half empty by a rule meant to add variety.
+        if len(dedup) < MAX_PER_FEED:
+            dedup += spill[:MAX_PER_FEED - len(dedup)]
+            dedup.sort(key=lambda m: m["d"] or "0000-00-00", reverse=True)
 
         out[block] = dedup[:MAX_PER_FEED]
         print(f"feeds/{block}: {len(out[block])}")

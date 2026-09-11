@@ -43,7 +43,12 @@ their response — the page silently keeps the snapshot. Nothing breaks.
   each index's own history and links to the primary sources (S&P, MSCI,
   Damodaran, Shiller) for real forward multiples.
 - **No aggregated news.** Every headline comes from the issuing institution —
-  the Fed, the ECB, the BIS, NBER, the SEC, USTR, EIA. No secondary commentary.
+  the ECB, the BoJ, the BoE, NBER, the SEC, USTR, the Federal Register. No
+  secondary commentary.
+- **Fed and EDGAR come in via the Federal Register.** `federalreserve.gov` and
+  `sec.gov` refuse GitHub runner IPs, so Fed and Treasury actions are read from
+  the Federal Register API — the government's publication of record for the
+  same documents — rather than scraped from sites that block automation.
 - **No CDX or ACM term premium.** Neither is free. `HYG/IEF` and `HYG/LQD` are
   labelled as proxies, and the real series are linked.
 
@@ -60,8 +65,16 @@ items are kept — a failed refresh never blanks good data.
 
 ## Deploying
 
-`.github/workflows/dashboard.yml` refreshes the snapshot every six hours and
-publishes `dashboard/` to GitHub Pages. One-time setup:
+`.github/workflows/dashboard.yml` refreshes the snapshot and publishes
+`dashboard/` to GitHub Pages.
+
+> **The six-hourly schedule only fires once this workflow is on the
+> repository's default branch.** GitHub runs `schedule` triggers on the default
+> branch only, so while it lives on a feature branch the snapshot refreshes
+> just on push and on a manual **Run workflow**. Merging the branch is what
+> turns the cron on.
+
+One-time setup:
 
 1. **Settings → Pages → Source: GitHub Actions.**
 2. If the workflow runs from a non-default branch, allow that branch under

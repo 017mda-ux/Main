@@ -285,6 +285,56 @@ FEEDS: dict[str, list[tuple[str, str]]] = {
     ],
 }
 
+# federalreserve.gov and sec.gov refuse cloud runner IPs outright, so Fed and
+# fiscal policy come from the Federal Register instead — the same documents, at
+# the government's own publication-of-record, over an API meant for automation.
+FR = "https://www.federalregister.gov/api/v1/documents.json"
+FR_FIELDS = "&fields[]=title&fields[]=html_url&fields[]=publication_date&fields[]=agencies"
+
+JSON_FEEDS: dict[str, list[tuple[str, str]]] = {
+    "policy": [
+        ("Federal Register — Fed & Treasury",
+         f"{FR}?per_page=12&order=newest{FR_FIELDS}"
+         "&conditions[agencies][]=federal-reserve-system"
+         "&conditions[agencies][]=treasury-department"),
+    ],
+    "geo": [
+        ("Federal Register — presidential documents",
+         f"{FR}?per_page=8&order=newest{FR_FIELDS}&conditions[type][]=PRESDOCU"),
+        ("Federal Register — trade & sanctions",
+         f"{FR}?per_page=8&order=newest{FR_FIELDS}"
+         "&conditions[agencies][]=trade-representative-office-of-united-states"
+         "&conditions[agencies][]=foreign-assets-control-office"),
+    ],
+}
+
+
+def parse_json_feed(source: str, url: str) -> list[dict]:
+    try:
+        doc = json.loads(get(url, "application/json").decode("utf-8", "replace"))
+    except Exception as e:                                    # noqa: BLE001
+        warn(f"{source}: {describe(e)}")
+        return []
+
+    items = []
+    for r in (doc.get("results") or [])[:MAX_PER_FEED * 2]:
+        title = (r.get("title") or "").strip()
+        link = r.get("html_url") or ""
+        if not title or not link.startswith("http"):
+            continue
+        if len(title) > 190:
+            title = title[:187].rstrip() + "…"
+        agencies = r.get("agencies") or []
+        name = next((a.get("name") for a in agencies if a.get("name")), None)
+        items.append({
+            "t": title,
+            "u": link,
+            "s": f"{source.split(' — ')[0]} · {name}" if name else source,
+            "d": r.get("publication_date"),
+        })
+    return items
+
+
 DATE_PATTERNS = (
     "%a, %d %b %Y %H:%M:%S %z",
     "%a, %d %b %Y %H:%M:%S %Z",
@@ -370,10 +420,11 @@ def build_feeds() -> dict[str, list[dict]]:
     cutoff = (datetime.now(timezone.utc) - timedelta(days=21)).strftime("%Y-%m-%d")
     out: dict[str, list[dict]] = {}
 
-    jobs = [(block, src, url) for block, lst in FEEDS.items() for src, url in lst]
+    jobs = [(block, src, url, parse_feed) for block, lst in FEEDS.items() for src, url in lst]
+    jobs += [(block, src, url, parse_json_feed) for block, lst in JSON_FEEDS.items() for src, url in lst]
     results: dict[tuple[str, str], list[dict]] = {}
     with ThreadPoolExecutor(max_workers=8) as ex:
-        futs = {ex.submit(parse_feed, src, url): (block, src) for block, src, url in jobs}
+        futs = {ex.submit(fn, src, url): (block, src) for block, src, url, fn in jobs}
         for fut, key in futs.items():
             try:
                 results[key] = fut.result()

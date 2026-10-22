@@ -7,7 +7,7 @@ from nomad.agent import load_system_prompt
 
 
 def test_sharer_detected():
-    out = tools.scale_economies_shared({"periods": [
+    out = tools.scale_economics_shared({"periods": [
         {"revenue": 100, "gross_margin_pct": 13.0, "opex_pct": 10.0, "price_index": 100},
         {"revenue": 160, "gross_margin_pct": 12.5, "opex_pct": 8.5, "price_index": 99},
     ]})
@@ -16,7 +16,7 @@ def test_sharer_detected():
 
 
 def test_harvester_detected():
-    out = tools.scale_economies_shared({"periods": [
+    out = tools.scale_economics_shared({"periods": [
         {"revenue": 100, "gross_margin_pct": 60, "opex_pct": 40, "price_index": 100},
         {"revenue": 140, "gross_margin_pct": 66, "opex_pct": 35, "price_index": 125},
     ]})
@@ -93,4 +93,49 @@ def test_tool_names_match_dispatch():
 def test_system_prompt_loads_without_front_matter():
     prompt = load_system_prompt()
     assert not prompt.startswith("---")
-    assert "Scale economies shared" in prompt
+    assert "Scale economics shared" in prompt
+
+
+def test_robustness_ratio_costco_like_and_trend():
+    out = tools.robustness_ratio({"periods": [
+        {"customer_savings": 175, "employee_premium": 26, "shareholder_profit": 32},
+        {"customer_savings": 150, "employee_premium": 26, "shareholder_profit": 50},
+    ]})
+    assert out["by_period"][0]["robustness_ratio"] == pytest.approx(6.28, abs=0.01)
+    assert out["trend"].startswith("falling")
+
+
+def test_hidden_investment_amazon_2006_style():
+    # Nomad: ~$500m FCF after ~$500m discretionary spend -> ~$800m as a cash cow.
+    out = tools.hidden_investment({"reported_fcf": 500, "discretionary_growth_spend": 500,
+                                   "tax_rate_pct": 40, "cash_cow_multiple": 12.5, "market_cap": 10000})
+    assert out["cash_cow_fcf"] == 800
+    assert out["cash_cow_value"] == 10000
+    assert "little or nothing" in out["reading"]
+
+
+def test_maturity_uplift_costco_stores():
+    # Old stores: 40% of assets earning 16.5%; young: 60% earning 6%.
+    out = tools.maturity_uplift({"cohorts": [
+        {"label": "old", "assets_or_cost": 40, "current_return_pct": 16.5},
+        {"label": "young", "assets_or_cost": 60, "current_return_pct": 6},
+    ]})
+    assert out["blended_return_now_pct"] == pytest.approx(10.2)
+    assert out["embedded_profit_uplift_pct"] == pytest.approx(61.8, abs=0.1)
+
+
+def test_dilution_matches_nomad_mbia_example():
+    out = tools.dilution_risk({"value_before": 2000, "shares_outstanding": 60, "capital_needed": 300,
+                               "your_purchase_price": 15, "raise_prices": [10, 5, 1]})
+    vps = [s["value_per_share_after"] for s in out["scenarios"]]
+    assert vps[0] == pytest.approx(22.2, abs=0.1)
+    assert vps[1] == pytest.approx(16.7, abs=0.1)
+    assert vps[2] == pytest.approx(5.56, abs=0.01)
+    assert out["scenarios"][0]["your_price_as_cents_per_dollar"] == pytest.approx(67.5, abs=0.5)
+
+
+def test_expected_return_nomad_typical_purchase():
+    # 50c dollar, value +10%/yr, converge in 5 years -> ~26% a year.
+    out = tools.reverse_valuation({"market_cap": 50, "owner_earnings": 4, "your_value_estimate": 100})
+    assert out["expected_annual_return_pct"] == pytest.approx(26.4, abs=0.1)
+    assert out["price_to_value_cents"] == 50

@@ -23,10 +23,11 @@ PYTHON_AGENT_NOTE = """
 
 ## Tools in this environment
 
-You have `web_search` for current figures and six calculators: scale_economies_shared,
-retention_quality, unit_economics_persistence, destination_analysis, reverse_valuation and
-moat_scorecard. Use the calculators whenever you have numbers rather than doing arithmetic in
-your head, and finish full company analyses with moat_scorecard."""
+You have `web_search` for current figures and ten calculators: scale_economics_shared,
+robustness_ratio, retention_quality, unit_economics_persistence, maturity_uplift,
+hidden_investment, destination_analysis, reverse_valuation, dilution_risk and moat_scorecard.
+Use the calculators whenever you have numbers rather than doing arithmetic in your head, and
+finish full company analyses with moat_scorecard."""
 
 
 def load_system_prompt(path: Path = PROMPT_FILE) -> str:

@@ -50,6 +50,17 @@ Nomad's checks:
 - **The filter question** Nomad applied to all news: "does any of this make a meaningful difference to the relationship our businesses have with their customers?" (December 2011).
 - **Adoption follows habit**: online retail grew at the pace habits changed, not at the pace of capacity. A large company can still be young (June 2011).
 
+## 2b. Is it entitled to its margins?
+
+A margin is earned when the customer is still better off than with the alternative after paying it, and brittle when it rests on the customer having no choice. Test it four ways:
+
+- **Value gap**: does the customer keep more value than the company takes (a robustness ratio above roughly 1:1)?
+- **Source**: does the margin come from lower costs than rivals (earned) or from higher prices, fees, lock-in, a patent or temporary scarcity (rented)?
+- **Direction**: are margins flat or falling as the value delivered grows (sharing), or rising faster than value (harvesting)?
+- **Free-switching test**: if switching cost nothing tomorrow, would customers stay and would the margin survive?
+
+Say which part of the margin is earned and which is rented, because the rented part is what competition, regulators or new technology will take first. Low margins can be the strongest position ("that's the point", Costco, December 2004). High margins are fine when they come from a cost or quality gap no one can close.
+
 ## 3. Is the product delighting customers?
 
 - Does the customer get more each year for the same or less money?
@@ -110,6 +121,7 @@ Lead with the verdict in two or three sentences, then:
 - **The model and its engine**
 - **Scale economics: shared or kept?** (with robustness ratio or cost gap if you can estimate it)
 - **Why customers stay: want-to or have-to?**
+- **Is it entitled to its margins?** (earned versus rented share of the margin)
 - **Customer delight: evidence for and against**
 - **Unit economics: level, direction, maturity mix, hidden investment**
 - **Management, incentives and character**

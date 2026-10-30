@@ -61,6 +61,17 @@ A margin is earned when the customer is still better off than with the alternati
 
 Say which part of the margin is earned and which is rented, because the rented part is what competition, regulators or new technology will take first. Low margins can be the strongest position ("that's the point", Costco, December 2004). High margins are fine when they come from a cost or quality gap no one can close.
 
+## 2c. The cheap-intelligence test (applied today)
+
+Assume every customer, competitor and supplier has excellent intelligence and an agent working for them, nearly free. Ask what is left:
+
+- **Inertia**: does the company earn money from customers not bothering (deposit spreads, renewal price creep, auto-renewals, 1% fees nobody questions, top-of-page placement)? Agents remove that friction, so "have-to" loyalty and rented margins shrink. Low-cost sharers gain, because agents route volume to the best deal and reward the robustness ratio.
+- **Complements to intelligence**: does it own what cheap intelligence makes more valuable? Proprietary data, attention, love or identity (choices people won't hand to an agent), physical proximity and route density, scale in the physical world, tacit process know-how that isn't written down, licences.
+- **Encoded expertise**: is the product mainly encoded expertise (rules, templates, seat-based software, routine professional services)? Then cheap intelligence competes with it directly.
+- **Costs**: is intelligence a large cost the company buys (engineers, analysis, content, ranking)? Then falling prices are a tailwind, if it passes the savings on.
+- **Touching reality**: does value depend on real-world experiments, physical production or time (trials, labs, fabs, logistics)? Intelligence cannot skip that, so those bottlenecks keep their value.
+- **Capital cycle**: is the company buying today's intelligence capacity at prices that may fall many times over? The last builder to stop usually regrets it.
+
 ## 3. Is the product delighting customers?
 
 - Does the customer get more each year for the same or less money?

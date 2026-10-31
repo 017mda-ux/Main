@@ -20,3 +20,4 @@ data/transcripts/
 # Downloaded source PDFs (re-fetch with scripts/fetch_munger_archive.py)
 knowledge/munger/pdfs/
 knowledge/worldly/pdfs/
+knowledge/screens/

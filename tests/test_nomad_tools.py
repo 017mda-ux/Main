@@ -176,3 +176,26 @@ def test_archive_link_parser():
         ("Psychology of Human Misjudgment", "https://worldlypartners.com/wp-content/uploads/Munger-1995.pdf"),
         ("Worldly Wisdom", "https://worldlypartners.com/charlie-munger-archive/files/Worldly_Wisdom.PDF"),
     ]
+
+
+def _load_finviz():
+    import importlib.util, pathlib
+    spec = importlib.util.spec_from_file_location(
+        "finviz_screen", pathlib.Path(__file__).resolve().parent.parent / "scripts" / "finviz_screen.py")
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod
+
+
+def test_finviz_parser_and_model():
+    fz = _load_finviz()
+    html = ("<table><tr><td>x</td></tr></table><table><tr><th>No.</th><th>Ticker</th><th>P/FCF</th>"
+            "<th>EPS next 5Y</th><th>ROE</th></tr><tr><td>1</td><td>ABC</td><td>20.5</td>"
+            "<td>15.00%</td><td>25.10%</td></tr></table>")
+    rows = fz.parse_table(html)
+    assert rows == [{"No.": "1", "Ticker": "ABC", "P/FCF": "20.5", "EPS next 5Y": "15.00%", "ROE": "25.10%"}]
+    assert fz.num("1.5B") == 1500 and fz.num("-") is None and fz.num("12.3%") == 12.3
+    # 5% FCF yield, 20% analyst growth (14% after haircut) -> comfortably above 15%
+    r = fz.expected_return(20, 20)
+    assert 0.15 < r < 0.22
+    assert fz.odds_of_15(0.15) == 0.5 and fz.odds_of_15(0.21) > 0.8

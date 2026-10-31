@@ -139,3 +139,40 @@ def test_expected_return_nomad_typical_purchase():
     out = tools.reverse_valuation({"market_cap": 50, "owner_earnings": 4, "your_value_estimate": 100})
     assert out["expected_annual_return_pct"] == pytest.approx(26.4, abs=0.1)
     assert out["price_to_value_cents"] == 50
+
+
+def test_search_library_finds_excerpt(tmp_path, monkeypatch):
+    lib = tmp_path / "munger" / "text"
+    lib.mkdir(parents=True)
+    (lib / "psychology-of-human-misjudgment.txt").write_text(
+        "Some opening words. Never, ever, think about something else when you should be "
+        "thinking about the power of incentives. More text follows here.")
+    (tmp_path / "munger" / "INDEX.md").write_text(
+        "| The Psychology of Human Misjudgment | [u](u) | text/psychology-of-human-misjudgment.txt |\n")
+    monkeypatch.setattr(tools, "LIBRARY_DIR", tmp_path)
+    out = tools.search_library({"query": "power of incentives"})
+    assert out["results"][0]["source"] == "The Psychology of Human Misjudgment"
+    assert "incentives" in out["results"][0]["excerpt"]
+    assert tools.search_library({"query": "zebra unicorn"})["results"] == []
+
+
+def test_search_library_empty(tmp_path, monkeypatch):
+    monkeypatch.setattr(tools, "LIBRARY_DIR", tmp_path / "missing")
+    assert "Library is empty" in tools.search_library({"query": "incentives"})["note"]
+
+
+def test_archive_link_parser():
+    import importlib.util, pathlib
+    spec = importlib.util.spec_from_file_location(
+        "fetcher", pathlib.Path(__file__).resolve().parent.parent / "scripts" / "fetch_munger_archive.py")
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    html = ('<a href="/wp-content/uploads/Munger-1995.pdf">Psychology of Human Misjudgment</a>'
+            '<a href="https://x.com/page">not a pdf</a>'
+            '<a href="/wp-content/uploads/Munger-1995.pdf">dup</a>'
+            '<a href="files/Worldly_Wisdom.PDF"></a>')
+    links = mod.find_pdf_links(html, "https://worldlypartners.com/charlie-munger-archive/")
+    assert links == [
+        ("Psychology of Human Misjudgment", "https://worldlypartners.com/wp-content/uploads/Munger-1995.pdf"),
+        ("Worldly Wisdom", "https://worldlypartners.com/charlie-munger-archive/files/Worldly_Wisdom.PDF"),
+    ]

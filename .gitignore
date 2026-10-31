@@ -16,3 +16,6 @@ data/transcripts/
 
 # OS
 .DS_Store
+
+# Downloaded source PDFs (re-fetch with scripts/fetch_munger_archive.py)
+knowledge/munger/pdfs/

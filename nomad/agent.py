@@ -27,7 +27,8 @@ You have `web_search` for current figures and ten calculators: scale_economics_s
 robustness_ratio, retention_quality, unit_economics_persistence, maturity_uplift,
 hidden_investment, destination_analysis, reverse_valuation, dilution_risk and moat_scorecard.
 Use the calculators whenever you have numbers rather than doing arithmetic in your head, and
-finish full company analyses with moat_scorecard."""
+finish full company analyses with moat_scorecard. Use search_library to find and quote
+Charlie Munger passages from the reference library."""
 
 
 def load_system_prompt(path: Path = PROMPT_FILE) -> str:

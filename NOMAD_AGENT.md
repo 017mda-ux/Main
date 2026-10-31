@@ -56,6 +56,20 @@ The Python agent uses web search for current numbers plus ten calculators
 The Python agent loads the subagent file as its system prompt, so editing that one file
 changes both.
 
+## Charlie Munger library
+
+Both agents can draw on Munger's talks and writings from the
+[Worldly Partners archive](https://worldlypartners.com/charlie-munger-archive/):
+
+```bash
+python scripts/fetch_munger_archive.py --dry-run   # list the PDFs found
+python scripts/fetch_munger_archive.py             # download + extract text
+```
+
+This writes `knowledge/munger/text/*.txt` and `knowledge/munger/INDEX.md` (the PDFs themselves
+are git-ignored). The Claude Code subagent searches the text with Grep; the Python agent uses the
+`search_library` tool. Both quote exact passages and name the source document.
+
 Tests: `python -m pytest tests`
 
 Not financial advice.

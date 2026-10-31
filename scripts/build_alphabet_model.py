@@ -290,6 +290,91 @@ for c in "CDEFG":
     s.column_dimensions[c].width = 15
 s.column_dimensions["H"].width = 44
 
+# ─────────────────────────── Drivers (feeds the Custom column) ───────────────────────────
+dv = wb.create_sheet("Drivers", 3)
+title(dv, "Key business drivers -> Custom scenario",
+      "Yellow cells are your driver assumptions. Derived growth rates flow into Scenarios > Custom (green links there).")
+header(dv, 5, ["Driver", "Value", "Latest data point", "Derived"])
+DR = {}
+
+
+def drow(r, key, label, value, fmt, latest):
+    DR[key] = f"Drivers!$C${r}"
+    put(dv, f"B{r}", label)
+    put(dv, f"C{r}", value, fmt, BLUE, fill=YELLOW)
+    put(dv, f"D{r}", latest, italic=True)
+
+
+def dsec(r, text):
+    c = put(dv, f"B{r}", text, bold=True)
+    for col in "BCDE":
+        dv[f"{col}{r}"].fill = SUB
+
+
+def dout(r, key, label, formula, fmt):
+    DR[key] = f"Drivers!$E${r}"
+    put(dv, f"B{r}", label, italic=True)
+    put(dv, f"E{r}", formula, fmt, bold=True)
+
+
+r = 6
+dsec(r, "Search = paid clicks x price per click (CPC)"); r += 1
+drow(r, "clk1", "Paid clicks growth 2027-29", 0.03, PCT, "Q3'26: +8% (9M'26: +11%)"); r += 1
+drow(r, "cpc1", "CPC growth 2027-29", 0.02, PCT, "Q3'26: +4%; AI Mode monetises less per query so far"); r += 1
+drow(r, "clk2", "Paid clicks growth 2030-31", 0.025, PCT, ""); r += 1
+drow(r, "cpc2", "CPC growth 2030-31", 0.015, PCT, ""); r += 1
+drow(r, "clk3", "Paid clicks growth 2032-36", 0.025, PCT, ""); r += 1
+drow(r, "cpc3", "CPC growth 2032-36", 0.015, PCT, ""); r += 1
+dout(r, "sg1", "-> Search growth 2027-29", f"=(1+{DR['clk1']})*(1+{DR['cpc1']})-1", PCT); r += 1
+dout(r, "sg2", "-> Search growth 2030-31", f"=(1+{DR['clk2']})*(1+{DR['cpc2']})-1", PCT); r += 1
+dout(r, "sg3", "-> Search growth 2032-36", f"=(1+{DR['clk3']})*(1+{DR['cpc3']})-1", PCT); r += 2
+dsec(r, "YouTube ads = watch time x revenue per hour watched"); r += 1
+drow(r, "wt1", "Watch-time growth 2027-29", 0.06, PCT, "Q3'26 YouTube ads +9%"); r += 1
+drow(r, "mon1", "Revenue per hour growth 2027-29", 0.047, PCT, "Ad load, pricing, CTV/Shorts monetisation"); r += 1
+drow(r, "wt2", "Watch-time growth 2030-36", 0.04, PCT, ""); r += 1
+drow(r, "mon2", "Revenue per hour growth 2030-36", 0.029, PCT, ""); r += 1
+dout(r, "yg1", "-> YouTube ads growth 2027-29", f"=(1+{DR['wt1']})*(1+{DR['mon1']})-1", PCT); r += 1
+dout(r, "yg2", "-> YouTube ads growth 2030-36", f"=(1+{DR['wt2']})*(1+{DR['mon2']})-1", PCT); r += 2
+dsec(r, "Subscriptions & devices = paid subscriptions x revenue per subscription"); r += 1
+drow(r, "sub1", "Paid subscriptions growth 2027-29", 0.08, PCT, "350m paid subs (Q1'26); YouTube Music/Premium 150m+"); r += 1
+drow(r, "arpu1", "Revenue per subscription growth 2027-29", 0.028, PCT, "Price rises, Google One AI plans"); r += 1
+drow(r, "sub2", "Paid subscriptions growth 2030-36", 0.05, PCT, ""); r += 1
+drow(r, "arpu2", "Revenue per subscription growth 2030-36", 0.029, PCT, ""); r += 1
+dout(r, "ug1", "-> Subs/devices growth 2027-29", f"=(1+{DR['sub1']})*(1+{DR['arpu1']})-1", PCT); r += 1
+dout(r, "ug2", "-> Subs/devices growth 2030-36", f"=(1+{DR['sub2']})*(1+{DR['arpu2']})-1", PCT); r += 2
+dsec(r, "Cloud 2027 = backlog converting + new business"); r += 1
+drow(r, "blog", "Cloud backlog ($bn)", 561, USD0, "Q3'26: $561bn"); r += 1
+drow(r, "conv", "Share of backlog recognised over next 24 months", 0.55, PCT, "Management: just over 55%"); r += 1
+drow(r, "newb", "New business recognised in 2027 (% of FY26E Cloud revenue)", 0.40, PCT, "Orders booked and delivered within the year, TPU system sales"); r += 1
+dout(r, "cl27", "-> Cloud revenue 2027 ($bn)", f"={DR['blog']}*{DR['conv']}/2+{DR['newb']}*{I['seg']['cloud'][0]}", USD); r += 1
+dout(r, "cg1", "-> Cloud growth 2027", f"={DR['cl27']}/{I['seg']['cloud'][0]}-1", PCT); r += 1
+put(dv, f"B{r}", "Cloud growth after 2027 and margins stay on Scenarios > Custom.", italic=True); r += 2
+dsec(r, "Waymo = weekly paid rides x fare x 52 x revenue multiple x Alphabet share"); r += 1
+drow(r, "wr31", "Weekly paid rides in 2031 (millions)", 10.0, '0.0', "~0.5m a week (spring 2026); target 1m by end-2026"); r += 1
+drow(r, "fare", "Average fare ($)", 22.0, '$#,##0.00', "Assumption"); r += 1
+drow(r, "wm31", "EV / revenue multiple in 2031", 33.0, MULT, "High-growth platform multiple"); r += 1
+drow(r, "wr36", "Weekly paid rides in 2036 (millions)", 30.0, '0.0', ""); r += 1
+drow(r, "fare36", "Average fare in 2036 ($)", 20.0, '$#,##0.00', "Cheaper as costs fall"); r += 1
+drow(r, "wm36", "EV / revenue multiple in 2036", 19.5, MULT, ""); r += 1
+drow(r, "own", "Alphabet ownership of Waymo", 0.80, PCT, "Assumption; Waymo valued $126bn post-money Feb 2026"); r += 1
+dout(r, "wrev31", "-> Waymo revenue 2031 ($bn)", f"={DR['wr31']}*{DR['fare']}*52/1000", USD); r += 1
+dout(r, "wval31", "-> Waymo value 2031, Alphabet share ($bn)", f"={DR['wrev31']}*{DR['wm31']}*{DR['own']}", USD0); r += 1
+dout(r, "waymo", "-> Value today: 2031 value discounted ($bn)", f"={DR['wval31']}/(1+{I['disc']})^5", USD0); r += 1
+dout(r, "waymo10", "-> Value in 2036, Alphabet share ($bn)",
+     f"={DR['wr36']}*{DR['fare36']}*52/1000*{DR['wm36']}*{DR['own']}", USD0); r += 1
+dout(r, "wx", "-> Multiple of Waymo's Feb-2026 valuation by 2031", f"={DR['wval31']}/{DR['own']}/126", MULT); r += 1
+dv.column_dimensions["B"].width = 58
+dv.column_dimensions["C"].width = 12
+dv.column_dimensions["D"].width = 52
+dv.column_dimensions["E"].width = 12
+
+# Custom column: driver-derived items become links to Drivers
+for key in ("sg1", "sg2", "sg3", "yg1", "yg2", "ug1", "ug2", "cg1", "waymo", "waymo10"):
+    c = s[f"G{D[key]}"]
+    c.value = f"={DR[key]}"
+    c.font = font(GREEN)
+    c.fill = PatternFill(fill_type=None)
+
 # ─────────────────────────── Model ───────────────────────────
 m = wb.create_sheet("Model")
 title(m, "10-year projections by scenario ($bn)", "Each block is one scenario. All cells are formulas driven by Scenarios and Inputs.")

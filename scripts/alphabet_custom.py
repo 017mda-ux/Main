@@ -37,6 +37,22 @@ DRIVERS = {
     "mx_search": "SOTP multiple: Search (x FY26E OI)", "mx_yt": "SOTP multiple: YouTube + Subs",
     "mx_cloud": "SOTP multiple: Cloud",
 }
+# keys now derived on the Drivers sheet (Custom column links there) -> set the drivers instead
+LINKED = {"search_g1", "search_g2", "search_g3", "yt_g1", "yt_g2", "subs_g1", "subs_g2", "cloud_g1", "waymo", "waymo10"}
+# answer key -> Drivers row label (column C)
+DRIVER_SHEET = {
+    "clicks1": "Paid clicks growth 2027-29", "cpc1": "CPC growth 2027-29", "clicks2": "Paid clicks growth 2030-31",
+    "cpc2": "CPC growth 2030-31", "clicks3": "Paid clicks growth 2032-36", "cpc3": "CPC growth 2032-36",
+    "watch1": "Watch-time growth 2027-29", "rph1": "Revenue per hour growth 2027-29",
+    "watch2": "Watch-time growth 2030-36", "rph2": "Revenue per hour growth 2030-36",
+    "subs1": "Paid subscriptions growth 2027-29", "arpu1": "Revenue per subscription growth 2027-29",
+    "subs2": "Paid subscriptions growth 2030-36", "arpu2": "Revenue per subscription growth 2030-36",
+    "backlog": "Cloud backlog ($bn)", "conv": "Share of backlog recognised over next 24 months",
+    "newbiz": "New business recognised in 2027 (% of FY26E Cloud revenue)",
+    "rides31": "Weekly paid rides in 2031 (millions)", "fare": "Average fare ($)", "wmult31": "EV / revenue multiple in 2031",
+    "rides36": "Weekly paid rides in 2036 (millions)", "fare36": "Average fare in 2036 ($)", "wmult36": "EV / revenue multiple in 2036",
+    "own": "Alphabet ownership of Waymo",
+}
 # answer key -> Inputs row label (column C)
 INPUTS = {"price": "Share price ($)", "shares": "Diluted shares (bn)", "netcash": "Net cash ($bn)",
           "stakes": "Equity stakes ($bn)", "disc": "Discount rate", "tg": "Terminal growth"}
@@ -57,16 +73,22 @@ def read_results():
                 "Free cash flow 2027", "Free cash flow 2031", "Cumulative FCF 2027-36"):
         out[key] = {n: sm[f"{c}{lab[key]}"].value for n, c in zip(names, "CDEFG")}
     drivers = {k: sc[f"G{rows_by_label(sc)[v]}"].value for k, v in DRIVERS.items()}
+    dv = wb["Drivers"]
+    dl = {dv[f"B{r}"].value: r for r in range(1, dv.max_row + 1) if dv[f"B{r}"].value}
+    drivers.update({k: dv[f"C{dl[v]}"].value for k, v in DRIVER_SHEET.items()})
+    drivers.update({lab.strip("-> "): dv[f"E{r}"].value for lab, r in dl.items() if str(lab).startswith("->")})
     return out, drivers
 
 
 def main(argv):
     wb = load_workbook(BOOK)
-    sc, inp = wb["Scenarios"], wb["Inputs"]
-    srow, irow = rows_by_label(sc), rows_by_label(inp)
+    sc, inp, dv = wb["Scenarios"], wb["Inputs"], wb["Drivers"]
+    srow, irow, drow = rows_by_label(sc), rows_by_label(inp), rows_by_label(dv)
     changed = {}
     if "--reset" in argv:
         for k, label in DRIVERS.items():
+            if k in LINKED:
+                continue
             r = srow[label]
             sc[f"G{r}"].value = sc[f"E{r}"].value
         changed["reset"] = "Custom = Base"
@@ -75,12 +97,16 @@ def main(argv):
             continue
         k, v = arg.split("=", 1)
         val = float(v)
-        if k in DRIVERS:
+        if k in LINKED:
+            sys.exit(f"{k} is now derived on the Drivers sheet; set its drivers instead ({', '.join(DRIVER_SHEET)})")
+        if k in DRIVER_SHEET:
+            dv[f"C{drow[DRIVER_SHEET[k]]}"].value = val
+        elif k in DRIVERS:
             sc[f"G{srow[DRIVERS[k]]}"].value = val
         elif k in INPUTS:
             inp[f"C{irow[INPUTS[k]]}"].value = val
         else:
-            sys.exit(f"Unknown key {k}. Valid: {', '.join(list(DRIVERS) + list(INPUTS))}")
+            sys.exit(f"Unknown key {k}. Valid: {', '.join(list(DRIVER_SHEET) + [d for d in DRIVERS if d not in LINKED] + list(INPUTS))}")
         changed[k] = val
     if changed:
         wb.save(BOOK)

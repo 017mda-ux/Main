@@ -262,7 +262,8 @@ drivers = [
     ("cx3", "Capex 2029 ($bn)", USD0, 250, 300, 280, 310, ""),
     ("cxp", "Capex % of revenue from 2030", PCT, 0.27, 0.27, 0.28, 0.28, "Long-run intensity"),
     ("dsh", "Share count change / yr", PCT, 0.01, 0.0, 0.005, -0.01, "+ = dilution (buybacks suspended in 2026)"),
-    ("waymo", "Waymo / Other Bets value ($bn)", USD0, 50, 150, 100, 200, "Estimate"),
+    ("waymo", "Waymo / Other Bets value ($bn)", USD0, 50, 150, 100, 200, "Alphabet's share, today (Waymo $126bn post-money Feb 2026)"),
+    ("waymo10", "Waymo / Other Bets value in year 10 ($bn)", USD0, 50, 150, 100, 200, "Alphabet's share at the 2036 exit"),
     ("exit", "Exit P/FCF multiple (year 10)", MULT, 14, 20, 18, 22, ""),
     ("mx_s", "SOTP multiple: Search (x FY26E OI)", MULT, 10, 12, 14, 16, ""),
     ("mx_y", "SOTP multiple: YouTube + Subs", MULT, 16, 20, 20, 26, ""),
@@ -382,7 +383,7 @@ for bi, sc in enumerate(SC):
         ("Equity value", f"=SUM(C{v0+1}:C{v0+3})", USD),
         ("DCF value per share ($)", f"=C{v0+4}/{I['shares']}", '$#,##0;($#,##0);-'),
         ("Upside vs price", f"=C{v0+5}/{I['price']}-1", PCT),
-        ("Year-10 exit value per share ($)", f"={LAST}{R['FCF per share ($)']}*{sv(sc,'exit')}+({I['stakes']}+{sv(sc,'waymo')})/{LAST}{R['Shares (bn)']}", '$#,##0;($#,##0);-'),
+        ("Year-10 exit value per share ($)", f"={LAST}{R['FCF per share ($)']}*{sv(sc,'exit')}+({I['stakes']}+{sv(sc,'waymo10')})/{LAST}{R['Shares (bn)']}", '$#,##0;($#,##0);-'),
     ]
     for j, (lab, f, fmt) in enumerate(rows_v):
         put(m, f"B{v0+1+j}", lab)

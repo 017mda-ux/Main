@@ -33,7 +33,7 @@ DRIVERS = {
     "other_bets": "Other Bets operating income ($bn/yr)",
     "capex27": "Capex 2027 ($bn)", "capex28": "Capex 2028 ($bn)", "capex29": "Capex 2029 ($bn)",
     "capex_pct": "Capex % of revenue from 2030", "dilution": "Share count change / yr",
-    "waymo": "Waymo / Other Bets value ($bn)", "exit": "Exit P/FCF multiple (year 10)",
+    "waymo": "Waymo / Other Bets value ($bn)", "waymo10": "Waymo / Other Bets value in year 10 ($bn)", "exit": "Exit P/FCF multiple (year 10)",
     "mx_search": "SOTP multiple: Search (x FY26E OI)", "mx_yt": "SOTP multiple: YouTube + Subs",
     "mx_cloud": "SOTP multiple: Cloud",
 }

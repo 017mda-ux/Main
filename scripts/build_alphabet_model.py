@@ -167,6 +167,68 @@ h.column_dimensions["B"].width = 34
 for c in "CDEFGHIJK":
     h.column_dimensions[c].width = 11
 
+# ─────────────────────────── Long-term history ───────────────────────────
+lt = wb.create_sheet("Long-term")
+title(lt, "Long-term history ($bn) with growth rates",
+      "Annual from Alphabet 10-Ks (2019-2024); 2025 segments via secondary sources citing the FY2025 10-K; TTM = Q4'25-Q3'26.")
+LT_YEARS = ["2019", "2020", "2021", "2022", "2023", "2024", "2025"]
+header(lt, 5, ["Line"] + LT_YEARS + ["TTM Q3'26", "6-yr CAGR 19-25", "3-yr CAGR 22-25", "2025 growth", "TTM vs 2025 pace", "Latest quarter YoY"])
+LT = [
+    ("Search & other", [98.1, 104.1, 148.95, 162.45, 175.03, 198.08, 224.53], "=History!C6+History!D6+History!E6+History!F6", "=History!K6"),
+    ("YouTube ads", [15.15, 19.77, 28.85, 29.24, 31.51, 36.15, 40.4], "=History!C7+History!D7+History!E7+History!F7", "=History!K7"),
+    ("Subscriptions, platforms & devices", [17.0, 21.7, 28.03, 29.06, 34.69, 40.34, 48.1], "=History!C8+History!D8+History!E8+History!F8", "=History!K8"),
+    ("Google Network", [21.55, 23.09, 31.70, 32.78, 31.31, 30.36, 29.8], "=History!C9+History!D9+History!E9+History!F9", "=History!K9"),
+    ("Google Cloud", [8.92, 13.06, 19.21, 26.28, 33.09, 43.23, 58.7], "=History!C10+History!D10+History!E10+History!F10", "=History!K10"),
+    ("Total revenue", [161.86, 182.53, 257.64, 282.84, 307.39, 350.02, 402.8], "=History!C13+History!D13+History!E13+History!F13", None),
+    ("Cloud operating income", [-4.6, -5.6, -3.1, -2.97, 1.72, 6.11, 13.9], "=History!C17+History!D17+History!E17+History!F17", None),
+    ("Capital expenditure", [23.55, 22.28, 24.64, 31.49, 32.25, 52.54, 91.4], None, None),
+    ("Free cash flow", [30.97, 42.84, 67.01, 60.01, 69.50, 72.76, 73.3], None, None),
+]
+for i, (lab, vals, ttm, lq) in enumerate(LT):
+    rr = 6 + i
+    put(lt, f"B{rr}", lab, bold=lab == "Total revenue")
+    for j, v in enumerate(vals):
+        put(lt, f"{L(3+j)}{rr}", v, USD, BLUE,
+            comment="Alphabet 10-K. 2025 segment values via secondary sources citing the FY2025 10-K; Cloud OI 2025 = sum of quarters (Q4 $5.3bn)." if j == 6 else None)
+    if ttm:
+        put(lt, f"J{rr}", ttm, USD, GREEN)
+    if lab not in ("Cloud operating income",):
+        put(lt, f"K{rr}", f"=IFERROR((I{rr}/C{rr})^(1/6)-1,0)", PCT)
+        put(lt, f"L{rr}", f"=IFERROR((I{rr}/F{rr})^(1/3)-1,0)", PCT)
+        put(lt, f"M{rr}", f"=IFERROR(I{rr}/H{rr}-1,0)", PCT)
+        if ttm:
+            put(lt, f"N{rr}", f"=IFERROR(J{rr}/I{rr}-1,0)", PCT)
+    if lq:
+        put(lt, f"O{rr}", lq, PCT, GREEN)
+put(lt, "B16", "Cloud operating margin", italic=True)
+for j in range(7):
+    c = L(3 + j)
+    put(lt, f"{c}16", f"=IFERROR({c}12/{c}10,0)", PCT)
+put(lt, "J16", "=IFERROR(J12/J10,0)", PCT)
+put(lt, "B17", "Capex as % of revenue", italic=True)
+for j in range(7):
+    c = L(3 + j)
+    put(lt, f"{c}17", f"=IFERROR({c}13/{c}11,0)", PCT)
+put(lt, "B19", "Driver history", bold=True)
+drivers_hist = [
+    ("Paid clicks growth", "2021 +23%; 2025 +6%; 9M'26 +11%; Q3'26 +8%", "Alphabet 10-K FY2021, FY2025; Q3'26 10-Q"),
+    ("Cost-per-click growth", "2021 +15%; 2025 +7%; Q3'26 +4%", "Alphabet 10-K FY2021, FY2025; Q3'26 10-Q"),
+    ("Paid subscriptions (all Google)", "270m (Q4'24) -> 325m+ (Q4'25) -> 350m (Q1'26)", "Alphabet earnings releases"),
+    ("YouTube Music & Premium subs", "~100m (early 2024) -> 125m (2025) -> 150m+ incl. trials (Q3'26)", "Alphabet releases; YouTube"),
+    ("Cloud backlog", "~$155bn (Q3'25) -> $240bn (Q4'25) -> $561bn (Q3'26)", "Alphabet releases / calls"),
+    ("Waymo paid rides per week", "50k (May'24) -> 150k (Oct'24) -> 250k (Apr'25) -> 400k (Feb'26) -> 500k (Mar'26, ~flat to Jul'26)", "Waymo / press"),
+    ("Gemini app users", "950m (Q2'26) -> 1bn (Q3'26)", "Alphabet Q3'26 call"),
+]
+header(lt, 20, ["Driver", "History"])
+put(lt, "M20", "Source", bold=True)
+for i, (a, b, c) in enumerate(drivers_hist):
+    put(lt, f"B{21+i}", a)
+    put(lt, f"C{21+i}", b, color=BLUE)
+    put(lt, f"M{21+i}", c, italic=True)
+lt.column_dimensions["B"].width = 34
+for j in range(3, 16):
+    lt.column_dimensions[L(j)].width = 11
+
 # ─────────────────────────── Inputs ───────────────────────────
 inp = wb.create_sheet("Inputs")
 title(inp, "Base year, market and balance sheet inputs ($bn)", "Yellow = key assumptions you may want to change.")

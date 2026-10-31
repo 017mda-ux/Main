@@ -55,7 +55,8 @@ DRIVER_SHEET = {
 }
 # answer key -> Inputs row label (column C)
 INPUTS = {"price": "Share price ($)", "shares": "Diluted shares (bn)", "netcash": "Net cash ($bn)",
-          "stakes": "Equity stakes ($bn)", "disc": "Discount rate", "tg": "Terminal growth"}
+          "stakes": "Equity stakes ($bn)", "disc": "Discount rate", "tg": "Terminal growth",
+          "nyrs": "DCF explicit forecast years"}
 
 
 def rows_by_label(ws, col="B"):

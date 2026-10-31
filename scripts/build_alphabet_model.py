@@ -241,7 +241,8 @@ inputs = [
     ("stakes", "Equity stakes ($bn)", 100.0, USD0, True, "Estimate: non-marketable stakes incl. SpaceX and Anthropic (see Guide disclosure)."),
     ("tax", "Tax rate", 0.17, PCT, False, "Approx. effective rate."),
     ("disc", "Discount rate", 0.09, PCT, True, "Cost of equity used for DCF."),
-    ("tg", "Terminal growth", 0.03, PCT, True, "Perpetual growth after year 10."),
+    ("tg", "Terminal growth", 0.03, PCT, True, "Perpetual FCF growth after the explicit forecast."),
+    ("nyrs", "DCF explicit forecast years", 5, "0", True, "Years of explicit FCF (1-10); terminal value on the last year. 5 = 2027-2031."),
     ("unalloc", "Unallocated costs FY26E ($bn)", -28.0, USD, False, "Estimate: total OI less Services, Cloud and Other Bets OI (AI/DeepMind, corporate)."),
     ("unalloc_g", "Unallocated cost growth / yr", 0.04, PCT, False, "Assumption."),
     ("capex26", "Capex FY26E ($bn)", 200.0, USD0, False, "Guide $195-205bn."),
@@ -524,8 +525,8 @@ for bi, sc in enumerate(SC):
     v0 = top + 2 + len(labels) + 1
     put(m, f"B{v0}", "Valuation", bold=True)
     rows_v = [
-        ("PV of FCF 2027-36", f"=NPV({I['disc']},{FIRST}{R['Free cash flow']}:{LAST}{R['Free cash flow']})", USD),
-        ("PV of terminal value", f"={LAST}{R['Free cash flow']}*(1+{I['tg']})/({I['disc']}-{I['tg']})/(1+{I['disc']})^10", USD),
+        ("PV of FCF, explicit years", f"=SUMPRODUCT(({FIRST}{R['t (year index)']}:{LAST}{R['t (year index)']}<={I['nyrs']})*{FIRST}{R['Free cash flow']}:{LAST}{R['Free cash flow']}/(1+{I['disc']})^{FIRST}{R['t (year index)']}:{LAST}{R['t (year index)']})", USD),
+        ("PV of terminal value", f"=INDEX({FIRST}{R['Free cash flow']}:{LAST}{R['Free cash flow']},{I['nyrs']})*(1+{I['tg']})/({I['disc']}-{I['tg']})/(1+{I['disc']})^{I['nyrs']}", USD),
         ("Net cash + stakes + Waymo", f"={I['netcash']}+{I['stakes']}+{sv(sc,'waymo')}", USD),
         ("Equity value", f"=SUM(C{v0+1}:C{v0+3})", USD),
         ("DCF value per share ($)", f"=C{v0+4}/{I['shares']}", '$#,##0;($#,##0);-'),

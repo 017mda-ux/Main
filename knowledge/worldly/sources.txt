@@ -1,0 +1,20 @@
+# Worldly Partners company case studies to study for "what makes a great business".
+# Fetch with: python scripts/fetch_munger_archive.py --urls-file knowledge/worldly/sources.txt --out knowledge/worldly
+https://worldlypartners.com/wp-content/uploads/2026/10/Seinfeld.pdf
+https://worldlypartners.com/wp-content/uploads/2026/09/Home-Depot.pdf
+https://worldlypartners.com/wp-content/uploads/2026/06/Disney.pdf
+https://worldlypartners.com/wp-content/uploads/2026/05/Vanguard.pdf
+https://worldlypartners.com/wp-content/uploads/2026/05/Ferrari.pdf
+https://worldlypartners.com/wp-content/uploads/2026/05/Formula-One.pdf
+https://worldlypartners.com/wp-content/uploads/2026/01/Coca-Cola.pdf
+https://worldlypartners.com/wp-content/uploads/2026/01/TSMC.pdf
+https://worldlypartners.com/wp-content/uploads/2026/01/Alphabet.pdf
+https://worldlypartners.com/wp-content/uploads/2024/10/Meta-Platforms-1.pdf
+https://worldlypartners.com/wp-content/uploads/2025/04/Epic-Systems.pdf
+https://worldlypartners.com/wp-content/uploads/2025/03/Indian-Premier-League.pdf
+https://worldlypartners.com/wp-content/uploads/2025/10/Trader-Joes.pdf
+https://worldlypartners.com/wp-content/uploads/2025/02/Rolex.pdf
+https://worldlypartners.com/wp-content/uploads/2025/01/Mars.pdf
+https://worldlypartners.com/wp-content/uploads/2024/10/Starbucks.pdf
+https://worldlypartners.com/wp-content/uploads/2024/11/IKEA.pdf
+https://worldlypartners.com/wp-content/uploads/2025/07/JP-Morgan-Chase.pdf

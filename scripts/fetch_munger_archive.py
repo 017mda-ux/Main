@@ -61,13 +61,24 @@ def pdf_to_text(pdf: Path, txt: Path) -> bool:
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--url", default=ARCHIVE_URL)
+    ap.add_argument("--urls-file", help="Text file of PDF URLs (one per line) instead of scraping a page")
+    ap.add_argument("--out", help="Output folder (default knowledge/munger)")
     ap.add_argument("--dry-run", action="store_true")
     args = ap.parse_args()
 
-    page = requests.get(args.url, headers=HEADERS, timeout=30)
-    page.raise_for_status()
-    links = find_pdf_links(page.text, args.url)
-    print(f"Found {len(links)} PDF links on {args.url}")
+    global ROOT
+    if args.out:
+        ROOT = Path(args.out).resolve()
+    if args.urls_file:
+        urls = [u.strip() for u in Path(args.urls_file).read_text().splitlines()
+                if u.strip() and not u.startswith("#")]
+        links = [(unquote(Path(urlparse(u).path).stem).replace("-", " "), u) for u in urls]
+        print(f"Read {len(links)} PDF URLs from {args.urls_file}")
+    else:
+        page = requests.get(args.url, headers=HEADERS, timeout=30)
+        page.raise_for_status()
+        links = find_pdf_links(page.text, args.url)
+        print(f"Found {len(links)} PDF links on {args.url}")
     if args.dry_run:
         for title, url in links:
             print(f"  {title}  ->  {url}")

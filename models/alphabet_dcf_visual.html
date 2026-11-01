@@ -127,10 +127,10 @@ input[type="range"]:focus-visible, button:focus-visible { outline: 2px solid var
 
   <section class="card">
     <div class="step"><span class="num">4</span><h2>Future dollars are worth less today</h2></div>
-    <p class="say">You need a 9% return a year (your cost of equity, k). So $1 received in 2031 is worth only <b>65¢</b> today. Each year's cash flow is shrunk by that factor.</p>
+    <p class="say">You need an 8.2% return a year (k, the return the market price implies on consensus). So $1 received in 2031 is worth only <b>67¢</b> today. Each year's cash flow is shrunk by that factor.</p>
     <div class="legend" id="lg-pv"></div>
     <div id="c-pv"></div>
-    <p class="callout">Add the five years up and they're worth only <b>$11B</b> today. The heavy spending eats almost all of the near-term cash.</p>
+    <p class="callout">Add the five years up and they're worth only <b>$15B</b> today. The heavy spending eats almost all of the near-term cash.</p>
   </section>
 
   <section class="card">
@@ -139,15 +139,15 @@ input[type="range"]:focus-visible, button:focus-visible { outline: 2px solid var
     <div class="formula">
       <div class="box"><b>$112</b><small>FCF 2031</small></div><span class="op">×</span>
       <div class="box"><b>1.04</b><small>grow 4%</small></div><span class="op">÷</span>
-      <div class="box"><b>5%</b><small>9% − 4%</small></div><span class="op">=</span>
-      <div class="box"><b>$2,325</b><small>value in 2031</small></div>
+      <div class="box"><b>4.2%</b><small>8.2% − 4%</small></div><span class="op">=</span>
+      <div class="box"><b>$2,768</b><small>value in 2031</small></div>
     </div>
     <div class="formula">
-      <div class="box"><b>$2,325</b><small>value in 2031</small></div><span class="op">÷</span>
-      <div class="box"><b>1.54</b><small>5 years of 9%</small></div><span class="op">=</span>
-      <div class="box result"><b>$1,511</b><small>worth today</small></div>
+      <div class="box"><b>$2,768</b><small>value in 2031</small></div><span class="op">÷</span>
+      <div class="box"><b>1.48</b><small>5 years of 8.2%</small></div><span class="op">=</span>
+      <div class="box result"><b>$1,867</b><small>worth today</small></div>
     </div>
-    <p class="callout">The terminal value is <b>79%</b> of the total. Whatever you assume about life after 2031 decides the answer.</p>
+    <p class="callout">The terminal value is <b>82%</b> of the total. Whatever you assume about life after 2031 decides the answer.</p>
   </section>
 
   <section class="card">
@@ -156,9 +156,9 @@ input[type="range"]:focus-visible, button:focus-visible { outline: 2px solid var
     <div class="legend" id="lg-wf"></div>
     <div id="c-wf"></div>
     <div class="tiles">
-      <div class="tile"><div class="k">Value per share</div><div class="v">$159</div></div>
+      <div class="tile"><div class="k">Value per share</div><div class="v">$189</div></div>
       <div class="tile"><div class="k">Price today</div><div class="v">$283.50</div></div>
-      <div class="tile"><div class="k">Difference</div><div class="v neg">−44%</div></div>
+      <div class="tile"><div class="k">Difference</div><div class="v neg">−33%</div></div>
     </div>
   </section>
 
@@ -167,8 +167,8 @@ input[type="range"]:focus-visible, button:focus-visible { outline: 2px solid var
     <p class="say">Terminal value = 2031 cash flow × (1 + g) ÷ (k − g). k is your required return, g is growth forever. Drag either one and watch the value change.</p>
     <div class="controls">
       <div class="ctl">
-        <label for="disc">k: your required return <output id="o-disc">9.00%</output></label>
-        <input id="disc" type="range" min="6" max="12" step="0.05" value="9">
+        <label for="disc">k: your required return <output id="o-disc">8.20%</output></label>
+        <input id="disc" type="range" min="6" max="12" step="0.05" value="8.2">
       </div>
       <div class="ctl">
         <label for="tg">g: growth forever after 2031 <output id="o-tg">4.0%</output></label>
@@ -176,12 +176,12 @@ input[type="range"]:focus-visible, button:focus-visible { outline: 2px solid var
       </div>
     </div>
     <div class="formula" id="o-formula"></div>
-    <div class="big"><span class="v" id="o-ps">$159</span><span class="pill down" id="o-up">−44% vs $283.50</span></div>
+    <div class="big"><span class="v" id="o-ps">$189</span><span class="pill down" id="o-up">−33% vs $283.50</span></div>
     <div id="c-mix"></div>
     <p class="say" id="o-note"></p>
   </section>
 
-  <p class="say" style="font-size:13px">Inputs: price $283.50, 12.1B shares, net cash $100B, stakes $100B, Waymo $302B in 2031 (your 10M rides/week × $22 × 33x × 80%), tax 17%, k = 9% (5.0% risk-free + about 4% equity premium), g = 4%. Search +7% then +5%, margin 40%; YouTube +12% then +9%; Cloud $206B in 2027, then +52%, +19%, +18%, margin 40%; capex $330B / $360B / $380B, then 38% of revenue. Source: models/Alphabet_Bottom_Up_Model.xlsx, Custom scenario.</p>
+  <p class="say" style="font-size:13px">Inputs: price $283.50, 12.1B shares, net cash $100B, stakes $100B, Waymo $302B in 2031 (your 10M rides/week × $22 × 33x × 80%), tax 17%, k = 8.2% (the return the $283.50 price implies on consensus cash flows), g = 4%. Search +7% then +5%, margin 40%; YouTube +12% then +9%; Cloud $206B in 2027, then +52%, +19%, +18%, margin 40%; capex $330B / $360B / $380B, then 38% of revenue. Source: models/Alphabet_Bottom_Up_Model.xlsx, Custom scenario.</p>
 </main>
 <div id="tip" role="tooltip"></div>
 
@@ -278,8 +278,8 @@ document.getElementById("fcf-tiles").innerHTML = [["FCF 2027", fcf[0]], ["FCF 20
 
 // Step 4: FCF vs present value
 legend("lg-pv", [["Free cash flow that year", "--s1"], ["Worth today", "--s4"]]);
-const pv = fcf.map((v, i) => v / Math.pow(1.09, i + 1));
-bars("c-pv", { cats: Y5.map((y, i) => `${y} · ${Math.round(100 / Math.pow(1.09, i + 1))}¢`), min: -120, max: 140, ticks: [-100, -50, 0, 50, 100], h: 260,
+const pv = fcf.map((v, i) => v / Math.pow(1.082, i + 1));
+bars("c-pv", { cats: Y5.map((y, i) => `${y} · ${Math.round(100 / Math.pow(1.082, i + 1))}¢`), min: -120, max: 140, ticks: [-100, -50, 0, 50, 100], h: 260,
   groups: [{ series: [{ name: "FCF", color: "--s1", values: fcf }] }, { series: [{ name: "Worth today", color: "--s4", values: pv }] }] });
 
 // Step 6: waterfall to equity value
@@ -311,12 +311,12 @@ function waterfall(id, items, priceLine) {
 }
 legend("lg-wf", [["Adds value", "--up"], ["Subtracts", "--down"], ["Total", "--total"]]);
 waterfall("c-wf", [
-  { n: "2027-31|cash", v: 11.5 }, { n: "After|2031", v: 1511.3 }, { n: "Net|cash", v: 100 },
-  { n: "Equity|stakes", v: 100 }, { n: "Waymo", v: 196.3 }, { n: "Equity|value", total: true },
+  { n: "2027-31|cash", v: 14.8 }, { n: "After|2031", v: 1867.3 }, { n: "Net|cash", v: 100 },
+  { n: "Equity|stakes", v: 100 }, { n: "Waymo", v: 203.7 }, { n: "Equity|value", total: true },
 ], 3430.6);
 
 // Step 7: live calculator
-const S = { disc: 9, tg: 4 };
+const S = { disc: 8.2, tg: 4 };
 const SH = 12.1, PRICE = 283.5;
 function calc() {
   const r = S.disc / 100, g = S.tg / 100;

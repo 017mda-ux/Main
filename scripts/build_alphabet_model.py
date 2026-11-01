@@ -74,7 +74,7 @@ rows = [
     ("Edit these", "Yellow cells: the Custom scenario column on Scenarios, and key inputs on Inputs (price, shares, net cash, discount rate). Blue text = hardcoded input; black = formula; green = link from another sheet."),
     ("Example edit", "To test 'Search -3% a year for 3 years': on Scenarios, set Custom > Search growth yrs 1-3 to -3.0%. Summary updates the Custom column."),
     ("Scenarios", "Bear: Search flat 5 yrs, margin falls, AI capex earns weak returns. Flat Search/Capex pays: Search flat 5 yrs but Cloud compounds strongly. Base: steady Search, Cloud strong then fading. Bull: Search grows, Cloud very strong, buybacks resume. Custom: starts equal to Base."),
-    ("Method", "Segment revenue x growth; segment operating margin glides linearly from FY26E to the scenario's terminal margin over 5 years (margins include each unit's depreciation). EBIT less tax plus D&A less capex = FCF. D&A = average of the last 6 years' capex. DCF at the discount rate with a terminal growth value. IRR (headline, 5-year hold): buy at price, receive FCF/share 2027-31, sell at end-2031 at the year-5 exit P/FCF multiple, plus net cash, stakes and Waymo's 2031 value per share. A 10-year IRR is kept for reference."),
+    ("Method", "Segment revenue x growth; segment operating margin glides linearly from FY26E to the scenario's terminal margin over 5 years (margins include each unit's depreciation). EBIT less tax plus D&A less capex = FCF. D&A = 60% of capex (servers) over 6 years with a half-year convention + 40% (buildings) over 25 years; this reproduces Bloomberg consensus EBITDA and EPS when fed consensus revenue and capex. DCF at the discount rate with a terminal growth value. IRR (headline, 5-year hold): buy at price, receive FCF/share 2027-31, sell at end-2031 at the year-5 exit P/FCF multiple, plus net cash, stakes and Waymo's 2031 value per share. A 10-year IRR is kept for reference."),
     ("Estimates", "Segment margins below the Services/Cloud level, Q4'26 estimates, net cash, equity stakes, Waymo value and pre-2026 capex are model estimates, marked with comments. Replace them as better data arrives."),
     ("Disclosure", "Alphabet's equity stakes include a holding in Anthropic, the company that makes Claude (the model that built this). It is included in a lump-sum estimate only and not separately valued."),
     ("Not advice", "Illustrative model for research. Not financial advice."),
@@ -246,6 +246,9 @@ inputs = [
     ("unalloc", "Unallocated costs FY26E ($bn)", -28.0, USD, False, "Estimate: total OI less Services, Cloud and Other Bets OI (AI/DeepMind, corporate)."),
     ("unalloc_g", "Unallocated cost growth / yr", 0.04, PCT, False, "Assumption."),
     ("capex26", "Capex FY26E ($bn)", 200.0, USD0, False, "Guide $195-205bn."),
+    ("eqshare", "Share of capex in servers & equipment", 0.60, PCT, False, "Depreciated over 6 years, half-year convention. Rest = buildings/land."),
+    ("bldlife", "Buildings & land improvements life (yrs)", 25, "0", False, "Straight line on cumulative spend."),
+    ("precap", "Cumulative capex 2016-2020 ($bn)", 94.3, USD, False, "10.2 + 13.2 + 25.1 + 23.5 + 22.3. Method gives ~$27bn FY25 D&A vs ~$24bn implied by Bloomberg EBITDA."),
 ]
 for i, (k, lab, v, fmt, key, note) in enumerate(inputs):
     rr = 6 + i
@@ -296,9 +299,17 @@ inp.column_dimensions["F"].width = 70
 # ─────────────────────────── Scenarios ───────────────────────────
 s = wb.create_sheet("Scenarios")
 title(s, "Scenario drivers", "Columns C-F are preset cases; G (yellow) is yours to edit. Growth rates are annual.")
-SC = ["Bear", "Flat Search / Capex pays", "Base", "Bull", "Custom"]
-SCOL = dict(zip(SC, "CDEFG"))
+SC = ["Bear", "Flat Search / Capex pays", "Base", "Bull", "Custom", "Consensus"]
+SCOL = dict(zip(SC, "CDEFGH"))
+# Bloomberg consensus (FY27-30E) translated into segment drivers. Bloomberg gives totals only, so the
+# segment split is implied: revenue + TAC ~ $625/773/879/987bn, capex 324/367/366/375, buybacks ~2.5%/yr.
+# Valuation choices (Waymo, exit multiples) link to Custom so only the operating view differs.
+CONS = {"sg1": 0.10, "sg2": 0.08, "sg3": 0.04, "sm": 0.56, "yg1": 0.12, "yg2": 0.09, "ym": 0.32,
+        "ug1": 0.13, "ug2": 0.10, "um": 0.20, "ng": -0.01, "nm": 0.15, "cg1": 0.87, "cg2": 0.52, "cg3": 0.19,
+        "cg4": 0.18, "cg5": 0.09, "cm": 0.42, "ob": -8.0, "cx1": 324, "cx2": 367, "cx3": 366, "cxp": 0.38,
+        "dsh": -0.025}
 header(s, 5, ["Driver"] + SC + ["What it means"])
+s["H5"].comment = Comment("Bloomberg consensus FY27-30E translated to drivers. Waymo and exit multiples link to Custom.", "Model")
 drivers = [
     # key, label, fmt, bear, flatpays, base, bull, note
     ("sg1", "Search growth yrs 1-3", PCT, 0.0, 0.0, 0.05, 0.08, "2027-2029"),
@@ -343,16 +354,17 @@ for i, (k, lab, fmt, *vals, note) in enumerate(drivers):
     for sc, v in zip(SC[:4], vals):
         put(s, f"{SCOL[sc]}{rr}", v, fmt, BLUE)
     put(s, f"G{rr}", f"=E{rr}", fmt, BLACK, fill=YELLOW, comment=None)
-    put(s, f"H{rr}", note, italic=True)
+    put(s, f"H{rr}", CONS[k] if k in CONS else f"=G{rr}", fmt, BLUE if k in CONS else GREEN)
+    put(s, f"I{rr}", note, italic=True)
 # Custom column: hard inputs (copy of Base) so the user overwrites values, not formulas
 for k, rr in D.items():
     s[f"G{rr}"].value = s[f"E{rr}"].value
     s[f"G{rr}"].font = font(BLUE)
 s["G5"].comment = Comment("Custom starts as a copy of Base. Overwrite any yellow cell to build your own case.", "Model")
 s.column_dimensions["B"].width = 40
-for c in "CDEFG":
+for c in "CDEFGH":
     s.column_dimensions[c].width = 15
-s.column_dimensions["H"].width = 44
+s.column_dimensions["I"].width = 44
 
 # ─────────────────────────── Drivers (feeds the Custom column) ───────────────────────────
 dv = wb.create_sheet("Drivers", 3)
@@ -445,7 +457,7 @@ title(m, "10-year projections by scenario ($bn)", "Each block is one scenario. A
 YEARS = list(range(2021, 2037))           # C..R
 YC = {y: L(3 + i) for i, y in enumerate(YEARS)}
 FIRST, LAST = YC[2027], YC[2036]
-BLOCK = 50
+BLOCK = 52
 OUT_ROWS = {}
 
 
@@ -464,7 +476,7 @@ for bi, sc in enumerate(SC):
               "Search margin", "YouTube margin", "Subs margin", "Network margin", "Cloud margin",
               "Search operating income", "YouTube operating income", "Subs operating income", "Network operating income",
               "Cloud operating income", "Other Bets operating income", "Unallocated costs", "EBIT", "EBIT margin",
-              "Taxes", "NOPAT", "Capex", "D&A (6-yr avg capex)", "Free cash flow", "Shares (bn)", "FCF per share ($)"]
+              "Taxes", "NOPAT", "Capex", "D&A", "EBITDA", "Free cash flow", "Shares (bn)", "FCF per share ($)"]
     for i, lab in enumerate(labels):
         R[lab] = top + 2 + i
         put(m, f"B{top+2+i}", lab, bold=lab in ("Total revenue", "EBIT", "Free cash flow"))
@@ -518,8 +530,12 @@ for bi, sc in enumerate(SC):
         cap = (f"IF({t}=1,{sv(sc,'cx1')},IF({t}=2,{sv(sc,'cx2')},IF({t}=3,{sv(sc,'cx3')},"
                f"{sv(sc,'cxp')}*{c}{R['Total revenue']})))")
         put(m, f"{c}{R['Capex']}", f"={cap}", USD)
-        put(m, f"{c}{R['D&A (6-yr avg capex)']}", f"=AVERAGE({YC[y-5]}{R['Capex']}:{c}{R['Capex']})", USD)
-        put(m, f"{c}{R['Free cash flow']}", f"={c}{R['NOPAT']}+{c}{R['D&A (6-yr avg capex)']}-{c}{R['Capex']}", USD, bold=True)
+        cx = R['Capex']
+        put(m, f"{c}{R['D&A']}",
+            f"={I['eqshare']}*(AVERAGE({YC[y-5]}{cx}:{c}{cx})+AVERAGE({YC[y-6]}{cx}:{p}{cx}))/2"
+            f"+(1-{I['eqshare']})*({I['precap']}+SUM({YC[2021]}{cx}:{c}{cx}))/{I['bldlife']}", USD)
+        put(m, f"{c}{R['EBITDA']}", f"={c}{R['EBIT']}+{c}{R['D&A']}", USD)
+        put(m, f"{c}{R['Free cash flow']}", f"={c}{R['NOPAT']}+{c}{R['D&A']}-{c}{R['Capex']}", USD, bold=True)
         put(m, f"{c}{R['Shares (bn)']}", f"={p}{R['Shares (bn)']}*(1+{sv(sc,'dsh')})", '0.00')
         put(m, f"{c}{R['FCF per share ($)']}", f"={c}{R['Free cash flow']}/{c}{R['Shares (bn)']}", '$#,##0.00;($#,##0.00);-')
     # valuation block
@@ -623,8 +639,124 @@ for sc in SC:
 put(sm, f"B{tot+4}", "Price used ($)")
 put(sm, f"C{tot+4}", f"={I['price']}", '$#,##0.00', GREEN)
 sm.column_dimensions["B"].width = 44
-for c in "CDEFG":
+
+for c in "CDEFGH":
     sm.column_dimensions[c].width = 16
+
+# ─────────────────────────── vs Consensus (Bloomberg) ───────────────────────────
+vc = wb.create_sheet("vs Consensus", 2)
+title(vc, "Your case vs Bloomberg consensus and history ($bn)",
+      "Blue = Bloomberg (Financial Analysis, Nov-2026). Bloomberg revenue appears net of TAC; gross = + TAC estimate.")
+BY = ["FY22", "FY23", "FY24", "FY25", "LTM", "FY26E", "FY27E", "FY28E", "FY29E", "FY30E"]
+header(vc, 5, ["Bloomberg"] + BY)
+BBG = [
+    ("Revenue (Bloomberg basis)", [282.836, 307.394, 350.018, 402.836, 471.097, 434.094, 565.173, 710.827, 814.016, 920.112]),
+    ("EBITDA adj", [93.670, 99.601, 131.721, 153.520, 188.787, 223.531, 292.718, 388.239, 491.904, 582.733]),
+    ("Net income adj", [63.968, 77.845, 98.550, 112.733, 133.173, 242.052, 188.848, 230.852, 271.565, 312.246]),
+    ("EPS adj ($)", [4.86, 6.12, 7.91, 9.22, 10.84, 18.57, 15.90, 19.98, 24.79, 28.86]),
+    ("Capex", [31.485, 32.251, 52.535, 91.447, 159.804, 202.222, 323.966, 367.128, 365.534, 374.857]),
+    ("Free cash flow", [60.010, 69.495, 72.764, 73.266, 19.747, -11.609, -43.397, -4.241, 53.292, 118.994]),
+]
+B = {}
+for i, (lab, vals) in enumerate(BBG):
+    rr = 6 + i
+    B[lab] = rr
+    put(vc, f"B{rr}", lab)
+    for j, v in enumerate(vals):
+        put(vc, f"{L(3+j)}{rr}", v, '$#,##0.00' if "EPS" in lab else USD, BLUE)
+rr = 6 + len(BBG)
+B["shares"] = rr
+put(vc, f"B{rr}", "Implied shares (bn) = NI / EPS")
+for j in range(len(BY)):
+    c = L(3 + j)
+    put(vc, f"{c}{rr}", f"={c}{B['Net income adj']}/{c}{B['EPS adj ($)']}", '0.00')
+rr += 1
+B["tac"] = rr
+put(vc, f"B{rr}", "TAC estimate (gross less Bloomberg revenue)")
+put(vc, f"H{rr}", f"=Model!{YC[2026]}{OUT_ROWS['Custom']['R']['Total revenue']}-H{B['Revenue (Bloomberg basis)']}", USD,
+    comment="FY26E model revenue (reported basis) less Bloomberg FY26E. Grown 4% a year after.")
+put(vc, f"C{rr+1}", 0.04, PCT, BLUE)
+put(vc, f"B{rr+1}", "TAC growth / yr")
+for j in range(7, 11):
+    c, pc = L(3 + j - 1), L(3 + j - 2)
+    put(vc, f"{c}{rr}", f"={pc}{rr}*(1+$C${rr+1})", USD)
+for j in range(len(BY)):
+    vc.column_dimensions[L(3 + j)].width = 11
+vc.column_dimensions["B"].width = 46
+
+# Side by side 2027-30
+top2 = rr + 3
+put(vc, f"B{top2}", "2027-2030: Bloomberg vs model Consensus scenario vs your case", bold=True)
+CY = [2027, 2028, 2029, 2030]
+BCOL = {2027: "I", 2028: "J", 2029: "K", 2030: "L"}
+header(vc, top2 + 1, ["Line"] + [str(y) for y in CY] + ["Avg gap"])
+RC, RU = OUT_ROWS["Consensus"]["R"], OUT_ROWS["Custom"]["R"]
+
+
+def mref(Rr, lab, y):
+    return f"Model!{YC[y]}{Rr[lab]}"
+
+
+def eps(Rr, y):
+    return f"{mref(Rr,'EBIT',y)}*(1-{I['tax']})/{mref(Rr,'Shares (bn)',y)}"
+
+
+blocks = [
+    ("Revenue (reported, incl. TAC)", lambda y: f"={BCOL[y]}{B['Revenue (Bloomberg basis)']}+{BCOL[y]}{B['tac']}",
+     lambda Rr, y: f"={mref(Rr,'Total revenue',y)}", USD),
+    ("EBITDA", lambda y: f"={BCOL[y]}{B['EBITDA adj']}", lambda Rr, y: f"={mref(Rr,'EBITDA',y)}", USD),
+    ("EPS ($, before other income)", lambda y: f"={BCOL[y]}{B['EPS adj ($)']}", lambda Rr, y: f"={eps(Rr,y)}", '$#,##0.00'),
+    ("Capex", lambda y: f"={BCOL[y]}{B['Capex']}", lambda Rr, y: f"={mref(Rr,'Capex',y)}", USD),
+    ("Free cash flow", lambda y: f"={BCOL[y]}{B['Free cash flow']}", lambda Rr, y: f"={mref(Rr,'Free cash flow',y)}", USD),
+    ("Shares (bn)", lambda y: f"={BCOL[y]}{B['shares']}", lambda Rr, y: f"={mref(Rr,'Shares (bn)',y)}", '0.00'),
+]
+r2 = top2 + 2
+for lab, fb, fm, fmt in blocks:
+    put(vc, f"B{r2}", lab, bold=True)
+    rows = (("  Bloomberg consensus", lambda y: fb(y), BLACK), ("  Model: Consensus scenario", lambda y: fm(RC, y), GREEN),
+            ("  Model: your case", lambda y: fm(RU, y), GREEN))
+    for k, (sub, f, col) in enumerate(rows):
+        put(vc, f"B{r2+1+k}", sub)
+        for j, y in enumerate(CY):
+            put(vc, f"{L(3+j)}{r2+1+k}", f(y), fmt, col)
+    put(vc, f"B{r2+4}", "  Your case vs Bloomberg", italic=True)
+    for j, y in enumerate(CY):
+        c = L(3 + j)
+        if lab == "Free cash flow":
+            put(vc, f"{c}{r2+4}", f"={c}{r2+3}-{c}{r2+1}", USD, italic=True)
+        else:
+            put(vc, f"{c}{r2+4}", f"={c}{r2+3}/{c}{r2+1}-1", PCT, italic=True)
+    put(vc, f"G{r2+4}", f"=AVERAGE(C{r2+4}:F{r2+4})", USD if lab == "Free cash flow" else PCT, italic=True, bold=True)
+    r2 += 6
+
+# Driver differences
+put(vc, f"B{r2}", "Where your assumptions differ (Scenarios sheet)", bold=True)
+header(vc, r2 + 1, ["Driver", "Consensus", "Your case", "Difference"])
+diffs = [("sg1", "Search growth 2027-29"), ("sg2", "Search growth 2030-31"), ("sm", "Search margin by 2031"),
+         ("yg1", "YouTube growth 2027-29"), ("ym", "YouTube margin"), ("ug1", "Subs/devices growth 2027-29"),
+         ("um", "Subs/devices margin"), ("cg1", "Cloud growth 2027"), ("cg2", "Cloud growth 2028"),
+         ("cg3", "Cloud growth 2029"), ("cg4", "Cloud growth 2030-31"), ("cm", "Cloud margin by 2031"),
+         ("cx1", "Capex 2027"), ("cx2", "Capex 2028"), ("cx3", "Capex 2029"), ("cxp", "Capex % revenue from 2030"),
+         ("dsh", "Share count change / yr")]
+for i, (k, lab) in enumerate(diffs):
+    rr = r2 + 2 + i
+    fmt = USD0 if k.startswith("cx") and k != "cxp" else PCT
+    put(vc, f"B{rr}", lab)
+    put(vc, f"C{rr}", f"=Scenarios!H{D[k]}", fmt, GREEN)
+    put(vc, f"D{rr}", f"=Scenarios!G{D[k]}", fmt, GREEN)
+    put(vc, f"E{rr}", f"=D{rr}-C{rr}", fmt)
+r3 = r2 + 2 + len(diffs) + 1
+put(vc, f"B{r3}", "Value (same discount rate, Waymo and exit multiple)", bold=True)
+header(vc, r3 + 1, ["Output", "Consensus", "Your case"])
+SUMR = {lab: 6 + i for i, (lab, _, _) in enumerate(summary_rows)}
+for i, lab in enumerate(("DCF value per share ($)", "Upside vs price", "5-year IRR from today's price",
+                         "Year-5 exit value per share ($)", "Cumulative FCF 2027-31")):
+    rr = r3 + 2 + i
+    fmt = PCT if ("IRR" in lab or "Upside" in lab) else ('$#,##0' if "$" in lab else USD0)
+    put(vc, f"B{rr}", lab)
+    put(vc, f"C{rr}", f"=Summary!{SCOL['Consensus']}{SUMR[lab]}", fmt, GREEN)
+    put(vc, f"D{rr}", f"=Summary!{SCOL['Custom']}{SUMR[lab]}", fmt, GREEN)
+vc.freeze_panes = "C6"
 
 for ws in wb.worksheets:
     ws.sheet_view.showGridLines = False

@@ -68,13 +68,13 @@ def read_results():
     wb = load_workbook(BOOK, data_only=True)
     sm, sc = wb["Summary"], wb["Scenarios"]
     lab = rows_by_label(sm)
-    names = [sm[f"{c}5"].value for c in "CDEFG"]
+    names = [sm[f"{c}5"].value for c in "CDEFGH"]
     out = {}
     for key in ("DCF value per share ($)", "Upside vs price", "5-year IRR from today's price",
                 "Year-5 exit value per share ($)", "SOTP value per share ($)", "EBIT 2031",
                 "Free cash flow 2027", "Free cash flow 2031", "FCF per share 2031 ($)",
                 "Cumulative FCF 2027-31", "For reference: 10-year IRR (2036 exit)"):
-        out[key] = {n: sm[f"{c}{lab[key]}"].value for n, c in zip(names, "CDEFG")}
+        out[key] = {n: sm[f"{c}{lab[key]}"].value for n, c in zip(names, "CDEFGH")}
     drivers = {k: sc[f"G{rows_by_label(sc)[v]}"].value for k, v in DRIVERS.items()}
     dv = wb["Drivers"]
     dl = {dv[f"B{r}"].value: r for r in range(1, dv.max_row + 1) if dv[f"B{r}"].value}

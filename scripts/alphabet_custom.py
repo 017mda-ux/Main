@@ -34,6 +34,7 @@ DRIVERS = {
     "capex27": "Capex 2027 ($bn)", "capex28": "Capex 2028 ($bn)", "capex29": "Capex 2029 ($bn)",
     "capex_pct": "Capex % of revenue from 2030", "dilution": "Share count change / yr",
     "waymo": "Waymo / Other Bets value ($bn)", "waymo10": "Waymo / Other Bets value in year 10 ($bn)", "exit": "Exit P/FCF multiple (year 10)",
+    "exit5": "Exit P/FCF multiple (year 5, end-2031)",
     "mx_search": "SOTP multiple: Search (x FY26E OI)", "mx_yt": "SOTP multiple: YouTube + Subs",
     "mx_cloud": "SOTP multiple: Cloud",
 }
@@ -69,9 +70,10 @@ def read_results():
     lab = rows_by_label(sm)
     names = [sm[f"{c}5"].value for c in "CDEFG"]
     out = {}
-    for key in ("DCF value per share ($)", "Upside vs price", "10-year IRR from today's price",
-                "SOTP value per share ($)", "Search operating income 2031", "Cloud operating income 2031",
-                "Free cash flow 2027", "Free cash flow 2031", "Cumulative FCF 2027-36"):
+    for key in ("DCF value per share ($)", "Upside vs price", "5-year IRR from today's price",
+                "Year-5 exit value per share ($)", "SOTP value per share ($)", "EBIT 2031",
+                "Free cash flow 2027", "Free cash flow 2031", "FCF per share 2031 ($)",
+                "Cumulative FCF 2027-31", "For reference: 10-year IRR (2036 exit)"):
         out[key] = {n: sm[f"{c}{lab[key]}"].value for n, c in zip(names, "CDEFG")}
     drivers = {k: sc[f"G{rows_by_label(sc)[v]}"].value for k, v in DRIVERS.items()}
     dv = wb["Drivers"]

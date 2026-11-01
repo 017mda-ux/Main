@@ -74,7 +74,7 @@ rows = [
     ("Edit these", "Yellow cells: the Custom scenario column on Scenarios, and key inputs on Inputs (price, shares, net cash, discount rate). Blue text = hardcoded input; black = formula; green = link from another sheet."),
     ("Example edit", "To test 'Search -3% a year for 3 years': on Scenarios, set Custom > Search growth yrs 1-3 to -3.0%. Summary updates the Custom column."),
     ("Scenarios", "Bear: Search flat 5 yrs, margin falls, AI capex earns weak returns. Flat Search/Capex pays: Search flat 5 yrs but Cloud compounds strongly. Base: steady Search, Cloud strong then fading. Bull: Search grows, Cloud very strong, buybacks resume. Custom: starts equal to Base."),
-    ("Method", "Segment revenue x growth; segment operating margin glides linearly from FY26E to the scenario's terminal margin over 5 years (margins include each unit's depreciation). EBIT less tax plus D&A less capex = FCF. D&A = average of the last 6 years' capex. DCF at the discount rate with a terminal growth value. IRR: buy at price, receive FCF/share yearly, sell in year 10 at the exit P/FCF multiple, plus stakes and Waymo per share."),
+    ("Method", "Segment revenue x growth; segment operating margin glides linearly from FY26E to the scenario's terminal margin over 5 years (margins include each unit's depreciation). EBIT less tax plus D&A less capex = FCF. D&A = average of the last 6 years' capex. DCF at the discount rate with a terminal growth value. IRR (headline, 5-year hold): buy at price, receive FCF/share 2027-31, sell at end-2031 at the year-5 exit P/FCF multiple, plus net cash, stakes and Waymo's 2031 value per share. A 10-year IRR is kept for reference."),
     ("Estimates", "Segment margins below the Services/Cloud level, Q4'26 estimates, net cash, equity stakes, Waymo value and pre-2026 capex are model estimates, marked with comments. Replace them as better data arrives."),
     ("Disclosure", "Alphabet's equity stakes include a holding in Anthropic, the company that makes Claude (the model that built this). It is included in a lump-sum estimate only and not separately valued."),
     ("Not advice", "Illustrative model for research. Not financial advice."),
@@ -235,9 +235,9 @@ title(inp, "Base year, market and balance sheet inputs ($bn)", "Yellow = key ass
 header(inp, 5, ["Input", "Value", "Note"])
 I = {}
 inputs = [
-    ("price", "Share price ($)", 295.0, '$#,##0.00', True, "Post-Q3'26 earnings price (~9% drop to ~$293-300). Update to live."),
+    ("price", "Share price ($)", 283.5, '$#,##0.00', True, "Bloomberg market cap $3,431bn / 12.1bn shares. Update to live."),
     ("shares", "Diluted shares (bn)", 12.1, '0.00', True, "Estimate. Check latest 10-Q cover."),
-    ("netcash", "Net cash ($bn)", 50.0, USD0, True, "Estimate: cash less debt after negative FCF and new borrowing; debt rose to ~$126bn face value in 2026."),
+    ("netcash", "Net cash ($bn)", 100.0, USD0, True, "Bloomberg LTM: cash $265bn less debt $147bn less preferred & other $18bn."),
     ("stakes", "Equity stakes ($bn)", 100.0, USD0, True, "Estimate: non-marketable stakes incl. SpaceX and Anthropic (see Guide disclosure)."),
     ("tax", "Tax rate", 0.17, PCT, False, "Approx. effective rate."),
     ("disc", "Discount rate", 0.09, PCT, True, "Cost of equity used for DCF."),
@@ -328,6 +328,7 @@ drivers = [
     ("waymo", "Waymo / Other Bets value ($bn)", USD0, 50, 150, 100, 200, "Alphabet's share, today (Waymo $126bn post-money Feb 2026)"),
     ("waymo10", "Waymo / Other Bets value in year 10 ($bn)", USD0, 50, 150, 100, 200, "Alphabet's share at the 2036 exit"),
     ("exit", "Exit P/FCF multiple (year 10)", MULT, 14, 20, 18, 22, ""),
+    ("exit5", "Exit P/FCF multiple (year 5, end-2031)", MULT, 14, 20, 18, 22, "Sale price for the 5-year hold"),
     ("mx_s", "SOTP multiple: Search (x FY26E OI)", MULT, 10, 12, 14, 16, ""),
     ("mx_y", "SOTP multiple: YouTube + Subs", MULT, 16, 20, 20, 26, ""),
     ("mx_n", "SOTP multiple: Network", MULT, 6, 6, 6, 6, ""),
@@ -444,7 +445,7 @@ title(m, "10-year projections by scenario ($bn)", "Each block is one scenario. A
 YEARS = list(range(2021, 2037))           # C..R
 YC = {y: L(3 + i) for i, y in enumerate(YEARS)}
 FIRST, LAST = YC[2027], YC[2036]
-BLOCK = 46
+BLOCK = 50
 OUT_ROWS = {}
 
 
@@ -531,13 +532,14 @@ for bi, sc in enumerate(SC):
         ("Equity value", f"=SUM(C{v0+1}:C{v0+3})", USD),
         ("DCF value per share ($)", f"=C{v0+4}/{I['shares']}", '$#,##0;($#,##0);-'),
         ("Upside vs price", f"=C{v0+5}/{I['price']}-1", PCT),
-        ("Year-10 exit value per share ($)", f"={LAST}{R['FCF per share ($)']}*{sv(sc,'exit')}+({I['stakes']}+{sv(sc,'waymo10')})/{LAST}{R['Shares (bn)']}", '$#,##0;($#,##0);-'),
+        ("Year-10 exit value per share ($)", f"={LAST}{R['FCF per share ($)']}*{sv(sc,'exit')}+({I['netcash']}+{I['stakes']}+{sv(sc,'waymo10')})/{LAST}{R['Shares (bn)']}", '$#,##0;($#,##0);-'),
+        ("Year-5 exit value per share ($)", f"={YC[2031]}{R['FCF per share ($)']}*{sv(sc,'exit5')}+({I['netcash']}+{I['stakes']}+{sv(sc,'waymo')}*(1+{I['disc']})^5)/{YC[2031]}{R['Shares (bn)']}", '$#,##0;($#,##0);-'),
     ]
     for j, (lab, f, fmt) in enumerate(rows_v):
         put(m, f"B{v0+1+j}", lab)
         put(m, f"C{v0+1+j}", f, fmt, bold=lab.startswith("DCF"))
     # IRR cash flows per share: year0 -price, yrs1-9 FCF/share, yr10 FCF/share + exit
-    irr_row = v0 + 9
+    irr_row = v0 + 10
     put(m, f"B{irr_row}", "Cash flows per share for IRR")
     put(m, f"{YC[2026]}{irr_row}", f"=-{I['price']}", '$#,##0.00;($#,##0.00);-')
     for y in range(2027, 2037):
@@ -548,7 +550,19 @@ for bi, sc in enumerate(SC):
     put(m, f"C{irr_row+1}", f"=IRR({YC[2026]}{irr_row}:{LAST}{irr_row})", PCT, bold=True)
     put(m, f"B{irr_row+2}", "Cumulative FCF 2027-36")
     put(m, f"C{irr_row+2}", f"=SUM({FIRST}{R['Free cash flow']}:{LAST}{R['Free cash flow']})", USD)
-    OUT_ROWS[sc] = dict(R=R, v0=v0, irr=irr_row + 1, cum=irr_row + 2)
+    # 5-year hold: buy at price, FCF/share 2027-30, 2031 FCF/share + year-5 exit
+    i5 = irr_row + 3
+    put(m, f"B{i5}", "Cash flows per share, 5-year hold")
+    put(m, f"{YC[2026]}{i5}", f"=-{I['price']}", '$#,##0.00;($#,##0.00);-')
+    for y in range(2027, 2032):
+        c = YC[y]
+        extra = f"+C{v0+8}" if y == 2031 else ""
+        put(m, f"{c}{i5}", f"={c}{R['FCF per share ($)']}{extra}", '$#,##0.00;($#,##0.00);-')
+    put(m, f"B{i5+1}", "5-year IRR", bold=True)
+    put(m, f"C{i5+1}", f"=IRR({YC[2026]}{i5}:{YC[2031]}{i5})", PCT, bold=True)
+    put(m, f"B{i5+2}", "Cumulative FCF 2027-31")
+    put(m, f"C{i5+2}", f"=SUM({FIRST}{R['Free cash flow']}:{YC[2031]}{R['Free cash flow']})", USD)
+    OUT_ROWS[sc] = dict(R=R, v0=v0, irr=irr_row + 1, cum=irr_row + 2, irr5=i5 + 1, cum5=i5 + 2)
 m.column_dimensions["B"].width = 34
 for y in YEARS:
     m.column_dimensions[YC[y]].width = 10
@@ -561,18 +575,17 @@ header(sm, 5, ["Output"] + SC)
 summary_rows = [
     ("DCF value per share ($)", lambda o: f"=Model!C{o['v0']+5}", '$#,##0;($#,##0);-'),
     ("Upside vs price", lambda o: f"=Model!C{o['v0']+6}", PCT),
-    ("10-year IRR from today's price", lambda o: f"=Model!C{o['irr']}", PCT),
-    ("Year-10 exit value per share ($)", lambda o: f"=Model!C{o['v0']+7}", '$#,##0;($#,##0);-'),
+    ("5-year IRR from today's price", lambda o: f"=Model!C{o['irr5']}", PCT),
+    ("Year-5 exit value per share ($)", lambda o: f"=Model!C{o['v0']+8}", '$#,##0;($#,##0);-'),
     ("Total revenue 2031", lambda o: f"=Model!{YC[2031]}{o['R']['Total revenue']}", USD0),
-    ("Total revenue 2036", lambda o: f"=Model!{YC[2036]}{o['R']['Total revenue']}", USD0),
     ("Search operating income 2031", lambda o: f"=Model!{YC[2031]}{o['R']['Search operating income']}", USD0),
     ("Cloud operating income 2031", lambda o: f"=Model!{YC[2031]}{o['R']['Cloud operating income']}", USD0),
-    ("Search operating income 2036", lambda o: f"=Model!{YC[2036]}{o['R']['Search operating income']}", USD0),
-    ("Cloud operating income 2036", lambda o: f"=Model!{YC[2036]}{o['R']['Cloud operating income']}", USD0),
+    ("EBIT 2031", lambda o: f"=Model!{YC[2031]}{o['R']['EBIT']}", USD0),
     ("Free cash flow 2027", lambda o: f"=Model!{YC[2027]}{o['R']['Free cash flow']}", USD0),
     ("Free cash flow 2031", lambda o: f"=Model!{YC[2031]}{o['R']['Free cash flow']}", USD0),
-    ("Free cash flow 2036", lambda o: f"=Model!{YC[2036]}{o['R']['Free cash flow']}", USD0),
-    ("Cumulative FCF 2027-36", lambda o: f"=Model!C{o['cum']}", USD0),
+    ("FCF per share 2031 ($)", lambda o: f"=Model!{YC[2031]}{o['R']['FCF per share ($)']}", '$#,##0.00;($#,##0.00);-'),
+    ("Cumulative FCF 2027-31", lambda o: f"=Model!C{o['cum5']}", USD0),
+    ("For reference: 10-year IRR (2036 exit)", lambda o: f"=Model!C{o['irr']}", PCT),
 ]
 for i, (lab, fn, fmt) in enumerate(summary_rows):
     rr = 6 + i

@@ -306,7 +306,7 @@ SCOL = dict(zip(SC, "CDEFGH"))
 # Valuation choices (Waymo, exit multiples) link to Custom so only the operating view differs.
 CONS = {"sg1": 0.10, "sg2": 0.08, "sg3": 0.04, "sm": 0.56, "yg1": 0.12, "yg2": 0.09, "ym": 0.32,
         "ug1": 0.13, "ug2": 0.10, "um": 0.20, "ng": -0.01, "nm": 0.15, "cg1": 0.87, "cg2": 0.52, "cg3": 0.19,
-        "cg4": 0.18, "cg5": 0.09, "cm": 0.42, "ob": -8.0, "cx1": 324, "cx2": 367, "cx3": 366, "cxp": 0.38,
+        "cg4": 0.18, "cg5": 0.09, "cm": 0.42, "ob": -8.0, "cx1": 324, "cx2": 367, "cx3": 366, "cxp": 0.38, "cxT": 0.38,
         "dsh": -0.025}
 header(s, 5, ["Driver"] + SC + ["What it means"])
 s["H5"].comment = Comment("Bloomberg consensus FY27-30E translated to drivers. Waymo and exit multiples link to Custom.", "Model")
@@ -335,6 +335,7 @@ drivers = [
     ("cx2", "Capex 2028 ($bn)", USD0, 280, 310, 300, 320, ""),
     ("cx3", "Capex 2029 ($bn)", USD0, 250, 300, 280, 310, ""),
     ("cxp", "Capex % of revenue from 2030", PCT, 0.27, 0.27, 0.28, 0.28, "Long-run intensity"),
+    ("cxT", "Terminal capex % of revenue (after forecast)", PCT, 0.27, 0.27, 0.28, 0.28, "DCF terminal value only; D&A held at the final forecast year's level. Pre-AI history 10-15%."),
     ("dsh", "Share count change / yr", PCT, 0.01, 0.0, 0.005, -0.01, "+ = dilution (buybacks suspended in 2026)"),
     ("waymo", "Waymo / Other Bets value ($bn)", USD0, 50, 150, 100, 200, "Alphabet's share, today (Waymo $126bn post-money Feb 2026)"),
     ("waymo10", "Waymo / Other Bets value in year 10 ($bn)", USD0, 50, 150, 100, 200, "Alphabet's share at the 2036 exit"),
@@ -578,7 +579,7 @@ for bi, sc in enumerate(SC):
     put(m, f"B{v0}", "Valuation", bold=True)
     rows_v = [
         ("PV of FCF, explicit years", f"=SUMPRODUCT(({FIRST}{R['t (year index)']}:{LAST}{R['t (year index)']}<={I['nyrs']})*{FIRST}{R['Free cash flow']}:{LAST}{R['Free cash flow']}/(1+{I['disc']})^{FIRST}{R['t (year index)']}:{LAST}{R['t (year index)']})", USD),
-        ("PV of terminal value", f"=INDEX({FIRST}{R['Free cash flow']}:{LAST}{R['Free cash flow']},{I['nyrs']})*(1+{I['tg']})/({I['disc']}-{I['tg']})/(1+{I['disc']})^{I['nyrs']}", USD),
+        ("PV of terminal value", f"=(INDEX({FIRST}{R['NOPAT']}:{LAST}{R['NOPAT']},{I['nyrs']})+INDEX({FIRST}{R['D&A']}:{LAST}{R['D&A']},{I['nyrs']})-{sv(sc,'cxT')}*INDEX({FIRST}{R['Total revenue']}:{LAST}{R['Total revenue']},{I['nyrs']}))*(1+{I['tg']})/({I['disc']}-{I['tg']})/(1+{I['disc']})^{I['nyrs']}", USD),
         ("Net cash + stakes + Waymo", f"={I['netcash']}+{I['stakes']}+{sv(sc,'waymo')}", USD),
         ("Equity value", f"=SUM(C{v0+1}:C{v0+3})", USD),
         ("DCF value per share ($)", f"=C{v0+4}/{I['shares']}", '$#,##0;($#,##0);-'),
@@ -775,7 +776,7 @@ diffs = [("sg1", "Search growth 2027-29"), ("sg2", "Search growth 2030-31"), ("s
          ("yg1", "YouTube growth 2027-29"), ("ym", "YouTube margin"), ("ug1", "Subs/devices growth 2027-29"),
          ("um", "Subs/devices margin"), ("cg1", "Cloud growth 2027"), ("cg2", "Cloud growth 2028"),
          ("cg3", "Cloud growth 2029"), ("cg4", "Cloud growth 2030-31"), ("cm", "Cloud margin by 2031"),
-         ("cx1", "Capex 2027"), ("cx2", "Capex 2028"), ("cx3", "Capex 2029"), ("cxp", "Capex % revenue from 2030"),
+         ("cx1", "Capex 2027"), ("cx2", "Capex 2028"), ("cx3", "Capex 2029"), ("cxp", "Capex % revenue from 2030"), ("cxT", "Terminal capex % revenue"),
          ("dsh", "Share count change / yr")]
 for i, (k, lab) in enumerate(diffs):
     rr = r2 + 2 + i

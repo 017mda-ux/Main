@@ -163,29 +163,19 @@ input[type="range"]:focus-visible, button:focus-visible { outline: 2px solid var
   </section>
 
   <section class="card">
-    <div class="step"><span class="num">7</span><h2>Try the big levers yourself</h2></div>
-    <p class="say">Your case assumes data center spending stays at 35% of sales forever. That means each new dollar invested earns only about 7.7%, below your 8.15% cost of equity. Switch to "Return on new investment" to set your own return.</p>
+    <div class="step"><span class="num">7</span><h2>Move k and g yourself</h2></div>
+    <p class="say">Terminal value = 2031 cash flow × (1 + g) ÷ (k − g). k is your required return, g is growth forever. Drag either one and watch the value change.</p>
     <div class="controls">
       <div class="ctl">
-        <span style="font-size:14px;color:var(--ink-2)">After 2031, cash flow is…</span>
-        <div class="seg" role="group" aria-label="Terminal method">
-          <button type="button" id="m-model" aria-pressed="true">As modelled (capex 35% forever)</button>
-          <button type="button" id="m-roic" aria-pressed="false">Return on new investment</button>
-        </div>
-      </div>
-      <div class="ctl" id="roic-wrap" style="opacity:.45">
-        <label for="roic">Return on new investment <output id="o-roic">15%</output></label>
-        <input id="roic" type="range" min="8" max="40" step="1" value="15" disabled>
-      </div>
-      <div class="ctl">
-        <label for="disc">Your required return (cost of equity) <output id="o-disc">8.15%</output></label>
+        <label for="disc">k: your required return <output id="o-disc">8.15%</output></label>
         <input id="disc" type="range" min="6" max="12" step="0.05" value="8.15">
       </div>
       <div class="ctl">
-        <label for="tg">Growth forever after 2031 <output id="o-tg">4.0%</output></label>
+        <label for="tg">g: growth forever after 2031 <output id="o-tg">4.0%</output></label>
         <input id="tg" type="range" min="1" max="5" step="0.25" value="4">
       </div>
     </div>
+    <div class="formula" id="o-formula"></div>
     <div class="big"><span class="v" id="o-ps">$192</span><span class="pill down" id="o-up">−32% vs $283.50</span></div>
     <div id="c-mix"></div>
     <p class="say" id="o-note"></p>
@@ -326,12 +316,12 @@ waterfall("c-wf", [
 ], 3430.6);
 
 // Step 7: live calculator
-const S = { mode: "model", roic: 15, disc: 8.15, tg: 4 };
-const NOPAT31 = 239.527, SH = 12.1, PRICE = 283.5;
+const S = { disc: 8.15, tg: 4 };
+const SH = 12.1, PRICE = 283.5;
 function calc() {
   const r = S.disc / 100, g = S.tg / 100;
   const pvY = fcf.reduce((s, v, i) => s + v / Math.pow(1 + r, i + 1), 0);
-  const tf = S.mode === "model" ? fcf[4] * (1 + g) : NOPAT31 * (1 + g) * (1 - g / (S.roic / 100));
+  const tf = fcf[4] * (1 + g);
   const df5 = Math.pow(1 + r, 5);
   const pvTV = r > g ? tf / (r - g) / df5 : NaN;
   const way = 302.016 / df5;
@@ -340,9 +330,11 @@ function calc() {
   const pill = document.getElementById("o-up");
   pill.textContent = isFinite(ps) ? `${up >= 0 ? "+" : "−"}${Math.abs(Math.round(up * 100))}% vs $283.50` : "growth must be below required return";
   pill.className = "pill " + (up >= 0 ? "up" : "down");
-  const reinvest = S.mode === "model" ? 1 - fcf[4] / NOPAT31 : g / (S.roic / 100);
-  const impliedRoic = S.mode === "model" ? g / reinvest : S.roic / 100;
-  document.getElementById("o-note").innerHTML = `Reinvesting <b>${Math.round(reinvest * 100)}%</b> of profit to grow ${S.tg.toFixed(1)}% a year implies a <b>${(impliedRoic * 100).toFixed(1)}%</b> return on new investment, against your ${S.disc.toFixed(2)}% required return. Terminal value = <b>${Math.round(pvTV / eq * 100)}%</b> of the total.`;
+  const tv = r > g ? tf / (r - g) : NaN;
+  document.getElementById("o-formula").innerHTML = r > g
+    ? `<div class="box"><b>$115</b><small>FCF 2031</small></div><span class="op">×</span><div class="box"><b>${(1 + g).toFixed(3)}</b><small>1 + g</small></div><span class="op">÷</span><div class="box"><b>${((r - g) * 100).toFixed(2)}%</b><small>k − g</small></div><span class="op">=</span><div class="box"><b>${fmt(tv)}</b><small>value in 2031</small></div><span class="op">÷</span><div class="box"><b>${df5.toFixed(2)}</b><small>(1 + k)<sup>5</sup></small></div><span class="op">=</span><div class="box result"><b>${fmt(pvTV)}</b><small>worth today</small></div>`
+    : `<p class="say">g must be below k.</p>`;
+  document.getElementById("o-note").innerHTML = isFinite(pvTV) ? `The terminal value is <b>${Math.round(pvTV / eq * 100)}%</b> of the total. Small changes in k − g move the answer a lot.` : "";
   // composition bar
   const parts = [["2027-31 cash", pvY, "--s2"], ["After 2031", pvTV, "--s1"], ["Cash + stakes", 200, "--s3"], ["Waymo", way, "--s4"]];
   const W = 400, H = 50, svg = el("svg", { viewBox: `0 0 ${W} ${H}`, role: "img" });
@@ -352,11 +344,7 @@ function calc() {
   const host = document.getElementById("c-mix"); host.innerHTML = ""; host.append(svg);
 }
 function bind(id, key, f) { const i = document.getElementById(id); i.addEventListener("input", () => { S[key] = +i.value; document.getElementById("o-" + id).textContent = f(+i.value); calc(); }); }
-bind("roic", "roic", v => v + "%"); bind("disc", "disc", v => v.toFixed(2) + "%"); bind("tg", "tg", v => v.toFixed(1) + "%");
-const mm = document.getElementById("m-model"), mr = document.getElementById("m-roic");
-function setMode(m) { S.mode = m; mm.setAttribute("aria-pressed", m === "model"); mr.setAttribute("aria-pressed", m === "roic");
-  const w = document.getElementById("roic-wrap"); w.style.opacity = m === "roic" ? 1 : .45; document.getElementById("roic").disabled = m !== "roic"; calc(); }
-mm.onclick = () => setMode("model"); mr.onclick = () => setMode("roic");
+bind("disc", "disc", v => v.toFixed(2) + "%"); bind("tg", "tg", v => v.toFixed(1) + "%");
 calc();
 matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => location.reload());
 </script>

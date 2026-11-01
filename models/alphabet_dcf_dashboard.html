@@ -105,7 +105,7 @@ td.cur { outline: 2px solid var(--accent); outline-offset: -2px; border-radius: 
       <button class="btn primary" id="p-you" type="button">Load your case</button>
       <button class="btn" id="p-cons" type="button">Load consensus (keeps your k, g, Waymo)</button>
       <button class="btn" id="p-bull" type="button">Load upside</button>
-      <button class="btn" id="p-bear" type="button">Load bear: Search disruption</button>
+      <button class="btn" id="p-bear" type="button">Load declining Search case</button>
       <button class="btn" id="p-severe" type="button">Load severe: Search disruption + AI bust</button>
     </div>
   </header>
@@ -218,8 +218,8 @@ function valueAt(p, rows, v, t) { // per-share value at end of year t (0 = today
 function irr(cf) { let lo = -0.9, hi = 2; for (let i = 0; i < 200; i++) { const m = (lo + hi) / 2; const n = cf.reduce((s, c, t) => s + c / Math.pow(1 + m, t), 0); if (n > 0) lo = m; else hi = m; } return (lo + hi) / 2; }
 
 // ───────── inputs ─────────
-const YOU = { price: 283.5, shares: 12.1, netcash: 100, spx: 2000, spx_own: 0.055, ant: 2000, ant_own: 0.14, stk_g: 0.15, tax: 0.17, k: 0.082, g: 0.04,
-  sg1: 1.04 * 1.029 - 1, sg2: 1.03 * 1.0194 - 1, sm: 0.40, yg1: 1.06 * 1.0566 - 1, yg2: 1.04 * 1.0481 - 1, ym: 0.30,
+const YOU = { price: 283.5, shares: 12.1, netcash: 50, spx: 2000, spx_own: 0.055, ant: 2000, ant_own: 0.14, stk_g: 0.15, tax: 0.17, k: 0.082, g: 0.04,
+  sg1: 1.04 * 1.029 - 1, sg2: 1.03 * 1.0194 - 1, sm: 0.46, yg1: 0.09, yg2: 0.07, ym: 0.30,
   ug1: 1.08 * 1.028 - 1, ug2: 1.05 * 1.029 - 1, um: 0.18, ng: -0.01, nm: 0.15,
   cloud27: 561 * 0.55 / 2 + 0.47 * 109.914, cg2: 0.52, cg3: 0.19, cg4: 0.18, cm: 0.40, ob: -8,
   cx1: 324, cx2: 367, cx3: 366, cxp: 0.38, cxT: 0.38, dsh: -0.01, eq: 0.6, life: 25, precap: 94.3,
@@ -251,7 +251,7 @@ const GROUPS = [
 ];
 const UNIT = {}; GROUPS.forEach(g => g[2].forEach(c => UNIT[c[0]] = c[4]));
 let S = { ...YOU };
-try { const saved = JSON.parse(localStorage.getItem("goog-dcf3") || "null"); if (saved) S = { ...YOU, ...saved }; } catch (e) {}
+try { const saved = JSON.parse(localStorage.getItem("goog-dcf4") || "null"); if (saved) S = { ...YOU, ...saved }; } catch (e) {}
 const toUI = (k, v) => UNIT[k] === "%" ? v * 100 : v;
 const fromUI = (k, v) => UNIT[k] === "%" ? v / 100 : v;
 const showNum = (k, v) => { const u = toUI(k, v); return Math.abs(u) >= 100 ? u.toFixed(0) : u.toFixed(1); };
@@ -280,8 +280,8 @@ function syncInputs() {
   }
 }
 document.getElementById("p-you").onclick = () => { S = { ...YOU }; syncInputs(); schedule(); };
-const BEAR = { sg1: 0, sg2: -0.03, sg3: -0.02, sm: 0.35, pem: 15, wev: 0 };
-const SEVERE = { ...BEAR, cloud27: 165, cg2: 0.25, cg3: 0.10, cg4: 0.08, cg5: 0.06, cm: 0.30, yg1: 0.08, yg2: 0.05, ym: 0.27,
+const BEAR = { sg1: 0.04, sg2: 0.02, sm: 0.40, pem: 15, wev: 0 };
+const SEVERE = { sg1: 0, sg2: -0.03, sg3: -0.02, sm: 0.35, pem: 15, wev: 0, cloud27: 165, cg2: 0.25, cg3: 0.10, cg4: 0.08, cg5: 0.06, cm: 0.30, yg1: 0.08, yg2: 0.05, ym: 0.27,
   ug1: 0.08, ug2: 0.05, um: 0.15, cx1: 324, cx2: 300, cx3: 260, cxp: 0.30, cxT: 0.30, spx: 1000, ant: 1000, stk_g: 0, rides: 3, wmult: 15, g: 0.035, dsh: 0 };
 const BULL = { sg1: 0.10, sg2: 0.08, sg3: 0.05, sm: 0.54, cloud27: 215, cg2: 0.55, cg3: 0.28, cg4: 0.22, cg5: 0.12, cm: 0.43,
   yg1: 0.13, yg2: 0.10, ym: 0.32, ug1: 0.14, ug2: 0.11, um: 0.22, cxp: 0.36, cxT: 0.30, rides: 15, dsh: -0.02, pem: 20, wev: 0 };
@@ -356,7 +356,7 @@ function waterfall(id, items, { f = fB, unit = "B", line, lineLabel, h = 230 } =
 const CASES = () => {
   const SEV = { sg1: 0, sg2: -0.03, sg3: -0.02, sm: 0.35, cloud27: 165, cg2: 0.25, cg3: 0.10, cg4: 0.08, cg5: 0.06, cm: 0.30, yg1: 0.08, yg2: 0.05, ym: 0.27,
     ug1: 0.08, ug2: 0.05, um: 0.15, cx1: 324, cx2: 300, cx3: 260, cxp: 0.30, cxT: 0.30, spx: 1000, ant: 1000, stk_g: 0, rides: 3, wmult: 15, dsh: 0 };
-  return [["Severe", 0.10, { ...S, ...SEV, g: Math.min(S.g, 0.035) }, 13], ["Bear", 0.25, { ...S, sg1: 0, sg2: -0.03, sg3: -0.02, sm: 0.35 }, 15],
+  return [["Severe", 0.10, { ...S, ...SEV, g: Math.min(S.g, 0.035) }, 13], ["Declining Search", 0.25, { ...S, sg1: 0.04, sg2: 0.02, sm: 0.40 }, 15],
     ["Your inputs", 0.40, { ...S }, S.pem], ["Upside", 0.25, { ...S, ...BULL }, 20]];
 };
 function caseOut(p, pe) {
@@ -369,7 +369,7 @@ function simulate(n = 2000) {
   const cs = CASES(), lowP = cs[0][2], bearP = cs[1][2], highP = cs[3][2];
   const G = { search: ["sg1", "sg2", "sg3", "sm"], cloud: ["cloud27", "cg2", "cg3", "cg4", "cg5", "cm"], media: ["yg1", "yg2", "ym", "ug1", "ug2", "um"],
     capex: ["cxp", "cxT"], stakes: ["spx", "ant", "stk_g", "rides", "wmult"] };
-  const LOW = { search: bearP, cloud: lowP, media: lowP, capex: { cxp: Math.max(S.cxp, 0.40), cxT: Math.max(S.cxT, 0.40) }, stakes: lowP };
+  const LOW = { search: lowP, cloud: lowP, media: lowP, capex: { cxp: Math.max(S.cxp, 0.40), cxT: Math.max(S.cxT, 0.40) }, stakes: lowP };
   const out = [];
   for (let i = 0; i < n; i++) {
     const Z = gauss(), p = { ...S };
@@ -429,7 +429,7 @@ function schedule() { if (!raf) raf = requestAnimationFrame(() => { raf = 0; ren
 const OPS = { Search: ["sg1", "sg2", "sm"], YouTube: ["yg1", "yg2", "ym"], Subs: ["ug1", "ug2", "um"], Network: ["ng", "nm"],
   Cloud: ["cloud27", "cg2", "cg3", "cg4", "cm"], "Other|bets": ["ob"], Capex: ["cx1", "cx2", "cx3", "cxp", "cxT"] };
 function render() {
-  try { localStorage.setItem("goog-dcf3", JSON.stringify(S)); } catch (e) {}
+  try { localStorage.setItem("goog-dcf4", JSON.stringify(S)); } catch (e) {}
   for (const k in UNIT) {
     const st = document.getElementById("st-" + k);
     if (k in STREET) { const d = Math.abs(STREET[k] - S[k]) > 1e-6; st.textContent = `Street: ${showNum(k, STREET[k])}${UNIT[k] === "%" ? "%" : UNIT[k] === "$" ? "B" : ""}${d ? " · you differ" : ""}`; st.className = "street" + (d ? " diff" : ""); }

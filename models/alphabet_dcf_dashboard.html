@@ -125,6 +125,12 @@ td.cur { outline: 2px solid var(--accent); outline-offset: -2px; border-radius: 
         </div>
       </div>
 
+      <div class="card">
+        <h3>Multiples method</h3>
+        <p class="small muted" id="m-note"></p>
+        <div class="tbl-wrap"><table id="mult"></table></div>
+      </div>
+
       <div class="charts">
         <div class="card"><h3>Where the value comes from</h3><div class="legend" id="lg-wf"></div><div id="c-wf"></div><p class="note" id="n-wf"></p></div>
         <div class="card"><h3>You vs consensus, per share</h3><div class="legend" id="lg-br"></div><div id="c-br"></div></div>
@@ -150,20 +156,20 @@ td.cur { outline: 2px solid var(--accent); outline-offset: -2px; border-radius: 
 
 <script>
 // ───────── model (validated against the Excel model: your case $222.83, consensus $321.08) ─────────
-function runModel(p) {
+function runModel(p, n = 5) {
   const base = { s: 253.305, y: 44.522, u: 54.55, n: 29.382, c: 109.914 };
   const m0 = { s: 0.52, y: 0.30, u: 0.15, n: 0.15, c: 0.354295176228688 };
   const mT = { s: p.sm, y: p.ym, u: p.um, n: p.nm, c: p.cm };
   const cap = { 2021: 24.6, 2022: 31.5, 2023: 32.3, 2024: 52.5, 2025: 91.4, 2026: 200 };
   const rev = { ...base }, rows = [];
   let sh = p.shares;
-  for (let t = 1; t <= 5; t++) {
+  for (let t = 1; t <= n; t++) {
     const y = 2026 + t;
-    rev.s *= 1 + (t <= 3 ? p.sg1 : p.sg2);
+    rev.s *= 1 + (t <= 3 ? p.sg1 : t <= 5 ? p.sg2 : p.sg3);
     rev.y *= 1 + (t <= 3 ? p.yg1 : p.yg2);
     rev.u *= 1 + (t <= 3 ? p.ug1 : p.ug2);
     rev.n *= 1 + p.ng;
-    rev.c = t === 1 ? p.cloud27 : rev.c * (1 + (t === 2 ? p.cg2 : t === 3 ? p.cg3 : p.cg4));
+    rev.c = t === 1 ? p.cloud27 : rev.c * (1 + (t === 2 ? p.cg2 : t === 3 ? p.cg3 : t <= 5 ? p.cg4 : p.cg5));
     const R = rev.s + rev.y + rev.u + rev.n + rev.c;
     const oi = {}; for (const k in rev) oi[k] = rev[k] * (m0[k] + (mT[k] - m0[k]) * Math.min(1, t / 5));
     const ebit = oi.s + oi.y + oi.u + oi.n + oi.c + p.ob - 28 * Math.pow(1.04, t);
@@ -176,7 +182,7 @@ function runModel(p) {
     const da = p.eq * (a / 6 + b / 6) / 2 + (1 - p.eq) * (p.precap + cum) / p.life;
     const fcf = nopat + da - cap[y];
     sh *= 1 + p.dsh;
-    rows.push({ y, rev: { ...rev }, R, oi, ebit, nopat, capex: cap[y], da, fcf, sh, eps: nopat / sh });
+    rows.push({ y, rev: { ...rev }, R, oi, ebit, ebitda: ebit + da, nopat, capex: cap[y], da, fcf, sh, eps: nopat / sh });
   }
   return rows;
 }
@@ -203,20 +209,22 @@ const YOU = { price: 283.5, shares: 12.1, netcash: 100, spx: 2000, spx_own: 0.05
   ug1: 1.08 * 1.028 - 1, ug2: 1.05 * 1.029 - 1, um: 0.18, ng: -0.01, nm: 0.15,
   cloud27: 561 * 0.55 / 2 + 0.47 * 109.914, cg2: 0.52, cg3: 0.19, cg4: 0.18, cm: 0.40, ob: -8,
   cx1: 324, cx2: 367, cx3: 366, cxp: 0.38, cxT: 0.38, dsh: -0.01, eq: 0.6, life: 25, precap: 94.3,
-  rides: 10, fare: 22, wmult: 33, own: 0.8 };
+  rides: 10, fare: 22, wmult: 33, own: 0.8, sg3: 1.015 * 1.015 - 1, cg5: 0.10, evm: 11.38, pem: 17.83, wev: 0.5 };
 const STREET = { sg1: 0.10, sg2: 0.08, sm: 0.56, yg1: 0.12, yg2: 0.09, ym: 0.32, ug1: 0.13, ug2: 0.10, um: 0.20,
   ng: -0.01, nm: 0.15, cloud27: 109.914 * 1.87, cg2: 0.52, cg3: 0.19, cg4: 0.18, cm: 0.42, ob: -8,
-  cx1: 324, cx2: 367, cx3: 366, cxp: 0.38, cxT: 0.38, dsh: -0.025 };
+  cx1: 324, cx2: 367, cx3: 366, cxp: 0.38, cxT: 0.38, dsh: -0.025, sg3: 0.04, cg5: 0.09, evm: 11.38, pem: 17.83 };
 // key, label, min, max, unit ('%' stores fraction; '$' / 'x' / '' store raw)
 const GROUPS = [
   ["Valuation", "k, g, terminal capex", [["k", "k: required return", 5, 12, "%"], ["g", "g: growth forever after 2031", 0, 6, "%"],
     ["cxT", "Capex after 2031 (% of revenue)", 10, 50, "%"]]],
-  ["Search", "biggest profit pool", [["sg1", "Growth 2027-29", -10, 20, "%"], ["sg2", "Growth 2030-31", -10, 20, "%"], ["sm", "Margin by 2031 (52% today)", 20, 65, "%"]]],
+  ["Multiples method", "EV/EBITDA, P/E", [["evm", "EV / EBITDA multiple", 5, 25, "x"], ["pem", "P/E multiple", 8, 35, "x"],
+    ["wev", "Weight on EV/EBITDA (rest on P/E)", 0, 100, "%"]]],
+  ["Search", "biggest profit pool", [["sg1", "Growth 2027-29", -10, 20, "%"], ["sg2", "Growth 2030-31", -10, 20, "%"], ["sm", "Margin by 2031 (52% today)", 20, 65, "%"], ["sg3", "Growth 2032 (multiples method only)", -10, 20, "%"]]],
   ["YouTube ads", "", [["yg1", "Growth 2027-29", -5, 25, "%"], ["yg2", "Growth 2030-31", -5, 25, "%"], ["ym", "Margin by 2031 (30% today)", 10, 45, "%"]]],
   ["Subscriptions & devices", "", [["ug1", "Growth 2027-29", -5, 25, "%"], ["ug2", "Growth 2030-31", -5, 25, "%"], ["um", "Margin by 2031 (15% today)", 5, 35, "%"]]],
   ["Network", "", [["ng", "Growth every year", -15, 5, "%"], ["nm", "Margin by 2031", 5, 25, "%"]]],
   ["Cloud", "biggest growth driver", [["cloud27", "Revenue 2027 ($110B in 2026)", 130, 260, "$"], ["cg2", "Growth 2028", 0, 80, "%"], ["cg3", "Growth 2029", 0, 60, "%"],
-    ["cg4", "Growth 2030-31", 0, 50, "%"], ["cm", "Margin by 2031 (35% today)", 15, 55, "%"]]],
+    ["cg4", "Growth 2030-31", 0, 50, "%"], ["cm", "Margin by 2031 (35% today)", 15, 55, "%"], ["cg5", "Growth 2032 (multiples method only)", 0, 40, "%"]]],
   ["Capex & depreciation", "", [["cx1", "Capex 2027", 200, 450, "$"], ["cx2", "Capex 2028", 200, 500, "$"], ["cx3", "Capex 2029", 200, 500, "$"],
     ["cxp", "Capex 2030-31 (% of revenue)", 10, 50, "%"], ["eq", "Share of capex in servers (6-yr life)", 30, 90, "%"], ["life", "Building life (years)", 10, 40, ""]]],
   ["Waymo", "", [["rides", "Paid rides per week in 2031 (millions)", 0.5, 40, ""], ["fare", "Average fare ($)", 10, 40, ""],
@@ -229,7 +237,7 @@ const GROUPS = [
 ];
 const UNIT = {}; GROUPS.forEach(g => g[2].forEach(c => UNIT[c[0]] = c[4]));
 let S = { ...YOU };
-try { const saved = JSON.parse(localStorage.getItem("goog-dcf2") || "null"); if (saved) S = { ...YOU, ...saved }; } catch (e) {}
+try { const saved = JSON.parse(localStorage.getItem("goog-dcf3") || "null"); if (saved) S = { ...YOU, ...saved }; } catch (e) {}
 const toUI = (k, v) => UNIT[k] === "%" ? v * 100 : v;
 const fromUI = (k, v) => UNIT[k] === "%" ? v / 100 : v;
 const showNum = (k, v) => { const u = toUI(k, v); return Math.abs(u) >= 100 ? u.toFixed(0) : u.toFixed(1); };
@@ -327,7 +335,7 @@ function schedule() { if (!raf) raf = requestAnimationFrame(() => { raf = 0; ren
 const OPS = { Search: ["sg1", "sg2", "sm"], YouTube: ["yg1", "yg2", "ym"], Subs: ["ug1", "ug2", "um"], Network: ["ng", "nm"],
   Cloud: ["cloud27", "cg2", "cg3", "cg4", "cm"], "Other|bets": ["ob"], Capex: ["cx1", "cx2", "cx3", "cxp", "cxT"] };
 function render() {
-  try { localStorage.setItem("goog-dcf2", JSON.stringify(S)); } catch (e) {}
+  try { localStorage.setItem("goog-dcf3", JSON.stringify(S)); } catch (e) {}
   for (const k in UNIT) {
     const st = document.getElementById("st-" + k);
     if (k in STREET) { const d = Math.abs(STREET[k] - S[k]) > 1e-6; st.textContent = `Street: ${showNum(k, STREET[k])}${UNIT[k] === "%" ? "%" : UNIT[k] === "$" ? "B" : ""}${d ? " · you differ" : ""}`; st.className = "street" + (d ? " diff" : ""); }
@@ -384,6 +392,20 @@ function render() {
   ks.forEach(k => { h += `<tr><td>${(k * 100).toFixed(1)}%</td>` + gs.map(g => { const ps = k > g ? value(S, rows, k, g).ps : NaN;
     return `<td class="${ps >= P ? "pos" : "neg"} ${k === nk && g === ng ? "cur" : ""}">${isFinite(ps) ? fS(ps) : "–"}</td>`; }).join("") + "</tr>"; });
   document.getElementById("sens").innerHTML = h + "</tbody>";
+
+  // multiples
+  const r6 = runModel(S, 6), sh0 = S.shares;
+  const evv = (E, sh) => (S.evm * E + S.netcash) / sh, pev = eps => S.pem * eps;
+  const at = [["Value today (on 2027)", r6[0], sh0], ["12-month target (on 2028)", r6[1], r6[0].sh], ["Value end-2031 (on 2032)", r6[5], r6[4].sh]];
+  const w = S.wev;
+  const vals = at.map(([n, r, sh]) => { const a = evv(r.ebitda, sh), b = pev(r.eps); return [n, a, b, w * a + (1 - w) * b]; });
+  const ir = j => irr([-P, ...fps.slice(0, 4), fps[4] + vals[2][j]]);
+  const pc = x => `<span class="${x >= P ? "pos" : "neg"}">${fS(x)}</span>`;
+  document.getElementById("mult").innerHTML = `<thead><tr><th></th><th>EV/EBITDA ${S.evm.toFixed(1)}x</th><th>P/E ${S.pem.toFixed(1)}x</th><th>Blend ${Math.round(w * 100)}/${Math.round((1 - w) * 100)}</th></tr></thead><tbody>` +
+    vals.map(([n, a, b, c]) => `<tr><td>${n}</td><td>${pc(a)}</td><td>${pc(b)}</td><td><b>${pc(c)}</b></td></tr>`).join("") +
+    `<tr class="bold"><td>5-year return</td>${[1, 2, 3].map(j => { const x = ir(j); return `<td class="${x >= S.k ? "pos" : "neg"}">${fP(x)}</td>`; }).join("")}</tr>` +
+    `<tr><td>vs DCF value today</td><td colspan="3" style="text-align:left">${fS(v.ps)}</td></tr></tbody>`;
+  document.getElementById("m-note").textContent = `Today's market: 11.4x EV/EBITDA, 17.8x P/E on FY27. Your EBITDA ${fB(r6[0].ebitda)}B → ${fB(r6[5].ebitda)}B (2027→2032), EPS $${r6[0].eps.toFixed(2)} → $${r6[5].eps.toFixed(2)}. Equity = multiple × EBITDA + net cash (stakes and Waymo sit inside the market multiple). Green = above today's price; returns green if above k. EV/EBITDA ignores capex, so read it as the generous case.`;
 
   // forecast table
   const line = (n, f, cls = "") => `<tr class="${cls}"><td>${n}</td>${rows.map(r => `<td>${f(r)}</td>`).join("")}</tr>`;

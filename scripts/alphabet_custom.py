@@ -34,7 +34,6 @@ DRIVERS = {
     "capex27": "Capex 2027 ($bn)", "capex28": "Capex 2028 ($bn)", "capex29": "Capex 2029 ($bn)",
     "capex_pct": "Capex % of revenue from 2030", "dilution": "Share count change / yr",
     "waymo": "Waymo / Other Bets value ($bn)", "waymo10": "Waymo / Other Bets value in year 10 ($bn)", "exit": "Exit P/FCF multiple (year 10)",
-    "exit5": "Exit P/FCF multiple (year 5, end-2031)",
     "mx_search": "SOTP multiple: Search (x FY26E OI)", "mx_yt": "SOTP multiple: YouTube + Subs",
     "mx_cloud": "SOTP multiple: Cloud",
 }
@@ -71,7 +70,7 @@ def read_results():
     names = [sm[f"{c}5"].value for c in "CDEFGH"]
     out = {}
     for key in ("DCF value per share ($)", "Upside vs price", "5-year IRR from today's price",
-                "Year-5 exit value per share ($)", "SOTP value per share ($)", "EBIT 2031",
+                "Year-5 exit value per share ($)", "Exit value / 2032 EPS (x)", "SOTP value per share ($)", "EBIT 2031",
                 "Free cash flow 2027", "Free cash flow 2031", "FCF per share 2031 ($)",
                 "Cumulative FCF 2027-31", "For reference: 10-year IRR (2036 exit)"):
         out[key] = {n: sm[f"{c}{lab[key]}"].value for n, c in zip(names, "CDEFGH")}

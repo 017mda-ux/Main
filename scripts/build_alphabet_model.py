@@ -74,7 +74,7 @@ rows = [
     ("Edit these", "Yellow cells: the Custom scenario column on Scenarios, and key inputs on Inputs (price, shares, net cash, discount rate). Blue text = hardcoded input; black = formula; green = link from another sheet."),
     ("Example edit", "To test 'Search -3% a year for 3 years': on Scenarios, set Custom > Search growth yrs 1-3 to -3.0%. Summary updates the Custom column."),
     ("Scenarios", "Bear: Search flat 5 yrs, margin falls, AI capex earns weak returns. Flat Search/Capex pays: Search flat 5 yrs but Cloud compounds strongly. Base: steady Search, Cloud strong then fading. Bull: Search grows, Cloud very strong, buybacks resume. Custom: starts equal to Base."),
-    ("Method", "Segment revenue x growth; segment operating margin glides linearly from FY26E to the scenario's terminal margin over 5 years (margins include each unit's depreciation). EBIT less tax plus D&A less capex = FCF. D&A = 60% of capex (servers) over 6 years with a half-year convention + 40% (buildings) over 25 years; this reproduces Bloomberg consensus EBITDA and EPS when fed consensus revenue and capex. DCF at the discount rate with a terminal growth value. IRR (headline, 5-year hold): buy at price, receive FCF/share 2027-31, sell at end-2031 at the year-5 exit P/FCF multiple, plus net cash, stakes and Waymo's 2031 value per share. A 10-year IRR is kept for reference."),
+    ("Method", "Segment revenue x growth; segment operating margin glides linearly from FY26E to the scenario's terminal margin over 5 years (margins include each unit's depreciation). EBIT less tax plus D&A less capex = FCF. D&A = 60% of capex (servers) over 6 years with a half-year convention + 40% (buildings) over 25 years; this reproduces Bloomberg consensus EBITDA and EPS when fed consensus revenue and capex. DCF at the discount rate with a terminal growth value. IRR (headline, 5-year hold): buy at price, receive FCF/share 2027-31, sell at end-2031 at a mosaic of today's core 12m-forward P/E, P/operating cash flow and EV/revenue applied to 2032, plus net cash, stakes and Waymo's 2031 value per share. A 10-year IRR is kept for reference."),
     ("Estimates", "Segment margins below the Services/Cloud level, Q4'26 estimates, net cash, equity stakes, Waymo value and pre-2026 capex are model estimates, marked with comments. Replace them as better data arrives."),
     ("Disclosure", "Alphabet's equity stakes include a holding in Anthropic, the company that makes Claude (the model that built this). It is included in a lump-sum estimate only and not separately valued."),
     ("Not advice", "Illustrative model for research. Not financial advice."),
@@ -339,7 +339,6 @@ drivers = [
     ("waymo", "Waymo / Other Bets value ($bn)", USD0, 50, 150, 100, 200, "Alphabet's share, today (Waymo $126bn post-money Feb 2026)"),
     ("waymo10", "Waymo / Other Bets value in year 10 ($bn)", USD0, 50, 150, 100, 200, "Alphabet's share at the 2036 exit"),
     ("exit", "Exit P/FCF multiple (year 10)", MULT, 14, 20, 18, 22, ""),
-    ("exit5", "Exit P/FCF multiple (year 5, end-2031)", MULT, 14, 20, 18, 22, "Sale price for the 5-year hold"),
     ("mx_s", "SOTP multiple: Search (x FY26E OI)", MULT, 10, 12, 14, 16, ""),
     ("mx_y", "SOTP multiple: YouTube + Subs", MULT, 16, 20, 20, 26, ""),
     ("mx_n", "SOTP multiple: Network", MULT, 6, 6, 6, 6, ""),
@@ -451,6 +450,42 @@ for key in ("sg1", "sg2", "sg3", "yg1", "yg2", "ug1", "ug2", "cg1", "waymo", "wa
     c.font = font(GREEN)
     c.fill = PatternFill(fill_type=None)
 
+# ─────────────────────────── Exit mosaic (Inputs) ───────────────────────────
+# Today's 12-month-forward multiples (FY27E consensus as the forward year), on the core business:
+# market cap less net cash, equity stakes and Waymo (your value), because the exit adds those back.
+mr = inp.max_row + 2
+put(inp, f"B{mr}", "Exit mosaic: today's 12m-forward multiples, applied to 2032 at the end-2031 sale", bold=True)
+mos_in = [
+    ("mcap", "Market cap ($bn)", 3430.6, USD, "Bloomberg"),
+    ("ev", "Enterprise value ($bn)", 3330.2, USD, "Bloomberg"),
+    ("fni", "Consensus net income, next 12m (FY27E, $bn)", 188.848, USD, "Bloomberg"),
+    ("feps", "Consensus EPS, next 12m (FY27E, $)", 15.90, '$#,##0.00', "Bloomberg"),
+    ("fcfo", "Consensus operating cash flow, next 12m ($bn)", 280.569, USD, "FCF -43.4 + capex 324.0"),
+    ("frev", "Consensus revenue incl. TAC, next 12m ($bn)", 625.1, USD, "565.2 Bloomberg + ~59.9 TAC"),
+]
+for i, (k, lab, v, fmt, note) in enumerate(mos_in):
+    rr = mr + 1 + i
+    I[k] = f"Inputs!$C${rr}"
+    put(inp, f"B{rr}", lab); put(inp, f"C{rr}", v, fmt, BLUE); put(inp, f"D{rr}", note, italic=True)
+rr = mr + 1 + len(mos_in)
+put(inp, f"B{rr}", "Headline: P/E | P/CFO | EV/revenue (x)", italic=True)
+put(inp, f"C{rr}", f"={I['price']}/{I['feps']}", MULT)
+put(inp, f"D{rr}", f"={I['mcap']}/{I['fcfo']}", MULT)
+put(inp, f"E{rr}", f"={I['ev']}/{I['frev']}", MULT)
+rr += 1
+I["core"] = f"Inputs!$C${rr}"
+put(inp, f"B{rr}", "Core value today ($bn) = market cap - net cash - stakes - Waymo")
+put(inp, f"C{rr}", f"={I['mcap']}-{I['netcash']}-{I['stakes']}-Scenarios!$G${D['waymo']}", USD)
+mult_rows = [("m_pe", "Core P/E (x)", "fni", "w_pe"), ("m_cf", "Core price / operating cash flow (x)", "fcfo", "w_cf"),
+             ("m_rev", "Core EV / revenue (x)", "frev", "w_rev")]
+put(inp, f"D{rr}", "Weight", bold=True)
+for i, (k, lab, base_k, wk) in enumerate(mult_rows):
+    r_ = rr + 1 + i
+    I[k] = f"Inputs!$C${r_}"; I[wk] = f"Inputs!$D${r_}"
+    put(inp, f"B{r_}", lab)
+    put(inp, f"C{r_}", f"={I['core']}/{I[base_k]}", MULT)
+    put(inp, f"D{r_}", 1 / 3, PCT, BLUE, fill=YELLOW)
+
 # ─────────────────────────── Model ───────────────────────────
 m = wb.create_sheet("Model")
 title(m, "10-year projections by scenario ($bn)", "Each block is one scenario. All cells are formulas driven by Scenarios and Inputs.")
@@ -549,7 +584,10 @@ for bi, sc in enumerate(SC):
         ("DCF value per share ($)", f"=C{v0+4}/{I['shares']}", '$#,##0;($#,##0);-'),
         ("Upside vs price", f"=C{v0+5}/{I['price']}-1", PCT),
         ("Year-10 exit value per share ($)", f"={LAST}{R['FCF per share ($)']}*{sv(sc,'exit')}+({I['netcash']}+{I['stakes']}+{sv(sc,'waymo10')})/{LAST}{R['Shares (bn)']}", '$#,##0;($#,##0);-'),
-        ("Year-5 exit value per share ($)", f"={YC[2031]}{R['FCF per share ($)']}*{sv(sc,'exit5')}+({I['netcash']}+{I['stakes']}+{sv(sc,'waymo')}*(1+{I['disc']})^5)/{YC[2031]}{R['Shares (bn)']}", '$#,##0;($#,##0);-'),
+        ("Year-5 exit value per share ($)",
+         f"=({I['w_pe']}*{I['m_pe']}*{YC[2032]}{R['NOPAT']}+{I['w_cf']}*{I['m_cf']}*({YC[2032]}{R['NOPAT']}+{YC[2032]}{R['D&A']})"
+         f"+{I['w_rev']}*{I['m_rev']}*{YC[2032]}{R['Total revenue']})/SUM({I['w_pe']}:{I['w_rev']})/{YC[2031]}{R['Shares (bn)']}"
+         f"+({I['netcash']}+{I['stakes']}+{sv(sc,'waymo')}*(1+{I['disc']})^5)/{YC[2031]}{R['Shares (bn)']}", '$#,##0;($#,##0);-'),
     ]
     for j, (lab, f, fmt) in enumerate(rows_v):
         put(m, f"B{v0+1+j}", lab)
@@ -593,6 +631,7 @@ summary_rows = [
     ("Upside vs price", lambda o: f"=Model!C{o['v0']+6}", PCT),
     ("5-year IRR from today's price", lambda o: f"=Model!C{o['irr5']}", PCT),
     ("Year-5 exit value per share ($)", lambda o: f"=Model!C{o['v0']+8}", '$#,##0;($#,##0);-'),
+    ("Exit value / 2032 EPS (x)", lambda o: f"=Model!C{o['v0']+8}/(Model!{YC[2032]}{o['R']['NOPAT']}/Model!{YC[2031]}{o['R']['Shares (bn)']})", MULT),
     ("Total revenue 2031", lambda o: f"=Model!{YC[2031]}{o['R']['Total revenue']}", USD0),
     ("Search operating income 2031", lambda o: f"=Model!{YC[2031]}{o['R']['Search operating income']}", USD0),
     ("Cloud operating income 2031", lambda o: f"=Model!{YC[2031]}{o['R']['Cloud operating income']}", USD0),

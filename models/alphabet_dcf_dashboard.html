@@ -104,6 +104,8 @@ td.cur { outline: 2px solid var(--accent); outline-offset: -2px; border-radius: 
     <div class="presets">
       <button class="btn primary" id="p-you" type="button">Load your case</button>
       <button class="btn" id="p-cons" type="button">Load consensus (keeps your k, g, Waymo)</button>
+      <button class="btn" id="p-bear" type="button">Load bear: Search disruption</button>
+      <button class="btn" id="p-severe" type="button">Load severe: Search disruption + AI bust</button>
     </div>
   </header>
 
@@ -266,6 +268,11 @@ function syncInputs() {
   }
 }
 document.getElementById("p-you").onclick = () => { S = { ...YOU }; syncInputs(); schedule(); };
+const BEAR = { sg1: 0, sg2: -0.03, sg3: -0.02, sm: 0.35, pem: 15, wev: 0 };
+const SEVERE = { ...BEAR, cloud27: 165, cg2: 0.25, cg3: 0.10, cg4: 0.08, cg5: 0.06, cm: 0.30, yg1: 0.08, yg2: 0.05, ym: 0.27,
+  ug1: 0.08, ug2: 0.05, um: 0.15, cx1: 324, cx2: 300, cx3: 260, cxp: 0.30, cxT: 0.30, spx: 1000, ant: 1000, stk_g: 0, rides: 3, wmult: 15, g: 0.035, dsh: 0 };
+document.getElementById("p-bear").onclick = () => { S = { ...YOU, ...BEAR }; syncInputs(); schedule(); };
+document.getElementById("p-severe").onclick = () => { S = { ...YOU, ...SEVERE }; syncInputs(); schedule(); };
 document.getElementById("p-cons").onclick = () => { S = { ...S, ...STREET }; syncInputs(); schedule(); };
 
 // ───────── drawing helpers ─────────

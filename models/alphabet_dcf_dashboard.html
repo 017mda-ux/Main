@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Alphabet DCF Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=Source+Serif+4:opsz,wght@8..60,600;8..60,700&display=swap" rel="stylesheet">
+<style>
+:root {
+  /* Layout: inputs panel + live outputs. Phone: outputs first, inputs below. Desktop: inputs left, outputs right and sticky. */
+  --bg: #f5f6f8; --card: #fcfcfb; --ink: #0b0b0b; --ink-2: #52514e; --ink-3: #8a8983; --line: #e3e4e8;
+  --accent: #2a78d6;
+  --s1: #2a78d6; --s2: #eb6834; --s3: #1baf7a; --s4: #eda100; --s5: #e87ba4;
+  --up: #1a7f37; --down: #c4314b; --total: #3b3d45; --chip: #eef3fb;
+  --font-display: "Source Serif 4", Georgia, serif;
+  --font-body: "IBM Plex Sans", -apple-system, "Segoe UI", sans-serif;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #121212; --card: #1a1a19; --ink: #f0efec; --ink-2: #c3c2b7; --ink-3: #8f8e86; --line: #2e2e2c; --accent: #3987e5;
+    --s1: #3987e5; --s2: #d95926; --s3: #199e70; --s4: #c98500; --s5: #d55181;
+    --up: #4cc26b; --down: #f0697f; --total: #c9cad1; --chip: #1f2a3a; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #121212; --card: #1a1a19; --ink: #f0efec; --ink-2: #c3c2b7; --ink-3: #8f8e86; --line: #2e2e2c; --accent: #3987e5;
+  --s1: #3987e5; --s2: #d95926; --s3: #199e70; --s4: #c98500; --s5: #d55181;
+  --up: #4cc26b; --down: #f0697f; --total: #c9cad1; --chip: #1f2a3a; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body { background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 15px; line-height: 1.45; }
+.wrap { max-width: 1180px; margin: 0 auto; padding: 18px 16px 60px; display: grid; gap: 16px; }
+h1, h2, h3 { font-family: var(--font-display); margin: 0; text-wrap: balance; }
+h1 { font-size: 27px; } h2 { font-size: 19px; } h3 { font-size: 16px; font-family: var(--font-body); font-weight: 600; }
+p { margin: 0; }
+.muted { color: var(--ink-2); }
+.small { font-size: 13px; }
+.layout { display: grid; gap: 16px; }
+.outputs { display: grid; gap: 16px; order: 1; }
+.inputs { display: grid; gap: 10px; order: 2; align-content: start; }
+@media (min-width: 960px) {
+  .layout { grid-template-columns: 370px 1fr; align-items: start; }
+  .inputs { order: 1; } .outputs { order: 2; position: sticky; top: 12px; }
+  .charts { grid-template-columns: 1fr 1fr; }
+}
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 14px; display: grid; gap: 10px; min-width: 0; }
+.presets { display: flex; flex-wrap: wrap; gap: 8px; }
+button { font: inherit; cursor: pointer; }
+.btn { border: 1px solid var(--line); background: var(--card); color: var(--ink); border-radius: 8px; padding: 7px 12px; font-size: 14px; }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+button:focus-visible, input:focus-visible, summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; }
+.tile { border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; display: grid; gap: 2px; }
+.tile .k { font-size: 12px; color: var(--ink-2); }
+.tile .v { font-family: var(--font-display); font-size: 26px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.tile .s { font-size: 12px; color: var(--ink-2); font-variant-numeric: tabular-nums; }
+.tile.hero .v { font-size: 34px; }
+.pos { color: var(--up); } .neg { color: var(--down); }
+details { background: var(--card); border: 1px solid var(--line); border-radius: 12px; }
+summary { list-style: none; padding: 12px 14px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; font-weight: 600; }
+summary::-webkit-details-marker { display: none; }
+summary .tag { font-size: 12px; font-weight: 500; color: var(--ink-2); }
+summary::after { content: "+"; color: var(--ink-3); font-size: 18px; margin-left: 8px; }
+details[open] summary::after { content: "−"; }
+.ctls { padding: 0 14px 14px; display: grid; gap: 14px; }
+.ctl { display: grid; gap: 4px; }
+.ctl .top { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.ctl label { font-size: 14px; }
+.ctl .street { font-size: 12px; color: var(--ink-3); }
+.ctl .street.diff { color: var(--accent); }
+.ctl .num { display: flex; align-items: center; gap: 2px; }
+.ctl input[type="number"] { width: 78px; font: inherit; font-size: 14px; font-variant-numeric: tabular-nums; text-align: right; padding: 3px 6px; border: 1px solid var(--line); border-radius: 6px; background: var(--bg); color: var(--ink); }
+.ctl .unit { font-size: 13px; color: var(--ink-2); min-width: 14px; }
+input[type="range"] { width: 100%; accent-color: var(--accent); margin: 0; }
+.charts { display: grid; gap: 16px; }
+svg { width: 100%; height: auto; display: block; overflow: visible; }
+svg text { fill: var(--ink-2); font-family: var(--font-body); font-size: 11px; font-variant-numeric: tabular-nums; }
+svg .strong { fill: var(--ink); font-weight: 600; }
+svg .grid { stroke: var(--line); stroke-width: 1; }
+svg .zero { stroke: var(--ink-3); stroke-width: 1; }
+.legend { display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: 12px; color: var(--ink-2); }
+.legend span { display: inline-flex; align-items: center; gap: 5px; }
+.legend i { width: 10px; height: 10px; border-radius: 3px; display: inline-block; }
+.tbl-wrap { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: 13px; font-variant-numeric: tabular-nums; }
+th, td { padding: 6px 8px; text-align: right; border-bottom: 1px solid var(--line); white-space: nowrap; }
+th:first-child, td:first-child { text-align: left; }
+thead th { color: var(--ink-2); font-weight: 500; }
+tr.bold td { font-weight: 600; }
+td.cur { outline: 2px solid var(--accent); outline-offset: -2px; border-radius: 4px; }
+#tip { position: fixed; pointer-events: none; background: var(--ink); color: var(--card); font-size: 12px; padding: 5px 8px; border-radius: 6px; opacity: 0; z-index: 10; max-width: 240px; }
+.note { font-size: 12px; color: var(--ink-3); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header style="display:grid;gap:6px">
+    <h1>Alphabet DCF dashboard</h1>
+    <p class="muted">Move any input and every number updates. Blue "Street" text marks inputs where you differ from consensus. $ billions unless per share.</p>
+    <div class="presets">
+      <button class="btn primary" id="p-you" type="button">Load your case</button>
+      <button class="btn" id="p-cons" type="button">Load consensus (keeps your k, g, Waymo)</button>
+    </div>
+  </header>
+
+  <div class="layout">
+    <aside class="inputs" id="inputs"></aside>
+
+    <section class="outputs">
+      <div class="card">
+        <div class="tiles">
+          <div class="tile hero"><div class="k">DCF value per share</div><div class="v" id="o-ps">–</div><div class="s" id="o-up">–</div></div>
+          <div class="tile"><div class="k">12-month target</div><div class="v" id="o-t1">–</div><div class="s" id="o-t1s">–</div></div>
+          <div class="tile"><div class="k">Value at end-2031</div><div class="v" id="o-t5">–</div><div class="s">per share, after buybacks</div></div>
+          <div class="tile"><div class="k">Consensus value</div><div class="v" id="o-cons">–</div><div class="s">same k, g, Waymo</div></div>
+        </div>
+        <div class="tiles">
+          <div class="tile"><div class="k">5-yr return if price meets value</div><div class="v" id="r-conv">–</div></div>
+          <div class="tile"><div class="k">5-yr return if discount/premium persists</div><div class="v" id="r-pers">–</div></div>
+          <div class="tile"><div class="k">Hold forever (implied IRR)</div><div class="v" id="r-forever">–</div></div>
+        </div>
+      </div>
+
+      <div class="charts">
+        <div class="card"><h3>Where the value comes from</h3><div class="legend" id="lg-wf"></div><div id="c-wf"></div><p class="note" id="n-wf"></p></div>
+        <div class="card"><h3>You vs consensus, per share</h3><div class="legend" id="lg-br"></div><div id="c-br"></div></div>
+        <div class="card"><h3>Revenue by business</h3><div class="legend" id="lg-rev"></div><div id="c-rev"></div></div>
+        <div class="card"><h3>Cash made vs capex</h3><div class="legend" id="lg-cash"></div><div id="c-cash"></div></div>
+      </div>
+
+      <div class="card">
+        <h3>Value per share: k vs g</h3>
+        <p class="small muted">Green = above today's price, red = below. Outlined cell = your current inputs.</p>
+        <div class="tbl-wrap"><table id="sens"></table></div>
+      </div>
+
+      <div class="card">
+        <h3>The forecast</h3>
+        <div class="tbl-wrap"><table id="fc"></table></div>
+        <p class="note">FCF = EBIT × (1 − tax) + depreciation − capex. Depreciation: servers over 6 years (half-year), buildings over the life set below. Terminal FCF = final-year profit + depreciation − terminal capex % × revenue, then × (1 + g) ÷ (k − g). Matches models/Alphabet_Bottom_Up_Model.xlsx.</p>
+      </div>
+    </section>
+  </div>
+</div>
+<div id="tip" role="tooltip"></div>
+
+<script>
+// ───────── model (validated against the Excel model: your case $187.38, consensus $285.62) ─────────
+function runModel(p) {
+  const base = { s: 253.305, y: 44.522, u: 54.55, n: 29.382, c: 109.914 };
+  const m0 = { s: 0.52, y: 0.30, u: 0.15, n: 0.15, c: 0.354295176228688 };
+  const mT = { s: p.sm, y: p.ym, u: p.um, n: p.nm, c: p.cm };
+  const cap = { 2021: 24.6, 2022: 31.5, 2023: 32.3, 2024: 52.5, 2025: 91.4, 2026: 200 };
+  const rev = { ...base }, rows = [];
+  let sh = p.shares;
+  for (let t = 1; t <= 5; t++) {
+    const y = 2026 + t;
+    rev.s *= 1 + (t <= 3 ? p.sg1 : p.sg2);
+    rev.y *= 1 + (t <= 3 ? p.yg1 : p.yg2);
+    rev.u *= 1 + (t <= 3 ? p.ug1 : p.ug2);
+    rev.n *= 1 + p.ng;
+    rev.c = t === 1 ? p.cloud27 : rev.c * (1 + (t === 2 ? p.cg2 : t === 3 ? p.cg3 : p.cg4));
+    const R = rev.s + rev.y + rev.u + rev.n + rev.c;
+    const oi = {}; for (const k in rev) oi[k] = rev[k] * (m0[k] + (mT[k] - m0[k]) * Math.min(1, t / 5));
+    const ebit = oi.s + oi.y + oi.u + oi.n + oi.c + p.ob - 28 * Math.pow(1.04, t);
+    const nopat = ebit - Math.max(0, ebit) * p.tax;
+    cap[y] = t === 1 ? p.cx1 : t === 2 ? p.cx2 : t === 3 ? p.cx3 : p.cxp * R;
+    let a = 0, b = 0, cum = 0;
+    for (let x = y - 5; x <= y; x++) a += cap[x];
+    for (let x = y - 6; x <= y - 1; x++) b += cap[x];
+    for (let x = 2021; x <= y; x++) cum += cap[x];
+    const da = p.eq * (a / 6 + b / 6) / 2 + (1 - p.eq) * (p.precap + cum) / p.life;
+    const fcf = nopat + da - cap[y];
+    sh *= 1 + p.dsh;
+    rows.push({ y, rev: { ...rev }, R, oi, ebit, nopat, capex: cap[y], da, fcf, sh, eps: nopat / sh });
+  }
+  return rows;
+}
+function value(p, rows, k = p.k, g = p.g) {
+  const L = rows[4], d5 = Math.pow(1 + k, 5);
+  const pvY = rows.reduce((s, r, i) => s + r.fcf / Math.pow(1 + k, i + 1), 0);
+  const tf = L.nopat + L.da - p.cxT * L.R;
+  const tv = tf * (1 + g) / (k - g);
+  const way31 = p.rides * p.fare * 52 / 1000 * p.wmult * p.own;
+  const eq = pvY + tv / d5 + p.netcash + p.stakes + way31 / d5;
+  return { pvY, tf, tv, pvTV: tv / d5, way31, wayPV: way31 / d5, eq, ps: eq / p.shares };
+}
+function valueAt(p, rows, v, t) { // per-share value at end of year t (0 = today)
+  const k = p.k, rem = rows.slice(t).reduce((s, r, i) => s + r.fcf / Math.pow(1 + k, i + 1), 0);
+  const d = Math.pow(1 + k, 5 - t);
+  return (rem + v.tv / d + p.netcash + p.stakes + v.way31 / d) / (t === 0 ? p.shares : rows[t - 1].sh);
+}
+function irr(cf) { let lo = -0.9, hi = 2; for (let i = 0; i < 200; i++) { const m = (lo + hi) / 2; const n = cf.reduce((s, c, t) => s + c / Math.pow(1 + m, t), 0); if (n > 0) lo = m; else hi = m; } return (lo + hi) / 2; }
+
+// ───────── inputs ─────────
+const YOU = { price: 283.5, shares: 12.1, netcash: 100, stakes: 100, tax: 0.17, k: 0.082, g: 0.04,
+  sg1: 1.04 * 1.029 - 1, sg2: 1.03 * 1.0194 - 1, sm: 0.40, yg1: 1.06 * 1.0566 - 1, yg2: 1.04 * 1.0481 - 1, ym: 0.30,
+  ug1: 1.08 * 1.028 - 1, ug2: 1.05 * 1.029 - 1, um: 0.18, ng: -0.01, nm: 0.15,
+  cloud27: 561 * 0.55 / 2 + 0.47 * 109.914, cg2: 0.52, cg3: 0.19, cg4: 0.18, cm: 0.40, ob: -8,
+  cx1: 324, cx2: 367, cx3: 366, cxp: 0.38, cxT: 0.38, dsh: -0.01, eq: 0.6, life: 25, precap: 94.3,
+  rides: 10, fare: 22, wmult: 33, own: 0.8 };
+const STREET = { sg1: 0.10, sg2: 0.08, sm: 0.56, yg1: 0.12, yg2: 0.09, ym: 0.32, ug1: 0.13, ug2: 0.10, um: 0.20,
+  ng: -0.01, nm: 0.15, cloud27: 109.914 * 1.87, cg2: 0.52, cg3: 0.19, cg4: 0.18, cm: 0.42, ob: -8,
+  cx1: 324, cx2: 367, cx3: 366, cxp: 0.38, cxT: 0.38, dsh: -0.025 };
+// key, label, min, max, unit ('%' stores fraction; '$' / 'x' / '' store raw)
+const GROUPS = [
+  ["Valuation", "k, g, terminal capex", [["k", "k: required return", 5, 12, "%"], ["g", "g: growth forever after 2031", 0, 6, "%"],
+    ["cxT", "Capex after 2031 (% of revenue)", 10, 50, "%"]]],
+  ["Search", "biggest profit pool", [["sg1", "Growth 2027-29", -10, 20, "%"], ["sg2", "Growth 2030-31", -10, 20, "%"], ["sm", "Margin by 2031 (52% today)", 20, 65, "%"]]],
+  ["YouTube ads", "", [["yg1", "Growth 2027-29", -5, 25, "%"], ["yg2", "Growth 2030-31", -5, 25, "%"], ["ym", "Margin by 2031 (30% today)", 10, 45, "%"]]],
+  ["Subscriptions & devices", "", [["ug1", "Growth 2027-29", -5, 25, "%"], ["ug2", "Growth 2030-31", -5, 25, "%"], ["um", "Margin by 2031 (15% today)", 5, 35, "%"]]],
+  ["Network", "", [["ng", "Growth every year", -15, 5, "%"], ["nm", "Margin by 2031", 5, 25, "%"]]],
+  ["Cloud", "biggest growth driver", [["cloud27", "Revenue 2027 ($110B in 2026)", 130, 260, "$"], ["cg2", "Growth 2028", 0, 80, "%"], ["cg3", "Growth 2029", 0, 60, "%"],
+    ["cg4", "Growth 2030-31", 0, 50, "%"], ["cm", "Margin by 2031 (35% today)", 15, 55, "%"]]],
+  ["Capex & depreciation", "", [["cx1", "Capex 2027", 200, 450, "$"], ["cx2", "Capex 2028", 200, 500, "$"], ["cx3", "Capex 2029", 200, 500, "$"],
+    ["cxp", "Capex 2030-31 (% of revenue)", 10, 50, "%"], ["eq", "Share of capex in servers (6-yr life)", 30, 90, "%"], ["life", "Building life (years)", 10, 40, ""]]],
+  ["Waymo", "", [["rides", "Paid rides per week in 2031 (millions)", 0.5, 40, ""], ["fare", "Average fare ($)", 10, 40, ""],
+    ["wmult", "EV / revenue multiple in 2031", 5, 60, "x"], ["own", "Alphabet ownership", 50, 100, "%"]]],
+  ["Other bets, tax, balance sheet", "", [["ob", "Other Bets profit per year", -20, 0, "$"], ["tax", "Tax rate", 10, 25, "%"],
+    ["price", "Share price today ($)", 150, 450, ""], ["netcash", "Net cash", -100, 300, "$"], ["stakes", "Equity stakes (SpaceX, Anthropic...)", 0, 400, "$"],
+    ["dsh", "Share count change per year", -4, 2, "%"]]],
+];
+const UNIT = {}; GROUPS.forEach(g => g[2].forEach(c => UNIT[c[0]] = c[4]));
+let S = { ...YOU };
+try { const saved = JSON.parse(localStorage.getItem("goog-dcf") || "null"); if (saved) S = { ...YOU, ...saved }; } catch (e) {}
+const toUI = (k, v) => UNIT[k] === "%" ? v * 100 : v;
+const fromUI = (k, v) => UNIT[k] === "%" ? v / 100 : v;
+const showNum = (k, v) => { const u = toUI(k, v); return Math.abs(u) >= 100 ? u.toFixed(0) : u.toFixed(1); };
+
+const host = document.getElementById("inputs");
+GROUPS.forEach(([name, tag, ctls], gi) => {
+  const d = document.createElement("details"); if (gi < 2) d.open = true;
+  d.innerHTML = `<summary><span>${name}</span><span class="tag">${tag}</span></summary><div class="ctls"></div>`;
+  const box = d.querySelector(".ctls");
+  ctls.forEach(([k, label, mn, mx, u]) => {
+    const div = document.createElement("div"); div.className = "ctl";
+    div.innerHTML = `<div class="top"><label for="n-${k}">${label}</label><span class="num"><input type="number" id="n-${k}" step="any" inputmode="decimal"><span class="unit">${u === "%" ? "%" : u === "x" ? "x" : u === "$" ? "B" : ""}</span></span></div>
+      <input type="range" id="r-${k}" min="${mn}" max="${mx}" step="any" aria-label="${label}">
+      <div class="street" id="st-${k}"></div>`;
+    box.append(div);
+    const n = div.querySelector("input[type=number]"), r = div.querySelector("input[type=range]");
+    r.addEventListener("input", () => { S[k] = fromUI(k, +r.value); n.value = showNum(k, S[k]); schedule(); });
+    n.addEventListener("change", () => { const v = parseFloat(n.value); if (isFinite(v)) { S[k] = fromUI(k, v); r.value = toUI(k, S[k]); } n.value = showNum(k, S[k]); schedule(); });
+  });
+  host.append(d);
+});
+function syncInputs() {
+  for (const k in UNIT) {
+    const r = document.getElementById("r-" + k), n = document.getElementById("n-" + k);
+    r.value = toUI(k, S[k]); n.value = showNum(k, S[k]);
+  }
+}
+document.getElementById("p-you").onclick = () => { S = { ...YOU }; syncInputs(); schedule(); };
+document.getElementById("p-cons").onclick = () => { S = { ...S, ...STREET }; syncInputs(); schedule(); };
+
+// ───────── drawing helpers ─────────
+const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const NS = "http://www.w3.org/2000/svg";
+const el = (t, a = {}, txt) => { const e = document.createElementNS(NS, t); for (const k in a) e.setAttribute(k, a[k]); if (txt != null) e.textContent = txt; return e; };
+const fB = v => (v < 0 ? "−$" : "$") + Math.abs(v).toLocaleString(undefined, { maximumFractionDigits: 0 });
+const fS = v => (v < 0 ? "−$" : "$") + Math.abs(v).toFixed(0);
+const fP = v => (v < 0 ? "−" : "") + Math.abs(v * 100).toFixed(1) + "%";
+const tip = document.getElementById("tip");
+document.addEventListener("pointermove", e => {
+  const t = e.target.closest && e.target.closest("[data-tip]");
+  if (!t) { tip.style.opacity = 0; return; }
+  tip.textContent = t.getAttribute("data-tip");
+  tip.style.left = Math.min(e.clientX + 12, innerWidth - tip.offsetWidth - 8) + "px"; tip.style.top = (e.clientY - 34) + "px"; tip.style.opacity = 1;
+});
+function legend(id, items) { document.getElementById(id).innerHTML = items.map(([n, c]) => `<span><i style="background:var(${c})"></i>${n}</span>`).join(""); }
+function niceMax(v) { const p = Math.pow(10, Math.floor(Math.log10(v))); for (const m of [1, 1.5, 2, 2.5, 3, 4, 5, 6, 8, 10]) if (m * p >= v) return m * p; return 10 * p; }
+function ticksFor(min, max) { const st = niceMax((max - min) / 4); const out = []; for (let t = Math.ceil(min / st) * st; t <= max + 1e-9; t += st) out.push(Math.round(t)); return out; }
+
+function bars(id, { cats, groups, h = 220 }) {
+  let max = 0, min = 0;
+  groups.forEach(g => cats.forEach((c, i) => { let p = 0, n = 0; g.series.forEach(s => { const v = s.values[i]; if (v >= 0) p += v; else n += v; }); max = Math.max(max, p); min = Math.min(min, n); }));
+  max = niceMax(max * 1.08); if (min < 0) min = -niceMax(-min * 1.1);
+  const W = 400, H = h, L = 42, R = 4, T = 18, B = 22, y = v => T + (max - v) / (max - min) * (H - T - B);
+  const svg = el("svg", { viewBox: `0 0 ${W} ${H}`, role: "img" });
+  ticksFor(min, max).forEach(t => { svg.append(el("line", { x1: L, x2: W - R, y1: y(t), y2: y(t), class: t === 0 ? "zero" : "grid" })); svg.append(el("text", { x: L - 5, y: y(t) + 4, "text-anchor": "end" }, fB(t))); });
+  const slot = (W - L - R) / cats.length, gN = groups.length, gap = 3, bw = Math.min(30, (slot - 8 - gap * (gN - 1)) / gN);
+  cats.forEach((c, i) => {
+    const x0 = L + i * slot + (slot - (bw * gN + gap * (gN - 1))) / 2;
+    groups.forEach((g, gi) => {
+      const x = x0 + gi * (bw + gap); let pos = 0, neg = 0;
+      g.series.forEach(s => { const v = s.values[i]; const a = v >= 0 ? pos : neg, b = a + v; if (v >= 0) pos = b; else neg = b;
+        svg.append(el("rect", { x, y: y(Math.max(a, b)) + (v >= 0 ? 1 : 0), width: bw, height: Math.max(1, Math.abs(y(a) - y(b)) - 1), rx: 3, fill: css(s.color), "data-tip": `${c} · ${s.name}: ${fB(v)}B` })); });
+      if (g.label) svg.append(el("text", { x: x + bw / 2, y: y(Math.max(pos, 0)) - 4, "text-anchor": "middle", class: "strong" }, fB(g.label[i])));
+    });
+    svg.append(el("text", { x: L + i * slot + slot / 2, y: H - 6, "text-anchor": "middle" }, c));
+  });
+  const box = document.getElementById(id); box.innerHTML = ""; box.append(svg);
+}
+function waterfall(id, items, { f = fB, unit = "B", line, lineLabel, h = 230 } = {}) {
+  let run = 0, mx = 0, mn = 0;
+  items.forEach(it => { if (it.start) run = it.v; else if (!it.total) run += it.v; mx = Math.max(mx, run); mn = Math.min(mn, run); });
+  if (line) mx = Math.max(mx, line);
+  const max = niceMax(mx * 1.12), min = mn < 0 ? -niceMax(-mn * 1.2) : 0;
+  const W = 400, H = h, L = 42, R = 4, T = 18, B = 34, y = v => T + (max - v) / (max - min) * (H - T - B);
+  const svg = el("svg", { viewBox: `0 0 ${W} ${H}`, role: "img" });
+  ticksFor(min, max).forEach(t => { svg.append(el("line", { x1: L, x2: W - R, y1: y(t), y2: y(t), class: t ? "grid" : "zero" })); svg.append(el("text", { x: L - 5, y: y(t) + 4, "text-anchor": "end" }, f(t))); });
+  const slot = (W - L - R) / items.length, bw = Math.min(34, slot - 10); run = 0;
+  items.forEach((it, i) => {
+    const x = L + i * slot + (slot - bw) / 2; let a, b, col;
+    if (it.start) run = it.v;
+    if (it.total || it.start) { a = 0; b = run; col = "--total"; } else { a = run; b = run + it.v; run = b; col = it.v >= 0 ? "--s1" : "--s2"; }
+    const top = y(Math.max(a, b)), hh = Math.max(2, Math.abs(y(a) - y(b)));
+    svg.append(el("rect", { x, y: top, width: bw, height: hh, rx: 3, fill: css(col), "data-tip": `${it.n.replace("|", " ")}: ${f(it.total || it.start ? run : it.v)}${unit}` }));
+    svg.append(el("text", { x: x + bw / 2, y: top - 4, "text-anchor": "middle", class: "strong" }, it.total || it.start ? f(run) : (it.v > 0 ? "+" : "") + f(it.v)));
+    it.n.split("|").forEach((ln, k) => svg.append(el("text", { x: x + bw / 2, y: H - 20 + k * 12, "text-anchor": "middle" }, ln)));
+  });
+  if (line) { const py = y(line); svg.append(el("line", { x1: L, x2: W - R, y1: py, y2: py, stroke: css("--ink"), "stroke-dasharray": "4 4", "stroke-width": 1.2 }));
+    svg.append(el("text", { x: W - R, y: py - 5, "text-anchor": "end", class: "strong" }, lineLabel)); }
+  const box = document.getElementById(id); box.innerHTML = ""; box.append(svg);
+}
+
+// ───────── render ─────────
+let raf = 0;
+function schedule() { if (!raf) raf = requestAnimationFrame(() => { raf = 0; render(); }); }
+const OPS = { Search: ["sg1", "sg2", "sm"], YouTube: ["yg1", "yg2", "ym"], Subs: ["ug1", "ug2", "um"], Network: ["ng", "nm"],
+  Cloud: ["cloud27", "cg2", "cg3", "cg4", "cm"], "Other|bets": ["ob"], Capex: ["cx1", "cx2", "cx3", "cxp", "cxT"] };
+function render() {
+  try { localStorage.setItem("goog-dcf", JSON.stringify(S)); } catch (e) {}
+  for (const k in UNIT) {
+    const st = document.getElementById("st-" + k);
+    if (k in STREET) { const d = Math.abs(STREET[k] - S[k]) > 1e-6; st.textContent = `Street: ${showNum(k, STREET[k])}${UNIT[k] === "%" ? "%" : UNIT[k] === "$" ? "B" : ""}${d ? " · you differ" : ""}`; st.className = "street" + (d ? " diff" : ""); }
+  }
+  const rows = runModel(S), ok = S.k > S.g + 0.001;
+  const v = ok ? value(S, rows) : null;
+  const set = (id, t, cls) => { const e = document.getElementById(id); e.textContent = t; if (cls !== undefined) e.className = (e.className.split(" ")[0] === "v" ? "v " : "s ") + cls; };
+  if (!v) { set("o-ps", "k must exceed g", ""); return; }
+  const P = S.price, up = v.ps / P - 1;
+  set("o-ps", fS(v.ps)); set("o-up", `${up >= 0 ? "+" : "−"}${Math.abs(up * 100).toFixed(0)}% vs $${P.toFixed(2)}`, up >= 0 ? "pos" : "neg");
+  const t1 = valueAt(S, rows, v, 1), t5 = valueAt(S, rows, v, 5);
+  set("o-t1", fS(t1)); set("o-t1s", `${t1 / P - 1 >= 0 ? "+" : "−"}${Math.abs((t1 / P - 1) * 100).toFixed(0)}% from today's price`, t1 >= P ? "pos" : "neg");
+  set("o-t5", fS(t5));
+  const fps = rows.map(r => r.fcf / r.sh);
+  const conv = irr([-P, ...fps.slice(0, 4), fps[4] + t5]);
+  const pers = irr([-P, ...fps.slice(0, 4), fps[4] + t5 * P / v.ps]);
+  let lo = S.g + 0.0005, hi = 0.6, fo = NaN;
+  if (value(S, rows, lo).ps > P && value(S, rows, hi).ps < P) { for (let i = 0; i < 80; i++) { const m = (lo + hi) / 2; if (value(S, rows, m).ps > P) lo = m; else hi = m; } fo = (lo + hi) / 2; }
+  set("r-conv", fP(conv), conv >= S.k ? "pos" : "neg"); set("r-pers", fP(pers), pers >= S.k ? "pos" : "neg");
+  set("r-forever", isFinite(fo) ? fP(fo) : "n/a", fo >= S.k ? "pos" : "neg");
+  const C = { ...S, ...STREET }, cv = value(C, runModel(C)); set("o-cons", fS(cv.ps));
+
+  // waterfall of value ($B)
+  legend("lg-wf", [["Adds", "--s1"], ["Subtracts", "--s2"], ["Total", "--total"]]);
+  waterfall("c-wf", [{ n: "2027-31|cash", v: v.pvY }, { n: "After|2031", v: v.pvTV }, { n: "Net cash|+ stakes", v: S.netcash + S.stakes },
+    { n: "Waymo", v: v.wayPV }, { n: "Equity|value", total: true }], { line: P * S.shares, lineLabel: `Market cap $${Math.round(P * S.shares).toLocaleString()}B` });
+  document.getElementById("n-wf").textContent = `Terminal value is ${Math.round(v.pvTV / v.eq * 100)}% of the total. Long-run FCF ${fB(v.tf)}B × ${(1 + S.g).toFixed(3)} ÷ (${(S.k * 100).toFixed(1)}% − ${(S.g * 100).toFixed(1)}%) = ${fB(v.tv)}B in 2031.`;
+
+  // bridge: consensus -> you, swapping one business at a time (your k, g, Waymo, balance sheet throughout)
+  let cur = { ...S, ...STREET }, other = 0; const items = [{ n: "Consen-|sus", v: value(cur, runModel(cur)).ps, start: true }];
+  for (const [name, keys] of Object.entries(OPS)) {
+    const before = value(cur, runModel(cur)).ps; keys.forEach(k => cur[k] = S[k]); const d = value(cur, runModel(cur)).ps - before;
+    if (Math.abs(d) >= 1) items.push({ n: name, v: d }); else other += d;
+  }
+  if (Math.abs(other) >= 0.05) items.push({ n: "Other", v: other });
+  items.push({ n: "You", total: true });
+  legend("lg-br", [["Adds", "--s1"], ["Subtracts", "--s2"], ["Value", "--total"]]);
+  waterfall("c-br", items, { f: fS, unit: "", line: P, lineLabel: `Price $${P.toFixed(2)}` });
+
+  // revenue
+  const segs = [["Search", "--s1", "s"], ["YouTube", "--s2", "y"], ["Subs", "--s3", "u"], ["Network", "--s4", "n"], ["Cloud", "--s5", "c"]];
+  legend("lg-rev", segs.map(s => [s[0], s[1]]));
+  bars("c-rev", { cats: rows.map(r => String(r.y)), groups: [{ series: segs.map(([n, c, k]) => ({ name: n, color: c, values: rows.map(r => r.rev[k]) })), label: rows.map(r => r.R) }] });
+  // cash vs capex
+  legend("lg-cash", [["Profit after tax", "--s1"], ["Depreciation", "--s3"], ["Capex", "--s2"]]);
+  bars("c-cash", { cats: rows.map(r => String(r.y)), groups: [
+    { series: [{ name: "Profit after tax", color: "--s1", values: rows.map(r => r.nopat) }, { name: "Depreciation", color: "--s3", values: rows.map(r => r.da) }], label: rows.map(r => r.nopat + r.da) },
+    { series: [{ name: "Capex", color: "--s2", values: rows.map(r => r.capex) }], label: rows.map(r => r.capex) }] });
+
+  // sensitivity
+  const ks = [-0.01, -0.005, 0, 0.005, 0.01, 0.02].map(d => S.k + d), gs = [-0.01, -0.005, 0, 0.005, 0.01].map(d => S.g + d);
+  const nk = S.k, ng = S.g;
+  let h = `<thead><tr><th>k \\ g</th>${gs.map(g => `<th>${(g * 100).toFixed(1)}%</th>`).join("")}</tr></thead><tbody>`;
+  ks.forEach(k => { h += `<tr><td>${(k * 100).toFixed(1)}%</td>` + gs.map(g => { const ps = k > g ? value(S, rows, k, g).ps : NaN;
+    return `<td class="${ps >= P ? "pos" : "neg"} ${k === nk && g === ng ? "cur" : ""}">${isFinite(ps) ? fS(ps) : "–"}</td>`; }).join("") + "</tr>"; });
+  document.getElementById("sens").innerHTML = h + "</tbody>";
+
+  // forecast table
+  const line = (n, f, cls = "") => `<tr class="${cls}"><td>${n}</td>${rows.map(r => `<td>${f(r)}</td>`).join("")}</tr>`;
+  const b1 = x => (x < 0 ? "−" : "") + Math.abs(x).toFixed(0);
+  document.getElementById("fc").innerHTML = `<thead><tr><th>$B</th>${rows.map(r => `<th>${r.y}</th>`).join("")}</tr></thead><tbody>` +
+    line("Search revenue", r => b1(r.rev.s)) + line("Cloud revenue", r => b1(r.rev.c)) + line("Total revenue", r => b1(r.R), "bold") +
+    line("Search profit", r => b1(r.oi.s)) + line("Cloud profit", r => b1(r.oi.c)) + line("EBIT", r => b1(r.ebit), "bold") +
+    line("EBIT margin", r => (r.ebit / r.R * 100).toFixed(0) + "%") + line("Profit after tax", r => b1(r.nopat)) + line("+ Depreciation", r => b1(r.da)) +
+    line("− Capex", r => b1(r.capex)) + line("Free cash flow", r => b1(r.fcf), "bold") + line("Shares (B)", r => r.sh.toFixed(2)) +
+    line("EPS ($)", r => r.eps.toFixed(2)) + line("Discount factor", (r, i) => (1 / Math.pow(1 + S.k, r.y - 2026)).toFixed(3)) +
+    line("FCF worth today", r => b1(r.fcf / Math.pow(1 + S.k, r.y - 2026))) + "</tbody>";
+}
+syncInputs(); render();
+matchMedia("(prefers-color-scheme: dark)").addEventListener("change", render);
+</script>
+</body>
+</html>

@@ -55,7 +55,8 @@ DRIVER_SHEET = {
 }
 # answer key -> Inputs row label (column C)
 INPUTS = {"price": "Share price ($)", "shares": "Diluted shares (bn)", "netcash": "Net cash ($bn)",
-          "stakes": "Equity stakes ($bn)", "disc": "Discount rate", "tg": "Terminal growth",
+          "spx": "SpaceX value today ($bn)", "spx_own": "Alphabet share of SpaceX", "ant": "Anthropic value today ($bn)",
+          "ant_own": "Alphabet share of Anthropic", "stk_g": "Stake value growth / yr to 2031", "disc": "Discount rate", "tg": "Terminal growth",
           "nyrs": "DCF explicit forecast years"}
 
 

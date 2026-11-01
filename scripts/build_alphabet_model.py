@@ -238,7 +238,12 @@ inputs = [
     ("price", "Share price ($)", 283.5, '$#,##0.00', True, "Bloomberg market cap $3,431bn / 12.1bn shares. Update to live."),
     ("shares", "Diluted shares (bn)", 12.1, '0.00', True, "Estimate. Check latest 10-Q cover."),
     ("netcash", "Net cash ($bn)", 100.0, USD0, True, "Bloomberg LTM: cash $265bn less debt $147bn less preferred & other $18bn."),
-    ("stakes", "Equity stakes ($bn)", 100.0, USD0, True, "Estimate: non-marketable stakes incl. SpaceX and Anthropic (see Guide disclosure)."),
+    ("stakes", "Equity stakes, value today ($bn)", 0.0, USD0, False, "Formula: (SpaceX x share + Anthropic x share) grown to 2031, discounted at the discount rate."),
+    ("spx", "SpaceX value today ($bn)", 2000.0, USD0, True, "Your assumption."),
+    ("spx_own", "Alphabet share of SpaceX", 0.055, PCT, True, "July 2026 filing: 551.2m shares worth ~$94bn; ~5-6% after the xAI merger."),
+    ("ant", "Anthropic value today ($bn)", 2000.0, USD0, True, "Your assumption."),
+    ("ant_own", "Alphabet share of Anthropic", 0.14, PCT, True, "Reported ~14% (not confirmed in Alphabet filings)."),
+    ("stk_g", "Stake value growth / yr to 2031", 0.15, PCT, True, "Your assumption. Ownership held flat (no dilution, no tax on gains)."),
     ("tax", "Tax rate", 0.17, PCT, False, "Approx. effective rate."),
     ("disc", "Discount rate", 0.09, PCT, True, "Cost of equity used for DCF."),
     ("tg", "Terminal growth", 0.03, PCT, True, "Perpetual FCF growth after the explicit forecast."),
@@ -256,6 +261,8 @@ for i, (k, lab, v, fmt, key, note) in enumerate(inputs):
     put(inp, f"B{rr}", lab)
     put(inp, f"C{rr}", v, fmt, BLUE, fill=YELLOW if key else None)
     put(inp, f"D{rr}", note, italic=True)
+inp[I["stakes"].replace("Inputs!", "").replace("$", "")].value = (
+    f"=({I['spx']}*{I['spx_own']}+{I['ant']}*{I['ant_own']})*(1+{I['stk_g']})^5/(1+{I['disc']})^5")
 rr = 6 + len(inputs) + 1
 put(inp, f"B{rr}", "Historical capex for D&A ($bn)", bold=True)
 cap_hist = [(2021, 24.6), (2022, 31.5), (2023, 32.3), (2024, 52.5), (2025, 91.4)]
@@ -588,7 +595,7 @@ for bi, sc in enumerate(SC):
         ("Year-5 exit value per share ($)",
          f"=({I['w_pe']}*{I['m_pe']}*{YC[2032]}{R['NOPAT']}+{I['w_cf']}*{I['m_cf']}*({YC[2032]}{R['NOPAT']}+{YC[2032]}{R['D&A']})"
          f"+{I['w_rev']}*{I['m_rev']}*{YC[2032]}{R['Total revenue']})/SUM({I['w_pe']}:{I['w_rev']})/{YC[2031]}{R['Shares (bn)']}"
-         f"+({I['netcash']}+{I['stakes']}+{sv(sc,'waymo')}*(1+{I['disc']})^5)/{YC[2031]}{R['Shares (bn)']}", '$#,##0;($#,##0);-'),
+         f"+({I['netcash']}+({I['stakes']}+{sv(sc,'waymo')})*(1+{I['disc']})^5)/{YC[2031]}{R['Shares (bn)']}", '$#,##0;($#,##0);-'),
     ]
     for j, (lab, f, fmt) in enumerate(rows_v):
         put(m, f"B{v0+1+j}", lab)

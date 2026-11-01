@@ -149,7 +149,7 @@ td.cur { outline: 2px solid var(--accent); outline-offset: -2px; border-radius: 
 <div id="tip" role="tooltip"></div>
 
 <script>
-// ───────── model (validated against the Excel model: your case $187.38, consensus $285.62) ─────────
+// ───────── model (validated against the Excel model: your case $222.83, consensus $321.08) ─────────
 function runModel(p) {
   const base = { s: 253.305, y: 44.522, u: 54.55, n: 29.382, c: 109.914 };
   const m0 = { s: 0.52, y: 0.30, u: 0.15, n: 0.15, c: 0.354295176228688 };
@@ -186,18 +186,19 @@ function value(p, rows, k = p.k, g = p.g) {
   const tf = L.nopat + L.da - p.cxT * L.R;
   const tv = tf * (1 + g) / (k - g);
   const way31 = p.rides * p.fare * 52 / 1000 * p.wmult * p.own;
-  const eq = pvY + tv / d5 + p.netcash + p.stakes + way31 / d5;
-  return { pvY, tf, tv, pvTV: tv / d5, way31, wayPV: way31 / d5, eq, ps: eq / p.shares };
+  const stk31 = (p.spx * p.spx_own + p.ant * p.ant_own) * Math.pow(1 + p.stk_g, 5);
+  const eq = pvY + tv / d5 + p.netcash + stk31 / d5 + way31 / d5;
+  return { pvY, tf, tv, pvTV: tv / d5, way31, wayPV: way31 / d5, stk31, stkPV: stk31 / d5, eq, ps: eq / p.shares };
 }
 function valueAt(p, rows, v, t) { // per-share value at end of year t (0 = today)
   const k = p.k, rem = rows.slice(t).reduce((s, r, i) => s + r.fcf / Math.pow(1 + k, i + 1), 0);
   const d = Math.pow(1 + k, 5 - t);
-  return (rem + v.tv / d + p.netcash + p.stakes + v.way31 / d) / (t === 0 ? p.shares : rows[t - 1].sh);
+  return (rem + v.tv / d + p.netcash + v.stk31 / d + v.way31 / d) / (t === 0 ? p.shares : rows[t - 1].sh);
 }
 function irr(cf) { let lo = -0.9, hi = 2; for (let i = 0; i < 200; i++) { const m = (lo + hi) / 2; const n = cf.reduce((s, c, t) => s + c / Math.pow(1 + m, t), 0); if (n > 0) lo = m; else hi = m; } return (lo + hi) / 2; }
 
 // ───────── inputs ─────────
-const YOU = { price: 283.5, shares: 12.1, netcash: 100, stakes: 100, tax: 0.17, k: 0.082, g: 0.04,
+const YOU = { price: 283.5, shares: 12.1, netcash: 100, spx: 2000, spx_own: 0.055, ant: 2000, ant_own: 0.14, stk_g: 0.15, tax: 0.17, k: 0.082, g: 0.04,
   sg1: 1.04 * 1.029 - 1, sg2: 1.03 * 1.0194 - 1, sm: 0.40, yg1: 1.06 * 1.0566 - 1, yg2: 1.04 * 1.0481 - 1, ym: 0.30,
   ug1: 1.08 * 1.028 - 1, ug2: 1.05 * 1.029 - 1, um: 0.18, ng: -0.01, nm: 0.15,
   cloud27: 561 * 0.55 / 2 + 0.47 * 109.914, cg2: 0.52, cg3: 0.19, cg4: 0.18, cm: 0.40, ob: -8,
@@ -220,13 +221,15 @@ const GROUPS = [
     ["cxp", "Capex 2030-31 (% of revenue)", 10, 50, "%"], ["eq", "Share of capex in servers (6-yr life)", 30, 90, "%"], ["life", "Building life (years)", 10, 40, ""]]],
   ["Waymo", "", [["rides", "Paid rides per week in 2031 (millions)", 0.5, 40, ""], ["fare", "Average fare ($)", 10, 40, ""],
     ["wmult", "EV / revenue multiple in 2031", 5, 60, "x"], ["own", "Alphabet ownership", 50, 100, "%"]]],
+  ["SpaceX & Anthropic stakes", "", [["spx", "SpaceX value today", 200, 5000, "$"], ["spx_own", "Alphabet share of SpaceX", 0, 15, "%"],
+    ["ant", "Anthropic value today", 100, 5000, "$"], ["ant_own", "Alphabet share of Anthropic", 0, 25, "%"], ["stk_g", "Value growth per year to 2031", -10, 40, "%"]]],
   ["Other bets, tax, balance sheet", "", [["ob", "Other Bets profit per year", -20, 0, "$"], ["tax", "Tax rate", 10, 25, "%"],
-    ["price", "Share price today ($)", 150, 450, ""], ["netcash", "Net cash", -100, 300, "$"], ["stakes", "Equity stakes (SpaceX, Anthropic...)", 0, 400, "$"],
+    ["price", "Share price today ($)", 150, 450, ""], ["netcash", "Net cash", -100, 300, "$"],
     ["dsh", "Share count change per year", -4, 2, "%"]]],
 ];
 const UNIT = {}; GROUPS.forEach(g => g[2].forEach(c => UNIT[c[0]] = c[4]));
 let S = { ...YOU };
-try { const saved = JSON.parse(localStorage.getItem("goog-dcf") || "null"); if (saved) S = { ...YOU, ...saved }; } catch (e) {}
+try { const saved = JSON.parse(localStorage.getItem("goog-dcf2") || "null"); if (saved) S = { ...YOU, ...saved }; } catch (e) {}
 const toUI = (k, v) => UNIT[k] === "%" ? v * 100 : v;
 const fromUI = (k, v) => UNIT[k] === "%" ? v / 100 : v;
 const showNum = (k, v) => { const u = toUI(k, v); return Math.abs(u) >= 100 ? u.toFixed(0) : u.toFixed(1); };
@@ -324,7 +327,7 @@ function schedule() { if (!raf) raf = requestAnimationFrame(() => { raf = 0; ren
 const OPS = { Search: ["sg1", "sg2", "sm"], YouTube: ["yg1", "yg2", "ym"], Subs: ["ug1", "ug2", "um"], Network: ["ng", "nm"],
   Cloud: ["cloud27", "cg2", "cg3", "cg4", "cm"], "Other|bets": ["ob"], Capex: ["cx1", "cx2", "cx3", "cxp", "cxT"] };
 function render() {
-  try { localStorage.setItem("goog-dcf", JSON.stringify(S)); } catch (e) {}
+  try { localStorage.setItem("goog-dcf2", JSON.stringify(S)); } catch (e) {}
   for (const k in UNIT) {
     const st = document.getElementById("st-" + k);
     if (k in STREET) { const d = Math.abs(STREET[k] - S[k]) > 1e-6; st.textContent = `Street: ${showNum(k, STREET[k])}${UNIT[k] === "%" ? "%" : UNIT[k] === "$" ? "B" : ""}${d ? " · you differ" : ""}`; st.className = "street" + (d ? " diff" : ""); }
@@ -349,7 +352,7 @@ function render() {
 
   // waterfall of value ($B)
   legend("lg-wf", [["Adds", "--s1"], ["Subtracts", "--s2"], ["Total", "--total"]]);
-  waterfall("c-wf", [{ n: "2027-31|cash", v: v.pvY }, { n: "After|2031", v: v.pvTV }, { n: "Net cash|+ stakes", v: S.netcash + S.stakes },
+  waterfall("c-wf", [{ n: "2027-31|cash", v: v.pvY }, { n: "After|2031", v: v.pvTV }, { n: "Net|cash", v: S.netcash }, { n: "SpaceX +|Anthropic", v: v.stkPV },
     { n: "Waymo", v: v.wayPV }, { n: "Equity|value", total: true }], { line: P * S.shares, lineLabel: `Market cap $${Math.round(P * S.shares).toLocaleString()}B` });
   document.getElementById("n-wf").textContent = `Terminal value is ${Math.round(v.pvTV / v.eq * 100)}% of the total. Long-run FCF ${fB(v.tf)}B × ${(1 + S.g).toFixed(3)} ÷ (${(S.k * 100).toFixed(1)}% − ${(S.g * 100).toFixed(1)}%) = ${fB(v.tv)}B in 2031.`;
 

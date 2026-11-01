@@ -188,6 +188,21 @@ input[type="range"]:focus-visible, button:focus-visible { outline: 2px solid var
     <p class="say" id="o-note"></p>
   </section>
 
+  <section class="card">
+    <div class="step"><span class="num">8</span><h2>You vs consensus</h2></div>
+    <p class="say">Start at consensus ($286 a share, about today's price) and switch in your assumptions one at a time. Per share.</p>
+    <div class="legend" id="lg-br"></div>
+    <div id="c-br"></div>
+    <p class="say">You are <b>more cautious</b> on Search: its margin falls to 40% vs 56% for consensus, and it grows 7% then 5% vs 10% then 8%. That costs about <b>$83</b>. You are <b>more optimistic</b> on capex: it eases to 25% of revenue after 2031, while consensus keeps it near 38%. That adds about <b>$188</b>. Cloud revenue is about the same.</p>
+    <div class="legend" id="lg-vs"></div>
+    <div id="c-vs"></div>
+    <div class="tiles">
+      <div class="tile"><div class="k">EPS 2031, you</div><div class="v">$24.85</div></div>
+      <div class="tile"><div class="k">EPS 2031, consensus</div><div class="v">$34.46</div></div>
+      <div class="tile"><div class="k">Gap</div><div class="v neg">−28%</div></div>
+    </div>
+  </section>
+
   <p class="say" style="font-size:13px">Inputs: price $283.50, 12.1B shares, net cash $100B, stakes $100B, Waymo $302B in 2031 (your 10M rides/week × $22 × 33x × 80%), tax 17%, k = 8.2% (the return the $283.50 price implies on consensus cash flows), g = 4%. Search +7% then +5%, margin 40%; YouTube +12% then +9%; Cloud $206B in 2027, then +52%, +19%, +18%, margin 40%; capex $330B / $360B / $380B, then 38% of revenue to 2031, 25% in the terminal value. Source: models/Alphabet_Bottom_Up_Model.xlsx, Custom scenario.</p>
 </main>
 <div id="tip" role="tooltip"></div>
@@ -290,29 +305,31 @@ bars("c-pv", { cats: Y5.map((y, i) => `${y} · ${Math.round(100 / Math.pow(1.082
   groups: [{ series: [{ name: "FCF", color: "--s1", values: fcf }] }, { series: [{ name: "Worth today", color: "--s4", values: pv }] }] });
 
 // Step 6: waterfall to equity value
-function waterfall(id, items, priceLine) {
-  const W = 400, H = 260, L = 44, R = 4, T = 24, B = 38, max = 4800, min = -100;
+function waterfall(id, items, priceLine, o = {}) {
+  const W = 400, H = 260, L = 44, R = 4, T = 24, B = 38, max = o.max ?? 4800, min = o.min ?? -100;
+  const f = o.fmt ?? fmt, unit = o.unit ?? "B";
   const svg = el("svg", { viewBox: `0 0 ${W} ${H}`, role: "img" });
   const y = v => T + (max - v) / (max - min) * (H - T - B);
-  [0, 1000, 2000, 3000, 4000].forEach(t => {
+  (o.ticks ?? [0, 1000, 2000, 3000, 4000]).forEach(t => {
     svg.append(el("line", { x1: L, x2: W - R, y1: y(t), y2: y(t), class: t ? "grid" : "zero" }));
-    svg.append(el("text", { x: L - 6, y: y(t) + 4, "text-anchor": "end" }, fmt(t)));
+    svg.append(el("text", { x: L - 6, y: y(t) + 4, "text-anchor": "end" }, f(t)));
   });
   const slot = (W - L - R) / items.length, bw = Math.min(40, slot - 12);
   let run = 0;
   items.forEach((it, i) => {
     const x = L + i * slot + (slot - bw) / 2;
     let a, b, col;
-    if (it.total) { a = 0; b = run; col = "--total"; } else { a = run; b = run + it.v; run = b; col = it.v >= 0 ? "--up" : "--down"; }
+    if (it.start) { run = it.v; }
+    if (it.total || it.start) { a = 0; b = run; col = "--total"; } else { a = run; b = run + it.v; run = b; col = it.v >= 0 ? "--up" : "--down"; }
     const top = y(Math.max(a, b)), hgt = Math.max(2, Math.abs(y(a) - y(b)));
-    svg.append(el("rect", { x, y: top, width: bw, height: hgt, rx: 3, fill: css(col), "data-tip": `${it.n}: ${fmt(it.total ? run : it.v)}B` }));
-    svg.append(el("text", { x: x + bw / 2, y: top - 6, "text-anchor": "middle", class: "strong" }, it.total ? fmt(run) : (it.v > 0 ? "+" : "") + fmt(it.v)));
+    svg.append(el("rect", { x, y: top, width: bw, height: hgt, rx: 3, fill: css(col), "data-tip": `${it.n.replace(/\|/g, " ")}: ${f(it.total || it.start ? run : it.v)}${unit}` }));
+    svg.append(el("text", { x: x + bw / 2, y: top - 6, "text-anchor": "middle", class: "strong" }, it.total || it.start ? f(run) : (it.v > 0 ? "+" : "") + f(it.v)));
     it.n.split("|").forEach((ln, k) => svg.append(el("text", { x: x + bw / 2, y: H - 24 + k * 14, "text-anchor": "middle" }, ln)));
   });
   if (priceLine) {
     const py = y(priceLine);
     svg.append(el("line", { x1: L, x2: W - R, y1: py, y2: py, stroke: css("--ink"), "stroke-dasharray": "4 4", "stroke-width": 1.5 }));
-    svg.append(el("text", { x: L + 4, y: py - 6, class: "strong" }, "Market value $3,431B ($283.50/sh)"));
+    svg.append(el("text", o.priceX ? { x: L + (W - L - R) * o.priceX, y: py - 6, "text-anchor": "middle", class: "strong" } : { x: L + 4, y: py - 6, class: "strong" }, o.priceLabel ?? "Market value $3,431B ($283.50/sh)"));
   }
   const host = document.getElementById(id); host.innerHTML = ""; host.append(svg);
 }
@@ -321,6 +338,20 @@ waterfall("c-wf", [
   { n: "2027-31|cash", v: 14.8 }, { n: "After|2031", v: 4146.6 }, { n: "Net|cash", v: 100 },
   { n: "Equity|stakes", v: 100 }, { n: "Waymo", v: 203.7 }, { n: "Equity|value", total: true },
 ], 3430.6);
+
+
+// Step 8: bridge consensus -> you, and 2031 side by side
+legend("lg-br", [["Adds", "--up"], ["Subtracts", "--down"], ["Value", "--total"]]);
+const fmtS = v => (v < 0 ? "−$" : "$") + Math.abs(v).toFixed(0);
+waterfall("c-br", [
+  { n: "Consen-|sus", v: 285.7, start: true }, { n: "Search|margin", v: -70.6 }, { n: "Search|growth", v: -12.2 },
+  { n: "Cloud|margin", v: -13.2 }, { n: "Other", v: -0.8 }, { n: "You at|38%", total: true },
+  { n: "Capex|25%", v: 188.4 }, { n: "You", total: true },
+], 283.5, { max: 420, min: 0, ticks: [0, 100, 200, 300, 400], fmt: fmtS, unit: "", priceLabel: "Price $283.50", priceX: 0.56 });
+legend("lg-vs", [["You", "--s1"], ["Consensus", "--s4"]]);
+bars("c-vs", { cats: ["Search profit", "Cloud profit", "EBIT", "Free cash flow"], min: 0, max: 500, ticks: [0, 100, 200, 300, 400, 500], h: 260,
+  groups: [{ series: [{ name: "You, 2031", color: "--s1", values: [136.9, 207.5, 344.5, 111.8] }], label: [137, 208, 345, 112] },
+           { series: [{ name: "Consensus, 2031", color: "--s4", values: [220.2, 217.4, 442.6, 173.0] }], label: [220, 217, 443, 173] }] });
 
 // Step 7: live calculator
 const S = { disc: 8.2, tg: 4 };

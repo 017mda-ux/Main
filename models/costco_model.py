@@ -14,6 +14,7 @@ A = dict(
     wc_pct_of_rev_growth=0.12,            # members pay before Costco pays suppliers (FY26 implied ~14%)
     shares=0.4444, special=15.0, special_year=2028, div0=5.20,   # Q4: flat shares, one $15 special
     k=0.075, g=0.035,                     # Q5, Q6
+    exit_pe=38.0,                         # Q7: modest fade from 44x
     net_cash=10.191, price=1009.4,
 )
 

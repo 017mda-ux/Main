@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Costco DCF Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=Source+Serif+4:opsz,wght@8..60,600;8..60,700&display=swap" rel="stylesheet">
+<style>
+:root {
+  /* Layout: inputs panel + live outputs. Phone: outputs first, inputs below. Desktop: inputs left, outputs right and sticky. */
+  --bg: #f5f6f8; --card: #fcfcfb; --ink: #0b0b0b; --ink-2: #52514e; --ink-3: #8a8983; --line: #e3e4e8;
+  --accent: #2a78d6;
+  --s1: #2a78d6; --s2: #eb6834; --s3: #1baf7a; --s4: #eda100; --s5: #e87ba4;
+  --up: #1a7f37; --down: #c4314b; --total: #3b3d45; --chip: #eef3fb;
+  --font-display: "Source Serif 4", Georgia, serif;
+  --font-body: "IBM Plex Sans", -apple-system, "Segoe UI", sans-serif;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #121212; --card: #1a1a19; --ink: #f0efec; --ink-2: #c3c2b7; --ink-3: #8f8e86; --line: #2e2e2c; --accent: #3987e5;
+    --s1: #3987e5; --s2: #d95926; --s3: #199e70; --s4: #c98500; --s5: #d55181;
+    --up: #4cc26b; --down: #f0697f; --total: #c9cad1; --chip: #1f2a3a; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #121212; --card: #1a1a19; --ink: #f0efec; --ink-2: #c3c2b7; --ink-3: #8f8e86; --line: #2e2e2c; --accent: #3987e5;
+  --s1: #3987e5; --s2: #d95926; --s3: #199e70; --s4: #c98500; --s5: #d55181;
+  --up: #4cc26b; --down: #f0697f; --total: #c9cad1; --chip: #1f2a3a; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body { background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 15px; line-height: 1.45; }
+.wrap { max-width: 1180px; margin: 0 auto; padding: 18px 16px 60px; display: grid; gap: 16px; }
+h1, h2, h3 { font-family: var(--font-display); margin: 0; text-wrap: balance; }
+h1 { font-size: 27px; } h2 { font-size: 19px; } h3 { font-size: 16px; font-family: var(--font-body); font-weight: 600; }
+p { margin: 0; }
+.muted { color: var(--ink-2); }
+.small { font-size: 13px; }
+.layout { display: grid; gap: 16px; }
+.outputs { display: grid; gap: 16px; order: 1; }
+.inputs { display: grid; gap: 10px; order: 2; align-content: start; }
+@media (min-width: 960px) {
+  .layout { grid-template-columns: 370px 1fr; align-items: start; }
+  .inputs { order: 1; } .outputs { order: 2; position: sticky; top: 12px; }
+  .charts { grid-template-columns: 1fr 1fr; }
+}
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 14px; display: grid; gap: 10px; min-width: 0; }
+.presets { display: flex; flex-wrap: wrap; gap: 8px; }
+button { font: inherit; cursor: pointer; }
+.btn { border: 1px solid var(--line); background: var(--card); color: var(--ink); border-radius: 8px; padding: 7px 12px; font-size: 14px; }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+button:focus-visible, input:focus-visible, summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; }
+.tile { border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; display: grid; gap: 2px; }
+.tile .k { font-size: 12px; color: var(--ink-2); }
+.tile .v { font-family: var(--font-display); font-size: 26px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.tile .s { font-size: 12px; color: var(--ink-2); font-variant-numeric: tabular-nums; }
+.tile.hero .v { font-size: 34px; }
+.pos { color: var(--up); } .neg { color: var(--down); }
+details { background: var(--card); border: 1px solid var(--line); border-radius: 12px; }
+summary { list-style: none; padding: 12px 14px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; font-weight: 600; }
+summary::-webkit-details-marker { display: none; }
+summary .tag { font-size: 12px; font-weight: 500; color: var(--ink-2); }
+summary::after { content: "+"; color: var(--ink-3); font-size: 18px; margin-left: 8px; }
+details[open] summary::after { content: "−"; }
+.ctls { padding: 0 14px 14px; display: grid; gap: 14px; }
+.ctl { display: grid; gap: 4px; }
+.ctl .top { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.ctl label { font-size: 14px; }
+.ctl .street { font-size: 12px; color: var(--ink-3); }
+.ctl .street.diff { color: var(--accent); }
+.ctl .num { display: flex; align-items: center; gap: 2px; }
+.ctl input[type="number"] { width: 78px; font: inherit; font-size: 14px; font-variant-numeric: tabular-nums; text-align: right; padding: 3px 6px; border: 1px solid var(--line); border-radius: 6px; background: var(--bg); color: var(--ink); }
+.ctl .unit { font-size: 13px; color: var(--ink-2); min-width: 14px; }
+input[type="range"] { width: 100%; accent-color: var(--accent); margin: 0; }
+.charts { display: grid; gap: 16px; }
+svg { width: 100%; height: auto; display: block; overflow: visible; }
+svg text { fill: var(--ink-2); font-family: var(--font-body); font-size: 11px; font-variant-numeric: tabular-nums; }
+svg .strong { fill: var(--ink); font-weight: 600; }
+svg .grid { stroke: var(--line); stroke-width: 1; }
+svg .zero { stroke: var(--ink-3); stroke-width: 1; }
+.legend { display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: 12px; color: var(--ink-2); }
+.legend span { display: inline-flex; align-items: center; gap: 5px; }
+.legend i { width: 10px; height: 10px; border-radius: 3px; display: inline-block; }
+.tbl-wrap { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: 13px; font-variant-numeric: tabular-nums; }
+th, td { padding: 6px 8px; text-align: right; border-bottom: 1px solid var(--line); white-space: nowrap; }
+th:first-child, td:first-child { text-align: left; }
+thead th { color: var(--ink-2); font-weight: 500; }
+tr.bold td { font-weight: 600; }
+td.cur { outline: 2px solid var(--accent); outline-offset: -2px; border-radius: 4px; }
+#tip { position: fixed; pointer-events: none; background: var(--ink); color: var(--card); font-size: 12px; padding: 5px 8px; border-radius: 6px; opacity: 0; z-index: 10; max-width: 240px; }
+.note { font-size: 12px; color: var(--ink-3); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header style="display:grid;gap:6px">
+    <h1>Costco DCF dashboard</h1>
+    <p class="muted">Three-stage FCFE model, forecast from sales (CFA method). Growth capex and the cash members and suppliers advance both scale with each new dollar of sales; maintenance capex sits inside net income. $ billions unless per share.</p>
+    <div class="presets">
+      <button class="btn primary" id="p-you" type="button">Load your case</button>
+      <button class="btn" id="p-hist" type="button">Load history repeats (20-yr runway)</button>
+      <button class="btn" id="p-short" type="button">Load shorter runway</button>
+      <button class="btn" id="p-bear" type="button">Load bear</button>
+    </div>
+  </header>
+  <div class="layout">
+    <aside class="inputs" id="inputs"></aside>
+    <section class="outputs">
+      <div class="card">
+        <div class="tiles">
+          <div class="tile hero"><div class="k">DCF value per share</div><div class="v" id="o-ps">–</div><div class="s" id="o-up">–</div></div>
+          <div class="tile"><div class="k">Return implied by today's price</div><div class="v" id="o-impl">–</div><div class="s">vs your k</div></div>
+          <div class="tile"><div class="k">Value at end-FY31</div><div class="v" id="o-v31">–</div><div class="s" id="o-jpe">–</div></div>
+        </div>
+        <div class="tiles">
+          <div class="tile"><div class="k">5-yr return at your exit P/E</div><div class="v" id="r-pe">–</div><div class="s" id="r-pe-s">–</div></div>
+          <div class="tile"><div class="k">5-yr return if price meets value</div><div class="v" id="r-val">–</div></div>
+          <div class="tile"><div class="k">Price for a 15% 5-yr return</div><div class="v" id="r-15">–</div><div class="s">at your exit P/E</div></div>
+        </div>
+      </div>
+      <div class="charts">
+        <div class="card"><h3>Where the value comes from</h3><div class="legend" id="lg-wf"></div><div id="c-wf"></div><p class="note" id="n-wf"></p></div>
+        <div class="card"><h3>Net income vs free cash flow</h3><div class="legend" id="lg-cf"></div><div id="c-cf"></div><p class="note">Growth is nearly self-funding when the working-capital release matches growth capex.</p></div>
+      </div>
+      <div class="card"><h3>Value per share: k vs g</h3><p class="small muted">Green = above today's price. Outlined = your inputs.</p><div class="tbl-wrap"><table id="sens"></table></div></div>
+      <div class="card"><h3>The forecast</h3><div class="tbl-wrap"><table id="fc"></table></div>
+        <p class="note">FCFE = net income − (growth capex rate − working-capital release rate) × sales increase. Terminal = net income × (1 + g) × (1 − g ÷ ROIC) ÷ (k − g). Inputs: Bloomberg FY26 (revenue $303.2B, net income $9.2B, EPS $20.76, market cap $448.6B, net cash $10.2B, 444M shares). Matches models/costco_model.py.</p></div>
+    </section>
+  </div>
+</div>
+<div id="tip" role="tooltip"></div>
+<script>
+// ───────── model (mirrors models/costco_model.py) ─────────
+function runModel(a) {
+  const rows = [], n = 5 + Math.round(a.s2_years), s2 = a.s2_start; let rev = 303.154;
+  for (let t = 1; t <= n; t++) {
+    let g, m;
+    if (t <= 5) { g = a.g1; m = a.m0 + (a.m1 - a.m0) * t / 5; }
+    else { const f = (t - 5) / Math.round(a.s2_years); g = s2 + (a.g - s2) * f; m = a.m1 + (a.m2 - a.m1) * f; }
+    const prev = rev; rev *= 1 + g; const ni = rev * m, reinv = (a.fc_rate - a.wc_rate) * (rev - prev);
+    rows.push({ y: 2026 + t, t, g, rev, m, ni, reinv, fcfe: ni - reinv, eps: ni / a.shares });
+  }
+  return rows;
+}
+function value(a, rows, k = a.k, g = a.g) {
+  const n = rows.length, pv1 = rows.slice(0, 5).reduce((s, r) => s + r.fcfe / Math.pow(1 + k, r.t), 0);
+  const pv2 = rows.slice(5).reduce((s, r) => s + r.fcfe / Math.pow(1 + k, r.t), 0);
+  const tv = rows[n - 1].ni * (1 + g) * (1 - g / a.roic) / (k - g), pvtv = tv / Math.pow(1 + k, n);
+  const eq = pv1 + pv2 + pvtv + a.net_cash;
+  const pv31 = rows.slice(5).reduce((s, r) => s + r.fcfe / Math.pow(1 + k, r.t - 5), 0);
+  const v31 = (pv31 + tv / Math.pow(1 + k, n - 5) + a.net_cash) / a.shares;
+  return { pv1, pv2, tv, pvtv, eq, ps: eq / a.shares, v31 };
+}
+function irr(cf) { let lo = -0.9, hi = 2; for (let i = 0; i < 200; i++) { const m = (lo + hi) / 2; const n = cf.reduce((s, c, t) => s + c / Math.pow(1 + m, t), 0); if (n > 0) lo = m; else hi = m; } return (lo + hi) / 2; }
+
+const YOU = { price: 1009.4, shares: 0.4444, net_cash: 10.191, g1: 0.075, m0: 0.030, m1: 0.033, s2_years: 15, s2_start: 0.075, m2: 0.033,
+  fc_rate: 0.137, wc_rate: 0.143, g: 0.035, roic: 0.25, k: 0.075, exit_pe: 38, div0: 5.20, special: 15 };
+const PRESETS = { hist: { g1: 0.075, s2_start: 0.10, s2_years: 20, m2: 0.036, g: 0.04 }, short: { s2_years: 8, s2_start: 0.06 },
+  bear: { g1: 0.05, m1: 0.030, s2_start: 0.05, s2_years: 10, wc_rate: 0.08, g: 0.03, exit_pe: 28 } };
+const GROUPS = [
+  ["Valuation", "k, g, ROIC, exit", [["k", "k: required return", 5, 11, "%"], ["g", "g: growth forever", 1, 5, "%"], ["roic", "ROIC on new capital (terminal)", 10, 60, "%"], ["exit_pe", "Exit P/E (5-yr return)", 15, 55, "x"]]],
+  ["Stage 1: FY27-31", "", [["g1", "Revenue growth", 0, 15, "%"], ["m1", "Net margin by FY31 (3.0% today)", 2, 5, "%"]]],
+  ["Stage 2: the runway", "", [["s2_years", "Years of fade after FY31", 1, 30, ""], ["s2_start", "Growth at start of fade", 0, 15, "%"], ["m2", "Long-run net margin", 2, 5, "%"]]],
+  ["Reinvestment", "per $ of extra sales", [["fc_rate", "Growth capex (FY26: 13.7%)", 0, 40, "%"], ["wc_rate", "Working capital released (FY26: 14.3%)", 0, 30, "%"]]],
+  ["Market & payouts", "", [["price", "Share price ($)", 500, 1500, ""], ["net_cash", "Net cash", -20, 60, "$"], ["div0", "Regular dividend today ($)", 0, 15, ""], ["special", "Special dividend in FY28 ($)", 0, 50, ""]]],
+];
+const UNIT = {}; GROUPS.forEach(g => g[2].forEach(c => UNIT[c[0]] = c[4]));
+let S = { ...YOU };
+try { const s = JSON.parse(localStorage.getItem("cost-dcf1") || "null"); if (s) S = { ...YOU, ...s }; } catch (e) {}
+const toUI = (k, v) => UNIT[k] === "%" ? v * 100 : v, fromUI = (k, v) => UNIT[k] === "%" ? v / 100 : v;
+const showNum = (k, v) => { const u = toUI(k, v); return Math.abs(u) >= 100 ? u.toFixed(0) : u.toFixed(k === "m1" || k === "m2" ? 2 : 1); };
+const host = document.getElementById("inputs");
+GROUPS.forEach(([name, tag, ctls], gi) => {
+  const d = document.createElement("details"); if (gi < 3) d.open = true;
+  d.innerHTML = `<summary><span>${name}</span><span class="tag">${tag}</span></summary><div class="ctls"></div>`;
+  const box = d.querySelector(".ctls");
+  ctls.forEach(([k, label, mn, mx, u]) => {
+    const div = document.createElement("div"); div.className = "ctl";
+    div.innerHTML = `<div class="top"><label for="n-${k}">${label}</label><span class="num"><input type="number" id="n-${k}" step="any" inputmode="decimal"><span class="unit">${u === "%" ? "%" : u === "x" ? "x" : u === "$" ? "B" : ""}</span></span></div>
+      <input type="range" id="r-${k}" min="${mn}" max="${mx}" step="any" aria-label="${label}">`;
+    box.append(div);
+    const n = div.querySelector("input[type=number]"), r = div.querySelector("input[type=range]");
+    r.addEventListener("input", () => { S[k] = fromUI(k, +r.value); n.value = showNum(k, S[k]); schedule(); });
+    n.addEventListener("change", () => { const v = parseFloat(n.value); if (isFinite(v)) { S[k] = fromUI(k, v); r.value = toUI(k, S[k]); } n.value = showNum(k, S[k]); schedule(); });
+  });
+  host.append(d);
+});
+function syncInputs() { for (const k in UNIT) { document.getElementById("r-" + k).value = toUI(k, S[k]); document.getElementById("n-" + k).value = showNum(k, S[k]); } }
+document.getElementById("p-you").onclick = () => { S = { ...YOU }; syncInputs(); schedule(); };
+for (const [id, p] of Object.entries(PRESETS)) document.getElementById("p-" + id).onclick = () => { S = { ...YOU, ...p }; syncInputs(); schedule(); };
+
+// ───────── drawing helpers ─────────
+const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const NS = "http://www.w3.org/2000/svg";
+const el = (t, a = {}, txt) => { const e = document.createElementNS(NS, t); for (const k in a) e.setAttribute(k, a[k]); if (txt != null) e.textContent = txt; return e; };
+const fB = v => (v < 0 ? "−$" : "$") + Math.abs(v).toLocaleString(undefined, { maximumFractionDigits: 0 });
+const fS = v => (v < 0 ? "−$" : "$") + Math.abs(v).toFixed(0);
+const fP = v => (v < 0 ? "−" : "") + Math.abs(v * 100).toFixed(1) + "%";
+const tip = document.getElementById("tip");
+document.addEventListener("pointermove", e => {
+  const t = e.target.closest && e.target.closest("[data-tip]");
+  if (!t) { tip.style.opacity = 0; return; }
+  tip.textContent = t.getAttribute("data-tip");
+  tip.style.left = Math.min(e.clientX + 12, innerWidth - tip.offsetWidth - 8) + "px"; tip.style.top = (e.clientY - 34) + "px"; tip.style.opacity = 1;
+});
+function legend(id, items) { document.getElementById(id).innerHTML = items.map(([n, c]) => `<span><i style="background:var(${c})"></i>${n}</span>`).join(""); }
+function niceMax(v) { const p = Math.pow(10, Math.floor(Math.log10(v))); for (const m of [1, 1.5, 2, 2.5, 3, 4, 5, 6, 8, 10]) if (m * p >= v) return m * p; return 10 * p; }
+function ticksFor(min, max) { const st = niceMax((max - min) / 4); const out = []; for (let t = Math.ceil(min / st) * st; t <= max + 1e-9; t += st) out.push(Math.round(t)); return out; }
+
+function bars(id, { cats, groups, h = 220 }) {
+  let max = 0, min = 0;
+  groups.forEach(g => cats.forEach((c, i) => { let p = 0, n = 0; g.series.forEach(s => { const v = s.values[i]; if (v >= 0) p += v; else n += v; }); max = Math.max(max, p); min = Math.min(min, n); }));
+  max = niceMax(max * 1.08); if (min < 0) min = -niceMax(-min * 1.1);
+  const W = 400, H = h, L = 42, R = 4, T = 18, B = 22, y = v => T + (max - v) / (max - min) * (H - T - B);
+  const svg = el("svg", { viewBox: `0 0 ${W} ${H}`, role: "img" });
+  ticksFor(min, max).forEach(t => { svg.append(el("line", { x1: L, x2: W - R, y1: y(t), y2: y(t), class: t === 0 ? "zero" : "grid" })); svg.append(el("text", { x: L - 5, y: y(t) + 4, "text-anchor": "end" }, fB(t))); });
+  const slot = (W - L - R) / cats.length, gN = groups.length, gap = 3, bw = Math.min(30, (slot - 8 - gap * (gN - 1)) / gN);
+  cats.forEach((c, i) => {
+    const x0 = L + i * slot + (slot - (bw * gN + gap * (gN - 1))) / 2;
+    groups.forEach((g, gi) => {
+      const x = x0 + gi * (bw + gap); let pos = 0, neg = 0;
+      g.series.forEach(s => { const v = s.values[i]; const a = v >= 0 ? pos : neg, b = a + v; if (v >= 0) pos = b; else neg = b;
+        svg.append(el("rect", { x, y: y(Math.max(a, b)) + (v >= 0 ? 1 : 0), width: bw, height: Math.max(1, Math.abs(y(a) - y(b)) - 1), rx: 3, fill: css(s.color), "data-tip": `${c} · ${s.name}: ${fB(v)}B` })); });
+      if (g.label) svg.append(el("text", { x: x + bw / 2, y: y(Math.max(pos, 0)) - 4, "text-anchor": "middle", class: "strong" }, fB(g.label[i])));
+    });
+    svg.append(el("text", { x: L + i * slot + slot / 2, y: H - 6, "text-anchor": "middle" }, c));
+  });
+  const box = document.getElementById(id); box.innerHTML = ""; box.append(svg);
+}
+function waterfall(id, items, { f = fB, unit = "B", line, lineLabel, h = 230 } = {}) {
+  let run = 0, mx = 0, mn = 0;
+  items.forEach(it => { if (it.start) run = it.v; else if (!it.total) run += it.v; mx = Math.max(mx, run); mn = Math.min(mn, run); });
+  if (line) mx = Math.max(mx, line);
+  const max = niceMax(mx * 1.12), min = mn < 0 ? -niceMax(-mn * 1.2) : 0;
+  const W = 400, H = h, L = 42, R = 4, T = 18, B = 34, y = v => T + (max - v) / (max - min) * (H - T - B);
+  const svg = el("svg", { viewBox: `0 0 ${W} ${H}`, role: "img" });
+  ticksFor(min, max).forEach(t => { svg.append(el("line", { x1: L, x2: W - R, y1: y(t), y2: y(t), class: t ? "grid" : "zero" })); svg.append(el("text", { x: L - 5, y: y(t) + 4, "text-anchor": "end" }, f(t))); });
+  const slot = (W - L - R) / items.length, bw = Math.min(34, slot - 10); run = 0;
+  items.forEach((it, i) => {
+    const x = L + i * slot + (slot - bw) / 2; let a, b, col;
+    if (it.start) run = it.v;
+    if (it.total || it.start) { a = 0; b = run; col = "--total"; } else { a = run; b = run + it.v; run = b; col = it.v >= 0 ? "--s1" : "--s2"; }
+    const top = y(Math.max(a, b)), hh = Math.max(2, Math.abs(y(a) - y(b)));
+    svg.append(el("rect", { x, y: top, width: bw, height: hh, rx: 3, fill: css(col), "data-tip": `${it.n.replace("|", " ")}: ${f(it.total || it.start ? run : it.v)}${unit}` }));
+    svg.append(el("text", { x: x + bw / 2, y: top - 4, "text-anchor": "middle", class: "strong" }, it.total || it.start ? f(run) : (it.v > 0 ? "+" : "") + f(it.v)));
+    it.n.split("|").forEach((ln, k) => svg.append(el("text", { x: x + bw / 2, y: H - 20 + k * 12, "text-anchor": "middle" }, ln)));
+  });
+  if (line) { const py = y(line); svg.append(el("line", { x1: L, x2: W - R, y1: py, y2: py, stroke: css("--ink"), "stroke-dasharray": "4 4", "stroke-width": 1.2 }));
+    svg.append(el("text", { x: W - R, y: py - 5, "text-anchor": "end", class: "strong" }, lineLabel)); }
+  const box = document.getElementById(id); box.innerHTML = ""; box.append(svg);
+}
+
+
+
+let raf = 0;
+function schedule() { if (!raf) raf = requestAnimationFrame(() => { raf = 0; render(); }); }
+function render() {
+  try { localStorage.setItem("cost-dcf1", JSON.stringify(S)); } catch (e) {}
+  const set = (id, t, cls) => { const e = document.getElementById(id); e.textContent = t; if (cls !== undefined) e.className = (e.className.split(" ")[0] === "v" ? "v " : "s ") + cls; };
+  if (S.k <= S.g + 0.001) { set("o-ps", "k must exceed g"); return; }
+  const rows = runModel(S), v = value(S, rows), P = S.price, up = v.ps / P - 1;
+  set("o-ps", fS(v.ps)); set("o-up", `${up >= 0 ? "+" : "−"}${Math.abs(up * 100).toFixed(0)}% vs $${P.toFixed(0)}`, up >= 0 ? "pos" : "neg");
+  let lo = S.g + 0.0005, hi = 0.4, im = NaN;
+  if (value(S, rows, lo).ps > P && value(S, rows, hi).ps < P) { for (let i = 0; i < 80; i++) { const m = (lo + hi) / 2; if (value(S, rows, m).ps > P) lo = m; else hi = m; } im = (lo + hi) / 2; }
+  set("o-impl", isFinite(im) ? fP(im) : "n/a", im >= S.k ? "pos" : "neg");
+  set("o-v31", fS(v.v31)); set("o-jpe", `= ${(v.v31 / rows[5].eps).toFixed(1)}x FY32 EPS (justified P/E)`);
+  const divs = rows.slice(0, 5).map(r => S.div0 * r.eps / 20.76 + (r.y === 2028 ? S.special : 0));
+  const exitV = S.exit_pe * rows[5].eps;
+  const rpe = irr([-P, ...divs.slice(0, 4), divs[4] + exitV]), rv = irr([-P, ...divs.slice(0, 4), divs[4] + v.v31]);
+  set("r-pe", fP(rpe), rpe >= S.k ? "pos" : "neg"); set("r-pe-s", `sell at ${S.exit_pe.toFixed(0)}x × $${rows[5].eps.toFixed(2)} = ${fS(exitV)}`);
+  set("r-val", fP(rv), rv >= S.k ? "pos" : "neg");
+  const pv15 = divs.reduce((s, d, i) => s + d / Math.pow(1.15, i + 1), 0) + exitV / Math.pow(1.15, 5); set("r-15", fS(pv15));
+  legend("lg-wf", [["Adds", "--s1"], ["Total", "--total"]]);
+  waterfall("c-wf", [{ n: "FY27-31", v: v.pv1 }, { n: "Runway|FY32+", v: v.pv2 }, { n: "Terminal", v: v.pvtv }, { n: "Net|cash", v: S.net_cash }, { n: "Equity|value", total: true }],
+    { line: P * S.shares, lineLabel: `Market cap $${Math.round(P * S.shares)}B` });
+  document.getElementById("n-wf").textContent = `Terminal value is ${Math.round(v.pvtv / (v.eq - S.net_cash) * 100)}% of operating value; the ${Math.round(S.s2_years)}-year runway is ${Math.round(v.pv2 / (v.eq - S.net_cash) * 100)}%.`;
+  const pick = rows.filter((r, i) => i < 5 || (r.y - 2031) % 5 === 0 || i === rows.length - 1);
+  legend("lg-cf", [["Net income", "--s1"], ["Free cash flow to equity", "--s3"]]);
+  bars("c-cf", { cats: pick.map(r => "FY" + String(r.y).slice(2)), groups: [{ series: [{ name: "Net income", color: "--s1", values: pick.map(r => r.ni) }], label: pick.map(r => r.ni) },
+    { series: [{ name: "FCFE", color: "--s3", values: pick.map(r => r.fcfe) }] }] });
+  const ks = [-0.01, -0.005, 0, 0.005, 0.01].map(d => S.k + d), gs = [-0.01, -0.005, 0, 0.005, 0.01].map(d => S.g + d);
+  let h = `<thead><tr><th>k \\ g</th>${gs.map(g => `<th>${(g * 100).toFixed(1)}%</th>`).join("")}</tr></thead><tbody>`;
+  ks.forEach(k => { h += `<tr><td>${(k * 100).toFixed(1)}%</td>` + gs.map(g => { const ps = k > g ? value(S, rows, k, g).ps : NaN;
+    return `<td class="${ps >= P ? "pos" : "neg"} ${k === S.k && g === S.g ? "cur" : ""}">${isFinite(ps) ? fS(ps) : "–"}</td>`; }).join("") + "</tr>"; });
+  document.getElementById("sens").innerHTML = h + "</tbody>";
+  const line = (n, f, cls = "") => `<tr class="${cls}"><td>${n}</td>${pick.map(r => `<td>${f(r)}</td>`).join("")}</tr>`;
+  document.getElementById("fc").innerHTML = `<thead><tr><th>$B</th>${pick.map(r => `<th>FY${String(r.y).slice(2)}</th>`).join("")}</tr></thead><tbody>` +
+    line("Revenue growth", r => (r.g * 100).toFixed(1) + "%") + line("Revenue", r => r.rev.toFixed(0), "bold") + line("Net margin", r => (r.m * 100).toFixed(2) + "%") +
+    line("Net income", r => r.ni.toFixed(1)) + line("− Net reinvestment", r => r.reinv.toFixed(1)) + line("Free cash flow to equity", r => r.fcfe.toFixed(1), "bold") +
+    line("EPS ($)", r => r.eps.toFixed(2)) + "</tbody>";
+}
+syncInputs(); render();
+matchMedia("(prefers-color-scheme: dark)").addEventListener("change", render);
+</script>
+</body>
+</html>

@@ -7,7 +7,8 @@ import json, sys
 
 A = dict(
     rev0=303.154, growth=0.075,          # Q1: consensus revenue growth FY27-31
-    net_margin=0.030,                     # Q2: flat
+    net_margin0=0.030, net_margin=0.033,  # Q2 revised: 3.0% today rising to 3.3% by FY31 (fee increase ~2030)
+    roic=0.25,                            # terminal reinvestment = g / ROIC (incremental ROIC ~29% FY22-26)
     capex_pct=0.025,                      # Q3: faster build-out
     da_pct=0.0085,                        # FY26 D&A ~ $2.6bn (EBITDA less operating income)
     wc_pct_of_rev_growth=0.12,            # members pay before Costco pays suppliers (FY26 implied ~14%)
@@ -21,7 +22,7 @@ def run(a=A):
     rows, rev = [], a["rev0"]
     for t, y in enumerate(range(2027, 2032), 1):
         prev, rev = rev, rev * (1 + a["growth"])
-        ni = rev * a["net_margin"]
+        ni = rev * (a["net_margin0"] + (a["net_margin"] - a["net_margin0"]) * t / 5)
         da = rev * a["da_pct"]
         wc = (rev - prev) * a["wc_pct_of_rev_growth"]
         capex = rev * a["capex_pct"]
@@ -33,7 +34,7 @@ def run(a=A):
 def value(a=A, rows=None, k=None):
     rows = rows or run(a); k = k or a["k"]; g = a["g"]
     pv = sum(r["fcf"] / (1 + k) ** r["t"] for r in rows)
-    tv = rows[-1]["fcf"] * (1 + g) / (k - g)
+    tv = rows[-1]["ni"] * (1 + g) * (1 - g / a["roic"]) / (k - g)
     eq = pv + tv / (1 + k) ** 5 + a["net_cash"]
     return dict(pv=pv, tv=tv, pvtv=tv / (1 + k) ** 5, eq=eq, ps=eq / a["shares"], tv31_ps=(tv + a["net_cash"]) / a["shares"])
 
@@ -48,7 +49,7 @@ def irr(cf):
 
 def returns(a=A):
     rows, v = run(a), value(a)
-    divs = [a["div0"] * r["eps"] / (a["rev0"] * a["net_margin"] / a["shares"]) + (a["special"] if r["y"] == a["special_year"] else 0) for r in rows]
+    divs = [a["div0"] * r["eps"] / (9.226 / a["shares"]) + (a["special"] if r["y"] == a["special_year"] else 0) for r in rows]
     eps32 = rows[-1]["eps"] * (1 + a["growth"])
     out = {"dcf_converge": irr([-a["price"]] + divs[:-1] + [divs[-1] + v["tv31_ps"]])}
     for pe in (44.3, 40, 35, 30, 25):

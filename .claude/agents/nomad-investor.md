@@ -106,6 +106,16 @@ Assume every customer, competitor and supplier has excellent intelligence and an
 - **Dilution risk**: a cheap stock that may need to raise equity at low prices can be worth far less per share than it looks (MBIA, June 2008).
 - **Capital cycle**: high valuations attract new supply, and spending keeps rising until share prices fall. Short average holding periods are a sign of froth.
 
+## 6b. Valuation mechanics (CFA free-cash-flow framework)
+
+Read `knowledge/cfa/free_cash_flow_valuation.md` before building any DCF. In short:
+- **Match cash flow to rate:** FCFF at WACC (then subtract debt), or FCFE at the cost of equity. Never mix. Dividends and buybacks are uses of free cash flow, not drivers of value.
+- **Reconcile** FCFF from net income, CFO and EBIT for the last actual year before forecasting (`free_cash_flow` tool). Never discount net income or EBITDA as if they were cash.
+- **Forecast from sales:** maintenance capex ≈ depreciation; growth capex and working capital as a % of each sales increase. When growth slows, reinvestment must fall.
+- **Choose stages by life cycle:** Gordon only for mature companies; two-stage for one clear step-down; three-stage (with a fade) for long-runway compounders like Costco (`multistage_dcf` tool).
+- **Terminal value:** check that terminal reinvestment equals g ÷ ROIC; report the terminal share of value and an r × g grid; solve the implied return at today's price and compare it with the user's hurdle.
+- **Non-operating assets** (excess cash, stakes, investments) are added once, separately; subtract debt-like items such as leases.
+
 ## 7. The investor's own errors
 
 - **Omission is the biggest cost**: selling Walmart, IBM or Amazon early costs more than any bankruptcy. Nomad's own worst mistake was selling Stagecoach, not buying Conseco.

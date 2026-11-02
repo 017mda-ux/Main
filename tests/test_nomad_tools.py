@@ -199,3 +199,32 @@ def test_finviz_parser_and_model():
     r = fz.expected_return(20, 20)
     assert 0.15 < r < 0.22
     assert fz.odds_of_15(0.15) == 0.5 and fz.odds_of_15(0.21) > 0.8
+
+
+def test_free_cash_flow_routes_reconcile():
+    # FCFF via NI, CFO and EBIT agree on a consistent example
+    out = tools.free_cash_flow({"net_income": 100, "depreciation": 40, "interest_expense": 20, "tax_rate_pct": 25,
+                                "fcinv": 60, "wcinv": 10, "cfo": 130, "ebit": 153.333333, "net_borrowing": 5})
+    assert out["routes_agree"]
+    assert out["fcff"] == pytest.approx(85.0, abs=0.01)
+    assert out["fcfe"] == pytest.approx(75.0, abs=0.01)
+
+
+def test_free_cash_flow_incremental_rates():
+    out = tools.free_cash_flow({"net_income": 9.226, "depreciation": 2.6, "fcinv": 6.435, "wcinv": -4.0, "sales_increase": 27.9})
+    assert out["incremental_fcinv_pct_of_sales_increase"] == pytest.approx(13.7, abs=0.1)
+    assert out["wcinv_pct_of_sales_increase"] == pytest.approx(-14.3, abs=0.1)
+
+
+def test_multistage_gordon_matches_closed_form():
+    # single stage: FCFF1 = 105, r 10%, g 5% -> 2100; zero explicit years handled via one-year flow
+    out = tools.multistage_dcf({"basis": "fcfe", "cash_flows": [105], "discount_rate_pct": 10, "terminal_growth_pct": 5})
+    assert out["equity_value"] == pytest.approx(105 / 1.1 + 105 * 1.05 / 0.05 / 1.1, abs=0.01)
+
+
+def test_multistage_fcff_subtracts_debt_and_implied_return():
+    out = tools.multistage_dcf({"basis": "fcff", "base_cash_flow": 100, "stage1_growth_pct": 10, "stage1_years": 5,
+                                "stage2_years": 5, "discount_rate_pct": 9, "terminal_growth_pct": 3,
+                                "debt": 500, "non_operating_assets": 200, "shares": 10, "price": 150})
+    assert out["equity_value"] == pytest.approx(out["pv_explicit"] + out["pv_terminal"] - 300, abs=0.05)
+    assert "implied_return_pct" in out and "sensitivity" in out

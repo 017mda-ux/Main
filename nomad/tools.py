@@ -683,6 +683,153 @@ def moat_scorecard(inp: dict) -> dict:
 _num = {"type": "number"}
 _num_list = {"type": "array", "items": {"type": "number"}}
 
+
+# ── Free cash flow valuation (CFA FCFF/FCFE framework) ────────────────
+
+def free_cash_flow(inp: dict) -> dict:
+    """FCFF and FCFE from whichever statement lines are given, with cross-checks.
+
+    FCFF = NI + NCC + Int(1-t) - FCInv - WCInv      FCFE = FCFF - Int(1-t) + Net borrowing
+    FCFF = CFO + Int(1-t) - FCInv                   FCFF = EBIT(1-t) + Dep - FCInv - WCInv
+    FCFF = EBITDA(1-t) + Dep*t - FCInv - WCInv
+    """
+    t = inp.get("tax_rate_pct", 21.0) / 100
+    intr = inp.get("interest_expense", 0.0) * (1 - t)
+    fcinv, wcinv = inp.get("fcinv", 0.0), inp.get("wcinv", 0.0)
+    nb = inp.get("net_borrowing", 0.0)
+    dep = inp.get("depreciation", inp.get("noncash_charges", 0.0))
+    ncc = inp.get("noncash_charges", dep)
+    routes = {}
+    if "net_income" in inp:
+        routes["from_net_income"] = inp["net_income"] + ncc + intr - fcinv - wcinv
+    if "cfo" in inp:
+        routes["from_cfo"] = inp["cfo"] + intr - fcinv
+    if "ebit" in inp:
+        routes["from_ebit"] = inp["ebit"] * (1 - t) + dep - fcinv - wcinv
+    if "ebitda" in inp:
+        routes["from_ebitda"] = inp["ebitda"] * (1 - t) + dep * t - fcinv - wcinv
+    if not routes:
+        raise ValueError("give at least one of net_income, cfo, ebit, ebitda")
+    fcff = next(iter(routes.values()))
+    out = {"fcff_by_route": {k: _r(v, 2) for k, v in routes.items()}, "fcff": _r(fcff, 2),
+           "fcfe": _r(fcff - intr + nb, 2)}
+    spread = max(routes.values()) - min(routes.values())
+    out["routes_agree"] = spread <= 0.02 * max(1.0, abs(fcff))
+    if not out["routes_agree"]:
+        out["note"] = ("Routes disagree: usually a missing non-cash item, a working-capital line inside CFO, "
+                       "or interest/tax classification. Reconcile before valuing.")
+    flags = []
+    if "net_income" in inp and fcff:
+        gap = inp["net_income"] / (fcff - intr + nb) - 1 if (fcff - intr + nb) else None
+        if gap is not None and abs(gap) > 0.2:
+            flags.append(f"Net income is {gap*100:+.0f}% vs FCFE: a poor cash proxy here (capex, working capital or borrowing differ).")
+    if "ebitda" in inp:
+        flags.append("EBITDA ignores taxes, capex and working capital: never discount it as cash flow.")
+    if "sales_increase" in inp and inp["sales_increase"]:
+        si = inp["sales_increase"]
+        out["incremental_fcinv_pct_of_sales_increase"] = _r((fcinv - dep) / si * 100, 1)
+        out["wcinv_pct_of_sales_increase"] = _r(wcinv / si * 100, 1)
+        out["reinvestment_note"] = ("Forecast growth capex and working capital as these % of each future sales increase; "
+                                    "maintenance capex ~ depreciation scales with the sales level.")
+    out["flags"] = flags
+    return out
+
+
+def multistage_dcf(inp: dict) -> dict:
+    """Two- or three-stage FCFF/FCFE valuation with terminal-value consistency checks.
+
+    Stage 1: explicit cash flows, or base cash flow grown at stage-1 growth for n1 years.
+    Stage 2 (optional): growth declines linearly to terminal growth over n2 years.
+    Terminal: Gordon on next-year cash flow, or reinvestment-consistent (NOPAT x (1 - g/ROIC)),
+    or an exit multiple on a terminal metric.
+    """
+    basis = inp.get("basis", "fcff").lower()
+    r = inp["discount_rate_pct"] / 100
+    g_t = inp.get("terminal_growth_pct", 3.0) / 100
+    flows = list(inp.get("cash_flows", []))
+    if not flows:
+        cf, g1 = inp["base_cash_flow"], inp.get("stage1_growth_pct", 5.0) / 100
+        for _ in range(int(inp.get("stage1_years", 5))):
+            cf *= 1 + g1
+            flows.append(cf)
+        g_last = g1
+    else:
+        g_last = inp.get("stage1_growth_pct", g_t * 100) / 100
+    n2 = int(inp.get("stage2_years", 0))
+    margin_of = inp.get("cash_conversion_pct")  # optional: terminal FCF as % of profit
+    for i in range(1, n2 + 1):
+        g = g_last + (g_t - g_last) * i / n2
+        flows.append(flows[-1] * (1 + g))
+    n = len(flows)
+    if r <= g_t and "exit_multiple" not in inp:
+        raise ValueError("discount rate must exceed terminal growth")
+    pv_flows = sum(f / (1 + r) ** (i + 1) for i, f in enumerate(flows))
+    if "exit_multiple" in inp:
+        tv = inp["exit_multiple"] * inp["terminal_metric"]
+        tv_method = "exit multiple"
+    elif "roic_pct" in inp:
+        profit = inp.get("terminal_profit", flows[-1] / (margin_of / 100) if margin_of else flows[-1])
+        tv = profit * (1 + g_t) * (1 - g_t / (inp["roic_pct"] / 100)) / (r - g_t)
+        tv_method = "reinvestment-consistent (profit x (1 - g/ROIC))"
+    else:
+        tv = flows[-1] * (1 + g_t) / (r - g_t)
+        tv_method = "Gordon growth on final-year cash flow"
+    pv_tv = tv / (1 + r) ** n
+    core = pv_flows + pv_tv
+    non_op = inp.get("non_operating_assets", 0.0)
+    if basis == "fcff":
+        equity = core + non_op - inp.get("debt", 0.0) - inp.get("preferred", 0.0)
+    else:
+        equity = core + non_op
+    out = {"basis": basis, "years_explicit": n, "pv_explicit": _r(pv_flows, 2), "terminal_value": _r(tv, 2),
+           "pv_terminal": _r(pv_tv, 2), "terminal_share_pct": _r(pv_tv / core * 100, 1), "terminal_method": tv_method,
+           "equity_value": _r(equity, 2)}
+    if "roic_pct" not in inp and "exit_multiple" not in inp:
+        out["check"] = ("Gordon on the final explicit year assumes that year's reinvestment rate forever. If capex is still "
+                        "at growth-phase levels, pass roic_pct so reinvestment falls to g/ROIC.")
+    if inp.get("shares"):
+        ps = equity / inp["shares"]
+        out["value_per_share"] = _r(ps, 2)
+        if inp.get("price"):
+            out["upside_pct"] = _r((ps / inp["price"] - 1) * 100, 1)
+            # implied return: discount rate that equates value to price
+            target = inp["price"] * inp["shares"]
+            lo, hi = g_t + 0.0005, 0.6
+            def val_at(rr):
+                pv = sum(f / (1 + rr) ** (i + 1) for i, f in enumerate(flows))
+                if "exit_multiple" in inp:
+                    t_ = tv
+                elif "roic_pct" in inp:
+                    t_ = profit * (1 + g_t) * (1 - g_t / (inp["roic_pct"] / 100)) / (rr - g_t)
+                else:
+                    t_ = flows[-1] * (1 + g_t) / (rr - g_t)
+                e = pv + t_ / (1 + rr) ** n + non_op
+                return e - (inp.get("debt", 0.0) + inp.get("preferred", 0.0) if basis == "fcff" else 0.0)
+            if val_at(lo) > target > val_at(hi):
+                for _ in range(100):
+                    m = (lo + hi) / 2
+                    lo, hi = (m, hi) if val_at(m) > target else (lo, m)
+                out["implied_return_pct"] = _r(m * 100, 2)
+    grid = {}
+    for dr in (-1.0, -0.5, 0.0, 0.5, 1.0):
+        row = {}
+        for dg in (-1.0, -0.5, 0.0, 0.5, 1.0):
+            rr, gg = r + dr / 100, g_t + dg / 100
+            if rr <= gg or "exit_multiple" in inp:
+                continue
+            pv = sum(f / (1 + rr) ** (i + 1) for i, f in enumerate(flows))
+            if "roic_pct" in inp:
+                t_ = profit * (1 + gg) * (1 - gg / (inp["roic_pct"] / 100)) / (rr - gg)
+            else:
+                t_ = flows[-1] * (1 + gg) / (rr - gg)
+            e = pv + t_ / (1 + rr) ** n + non_op - (inp.get("debt", 0.0) + inp.get("preferred", 0.0) if basis == "fcff" else 0.0)
+            row[f"g={gg*100:.1f}%"] = _r(e / inp["shares"], 1) if inp.get("shares") else _r(e, 1)
+        if row:
+            grid[f"r={rr*100:.1f}%"] = row
+    if grid:
+        out["sensitivity"] = grid
+    return out
+
 TOOL_DEFINITIONS: list[dict] = [
     {
         "name": "scale_economics_shared",
@@ -779,6 +926,53 @@ TOOL_DEFINITIONS: list[dict] = [
                 "max_share_pct": _num,
             },
             "required": ["current_revenue", "current_net_margin_pct", "reinvestment_rate_pct", "incremental_roic_pct"],
+        },
+    },
+    {
+        "name": "free_cash_flow",
+        "description": (
+            "CFA free-cash-flow arithmetic: compute FCFF and FCFE from net income, CFO, EBIT and/or EBITDA "
+            "(all routes cross-checked), flag when net income or EBITDA would be misleading cash proxies, and "
+            "derive incremental fixed and working capital investment as % of a sales increase for forecasting."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "net_income": _num, "cfo": _num, "ebit": _num, "ebitda": _num,
+                "depreciation": _num, "noncash_charges": {"type": "number", "description": "All non-cash charges (defaults to depreciation)"},
+                "interest_expense": _num, "tax_rate_pct": _num,
+                "fcinv": {"type": "number", "description": "Capital expenditure net of asset sales"},
+                "wcinv": {"type": "number", "description": "Increase in working capital (negative if WC releases cash)"},
+                "net_borrowing": _num,
+                "sales_increase": {"type": "number", "description": "Last period's sales increase, to derive incremental investment rates"},
+            },
+            "required": [],
+        },
+    },
+    {
+        "name": "multistage_dcf",
+        "description": (
+            "Two- or three-stage FCFF (discount at WACC, subtract debt) or FCFE (discount at cost of equity) valuation. "
+            "Stage 1 explicit flows or base x growth; optional stage 2 linear fade to terminal growth; terminal by "
+            "Gordon, reinvestment-consistent (profit x (1 - g/ROIC)) or exit multiple. Adds non-operating assets, "
+            "returns per-share value, implied return at the market price, terminal share and an r x g sensitivity grid."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "basis": {"type": "string", "enum": ["fcff", "fcfe"]},
+                "cash_flows": {"type": "array", "items": _num, "description": "Explicit stage-1 cash flows, year 1 first"},
+                "base_cash_flow": _num, "stage1_growth_pct": _num, "stage1_years": {"type": "integer"},
+                "stage2_years": {"type": "integer", "description": "Years to fade linearly from stage-1 growth to terminal growth"},
+                "discount_rate_pct": {"type": "number", "description": "WACC for FCFF, cost of equity for FCFE"},
+                "terminal_growth_pct": _num,
+                "roic_pct": {"type": "number", "description": "Return on new capital, for reinvestment-consistent terminal value"},
+                "terminal_profit": {"type": "number", "description": "Final-year NOPAT (FCFF) or net income (FCFE) for the ROIC terminal"},
+                "exit_multiple": _num, "terminal_metric": _num,
+                "non_operating_assets": {"type": "number", "description": "Excess cash, investments, stakes valued separately"},
+                "debt": _num, "preferred": _num, "shares": _num, "price": _num,
+            },
+            "required": ["discount_rate_pct"],
         },
     },
     {
@@ -1002,6 +1196,8 @@ _DISPATCH: dict[str, Callable[[dict], dict]] = {
     "dilution_risk": dilution_risk,
     "moat_scorecard": moat_scorecard,
     "search_library": search_library,
+    "free_cash_flow": free_cash_flow,
+    "multistage_dcf": multistage_dcf,
 }
 
 _REQUIRED = {t["name"]: t["input_schema"].get("required", []) for t in TOOL_DEFINITIONS}

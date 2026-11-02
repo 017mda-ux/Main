@@ -50,6 +50,8 @@ The Python agent uses web search for current numbers plus ten calculators
 | `hidden_investment` | Earning power before discretionary growth spending vs market value | Amazon (Dec 2006) |
 | `destination_analysis` | Where does reinvesting at a given return take the business? | |
 | `reverse_valuation` | What growth does the price imply? Expected return from a discount to value | "Typical purchase" (Dec 2003) |
+| `free_cash_flow` | FCFF/FCFE from NI, CFO, EBIT, EBITDA (cross-checked); incremental capex and working capital as % of sales increase | CFA L2 *Free Cash Flow Valuation* |
+| `multistage_dcf` | Two/three-stage FCFF or FCFE DCF; ROIC-consistent terminal; non-operating assets; implied return; r × g grid | CFA L2 *Free Cash Flow Valuation* |
 | `dilution_risk` | Value per share if equity must be raised at low prices | MBIA (Jun 2008) |
 | `moat_scorecard` | Weighted 0-100 grade, weakest link, red-flag penalties | |
 

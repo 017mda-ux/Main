@@ -21,7 +21,14 @@ A = dict(
     s2_years=15, g=0.04, k=0.075, roic=0.25,   # Q5, Q6
     fc_rate=0.137, wc_rate=0.143,        # growth capex / working capital released, % of sales increase
     exit_pe=38.0, div0=5.20, special=15.0,
+    nm_end=None,                         # long-run net margin reached at end of stage 2 (None = hold FY31 level)
+    dsh=0.0,                             # share count change per year (buybacks negative); affects per-share EPS/returns
 )
+
+# Nick Sleep's lens (Nomad letters, Dec 2004 and later): investors fade growth too early ("in year three or five
+# of a DCF"), Costco under-earns while young warehouses mature, growth is self-funded, and net income is a
+# deliberately small residual. The Sleep case gives the runway, the maturity margin uplift and buybacks.
+SLEEP = dict(s2_years=20, nm_end=0.036, dsh=-0.01)
 
 
 def run(a=A):
@@ -48,13 +55,16 @@ def run(a=A):
                          rev=rev, growth=rev / prev_rev - 1, mm=mm, ebit=ebit, ni=ni, fcfe=fcfe, eps=ni / a["shares"]))
         prev_rev = rev
     # stage 2: revenue growth fades linearly to g; net margin held at FY31 level
-    g0, nm, rev = rows[-1]["growth"], rows[-1]["ni"] / rows[-1]["rev"], rows[-1]["rev"]
+    g0, nm31, rev = rows[-1]["growth"], rows[-1]["ni"] / rows[-1]["rev"], rows[-1]["rev"]
+    nm_end = nm31 if a.get("nm_end") is None else a["nm_end"]
     for i in range(1, int(a["s2_years"]) + 1):
         gr = g0 + (a["g"] - g0) * i / a["s2_years"]
         prev, rev = rev, rev * (1 + gr)
-        ni = rev * nm
+        ni = rev * (nm31 + (nm_end - nm31) * i / a["s2_years"])
         rows.append(dict(y=2031 + i, t=5 + i, rev=rev, growth=gr, ni=ni,
                          fcfe=ni - (a["fc_rate"] - a["wc_rate"]) * (rev - prev), eps=ni / a["shares"]))
+    for r in rows:
+        r["eps"] = r["ni"] / (a["shares"] * (1 + a.get("dsh", 0.0)) ** r["t"])
     return rows
 
 
@@ -66,7 +76,7 @@ def value(a=A, rows=None, k=None):
     tv = rows[-1]["ni"] * (1 + g) * (1 - g / a["roic"]) / (k - g)
     eq = pv + tv / (1 + k) ** n + a["net_cash"]
     pv31 = sum(r["fcfe"] / (1 + k) ** (r["t"] - 5) for r in rows[5:])
-    v31 = (pv31 + tv / (1 + k) ** (n - 5) + a["net_cash"]) / a["shares"]
+    v31 = (pv31 + tv / (1 + k) ** (n - 5) + a["net_cash"]) / (a["shares"] * (1 + a.get("dsh", 0.0)) ** 5)
     return dict(ps=eq / a["shares"], v31=v31, pv_stage1=sum(r["fcfe"] / (1 + k) ** r["t"] for r in rows[:5]),
                 pv_stage2=sum(r["fcfe"] / (1 + k) ** r["t"] for r in rows[5:]), pv_tv=tv / (1 + k) ** n)
 
@@ -98,7 +108,9 @@ def analyse(a=A):
 
 if __name__ == "__main__":
     a = dict(A)
-    for arg in sys.argv[1:]:
+    if "sleep" in sys.argv[1:]:
+        a.update(SLEEP)
+    for arg in [x for x in sys.argv[1:] if x != "sleep"]:
         k, val = arg.split("=", 1)
         if k not in a:
             sys.exit(f"Unknown input {k}")

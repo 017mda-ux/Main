@@ -116,6 +116,15 @@ Read `knowledge/cfa/free_cash_flow_valuation.md` before building any DCF. In sho
 - **Terminal value:** check that terminal reinvestment equals g ÷ ROIC; report the terminal share of value and an r × g grid; solve the implied return at today's price and compare it with the user's hurdle.
 - **Non-operating assets** (excess cash, stakes, investments) are added once, separately; subtract debt-like items such as leases.
 
+## 6c. Multiples (CFA market-based valuation)
+
+Read `knowledge/cfa/market_multiples_valuation.md`. Multiples are cross-checks on the DCF, never the answer by themselves:
+- Use **underlying, forward EPS**; strip one-offs (investment marks, fines, tax refunds) and normalize cyclicals.
+- **Comparables:** benchmark against the peer median and harmonic mean, and explain every gap with growth, ROE, risk and accounting before calling it a mispricing. Cheap relative to an expensive group is not cheap.
+- **Fundamentals:** convert the current P/E into the perpetual growth it implies (`multiples_valuation` tool). For compounders, get the justified P/E from the multistage DCF, because single-stage formulas break as g approaches r.
+- **Pick the right multiple:** P/E for steady earners; EV/EBITDA neutralizes leverage but flatters heavy capex; EV/S for early or loss-making firms; P/B for banks; dividend yield is weak when payout is by buyback.
+- **Exit multiples** in DCFs must match the justified multiple at exit, not just today's market multiple.
+
 ## 7. The investor's own errors
 
 - **Omission is the biggest cost**: selling Walmart, IBM or Amazon early costs more than any bankruptcy. Nomad's own worst mistake was selling Stagecoach, not buying Conseco.

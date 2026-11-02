@@ -830,6 +830,91 @@ def multistage_dcf(inp: dict) -> dict:
         out["sensitivity"] = grid
     return out
 
+
+# ── Market-based valuation: price and EV multiples (CFA) ─────────────
+
+def multiples_valuation(inp: dict) -> dict:
+    """Justified multiples from fundamentals, implied steady growth, PEG, comparables statistics, EV build.
+
+    Justified forward P/E = payout / (r - g)       trailing = payout x (1 + g) / (r - g)
+    Payout = 1 - g / ROE (sustainable growth)      P/B = (ROE - g) / (r - g)
+    P/S = net margin x payout x (1 + g) / (r - g)  EV/EBITDA = (FCFF/EBITDA) x (1 + g) / (WACC - g)
+    """
+    r = inp["required_return_pct"] / 100
+    out: dict = {}
+    g = inp.get("growth_pct")
+    g = None if g is None else g / 100
+    roe = inp.get("roe_pct")
+    roe = None if roe is None else roe / 100
+    payout = inp.get("payout_ratio")
+    if payout is None and roe and g is not None:
+        payout = max(0.0, 1 - g / roe)
+    price = inp.get("price")
+    if g is not None and payout is not None:
+        if r <= g:
+            out["warning"] = ("Required return <= growth: single-stage multiples are undefined. Use multistage_dcf "
+                              "and divide value by next-year EPS for a justified P/E.")
+        else:
+            out["justified_forward_pe"] = _r(payout / (r - g), 1)
+            out["justified_trailing_pe"] = _r(payout * (1 + g) / (r - g), 1)
+            if roe:
+                out["justified_pb"] = _r((roe - g) / (r - g), 2)
+            if inp.get("net_margin_pct") is not None:
+                out["justified_ps"] = _r(inp["net_margin_pct"] / 100 * payout * (1 + g) / (r - g), 2)
+            if inp.get("fcff_to_ebitda") is not None and inp.get("wacc_pct"):
+                w = inp["wacc_pct"] / 100
+                out["justified_ev_ebitda"] = _r(inp["fcff_to_ebitda"] * (1 + g) / (w - g), 1) if w > g else None
+    eps_f, eps_t = inp.get("forward_eps"), inp.get("trailing_eps")
+    if price and eps_f:
+        pe = price / eps_f
+        out["forward_pe"] = _r(pe, 1)
+        out["earnings_yield_pct"] = _r(eps_f / price * 100, 2)
+        if "justified_forward_pe" in out:
+            out["pe_vs_justified_pct"] = _r((pe / out["justified_forward_pe"] - 1) * 100, 1)
+            out["value_per_share_at_justified_pe"] = _r(out["justified_forward_pe"] * eps_f, 2)
+        # steady growth implied by the forward P/E (payout tied to ROE if given)
+        lo, hi = -0.05, r - 1e-4
+        f = (lambda gg: (1 - gg / roe) / (r - gg)) if roe else (lambda gg: (payout if payout is not None else 0.5) / (r - gg))
+        if f(lo) < pe < f(hi):
+            for _ in range(100):
+                m = (lo + hi) / 2
+                lo, hi = (m, hi) if f(m) < pe else (lo, m)
+            out["implied_perpetual_growth_pct"] = _r(m * 100, 2)
+        if inp.get("eps_growth_pct"):
+            out["peg"] = _r(pe / inp["eps_growth_pct"], 2)
+    if price and eps_t:
+        out["trailing_pe"] = _r(price / eps_t, 1)
+    if inp.get("eps_history"):
+        h = inp["eps_history"]
+        out["normalized_eps_avg"] = _r(sum(h) / len(h), 2)
+    if inp.get("roe_history_pct") and inp.get("book_value_per_share"):
+        hr = inp["roe_history_pct"]
+        out["normalized_eps_avg_roe"] = _r(sum(hr) / len(hr) / 100 * inp["book_value_per_share"], 2)
+    peers = inp.get("peer_multiples")
+    if peers:
+        pos = [x for x in peers if x > 0]
+        srt = sorted(peers)
+        med = srt[len(srt) // 2] if len(srt) % 2 else (srt[len(srt) // 2 - 1] + srt[len(srt) // 2]) / 2
+        stats = {"mean": sum(peers) / len(peers), "median": med,
+                 "harmonic_mean": len(pos) / sum(1 / x for x in pos) if pos else None}
+        out["peer_stats"] = {k: _r(v, 2) for k, v in stats.items()}
+        if inp.get("subject_metric"):
+            out["value_at_peer_multiple"] = {k: _r(v * inp["subject_metric"], 2) for k, v in stats.items() if v}
+        out["peer_note"] = ("Harmonic mean damps outliers from high multiples; median resists both tails. "
+                            "Adjust for differences in growth, risk and ROE before concluding mispricing.")
+    if inp.get("market_cap") is not None:
+        ev = (inp["market_cap"] + inp.get("debt", 0) + inp.get("preferred", 0) + inp.get("minority_interest", 0)
+              - inp.get("cash_and_investments", 0))
+        out["enterprise_value"] = _r(ev, 2)
+        for k in ("ebitda", "ebit", "sales"):
+            if inp.get(k):
+                out[f"ev_to_{k}"] = _r(ev / inp[k], 2)
+    if inp.get("one_off_items_per_share") is not None and eps_t:
+        out["underlying_trailing_eps"] = _r(eps_t - inp["one_off_items_per_share"], 2)
+        if price:
+            out["underlying_trailing_pe"] = _r(price / (eps_t - inp["one_off_items_per_share"]), 1)
+    return out
+
 TOOL_DEFINITIONS: list[dict] = [
     {
         "name": "scale_economics_shared",
@@ -973,6 +1058,29 @@ TOOL_DEFINITIONS: list[dict] = [
                 "debt": _num, "preferred": _num, "shares": _num, "price": _num,
             },
             "required": ["discount_rate_pct"],
+        },
+    },
+    {
+        "name": "multiples_valuation",
+        "description": (
+            "CFA market-based valuation: justified forward/trailing P/E, P/B, P/S and EV/EBITDA from growth, ROE and "
+            "required return; the perpetual growth a P/E implies; PEG; underlying and normalized EPS; peer statistics "
+            "(mean, median, harmonic mean) and value at each; enterprise value and EV multiples."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "required_return_pct": _num, "growth_pct": _num, "roe_pct": _num, "payout_ratio": _num,
+                "price": _num, "forward_eps": _num, "trailing_eps": _num, "eps_growth_pct": _num,
+                "net_margin_pct": _num, "fcff_to_ebitda": _num, "wacc_pct": _num,
+                "one_off_items_per_share": {"type": "number", "description": "Non-recurring EPS to strip (gains positive)"},
+                "eps_history": {"type": "array", "items": _num, "description": "EPS over a full cycle, for normalized EPS"},
+                "roe_history_pct": {"type": "array", "items": _num}, "book_value_per_share": _num,
+                "peer_multiples": {"type": "array", "items": _num}, "subject_metric": {"type": "number", "description": "The metric the peer multiple applies to"},
+                "market_cap": _num, "debt": _num, "preferred": _num, "minority_interest": _num, "cash_and_investments": _num,
+                "ebitda": _num, "ebit": _num, "sales": _num,
+            },
+            "required": ["required_return_pct"],
         },
     },
     {
@@ -1198,6 +1306,7 @@ _DISPATCH: dict[str, Callable[[dict], dict]] = {
     "search_library": search_library,
     "free_cash_flow": free_cash_flow,
     "multistage_dcf": multistage_dcf,
+    "multiples_valuation": multiples_valuation,
 }
 
 _REQUIRED = {t["name"]: t["input_schema"].get("required", []) for t in TOOL_DEFINITIONS}

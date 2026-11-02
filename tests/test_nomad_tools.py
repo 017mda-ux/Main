@@ -228,3 +228,21 @@ def test_multistage_fcff_subtracts_debt_and_implied_return():
                                 "debt": 500, "non_operating_assets": 200, "shares": 10, "price": 150})
     assert out["equity_value"] == pytest.approx(out["pv_explicit"] + out["pv_terminal"] - 300, abs=0.05)
     assert "implied_return_pct" in out and "sensitivity" in out
+
+
+def test_multiples_justified_and_implied_growth_round_trip():
+    # ROE 20%, g 5% -> payout 75%; r 10% -> forward P/E 15; P/B 3
+    out = tools.multiples_valuation({"required_return_pct": 10, "growth_pct": 5, "roe_pct": 20,
+                                     "price": 30, "forward_eps": 2})
+    assert out["justified_forward_pe"] == pytest.approx(15.0)
+    assert out["justified_pb"] == pytest.approx(3.0)
+    assert out["forward_pe"] == pytest.approx(15.0)
+    assert out["implied_perpetual_growth_pct"] == pytest.approx(5.0, abs=0.01)
+
+
+def test_multiples_peer_stats_and_ev():
+    out = tools.multiples_valuation({"required_return_pct": 8, "peer_multiples": [10, 20, 40], "subject_metric": 2,
+                                     "market_cap": 100, "debt": 20, "cash_and_investments": 30, "ebitda": 9})
+    assert out["peer_stats"]["median"] == 20
+    assert out["peer_stats"]["harmonic_mean"] == pytest.approx(3 / (0.1 + 0.05 + 0.025), abs=0.01)
+    assert out["enterprise_value"] == 90 and out["ev_to_ebitda"] == 10

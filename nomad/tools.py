@@ -915,6 +915,49 @@ def multiples_valuation(inp: dict) -> dict:
             out["underlying_trailing_pe"] = _r(price / (eps_t - inp["one_off_items_per_share"]), 1)
     return out
 
+
+# ── Buffett Partnership tools ──────────────────────────────────────────
+
+def workout_return(inp: dict) -> dict:
+    """Buffett's 'workout' (merger, tender, liquidation): expected and annualised return, break-even odds."""
+    price, deal, down = inp["price"], inp["deal_value"], inp["downside_value"]
+    p = inp.get("probability_close_pct", 90.0) / 100
+    months = inp.get("months_to_close", 6.0)
+    carry = inp.get("dividends_or_carry", 0.0)
+    yrs = months / 12
+    ev = p * (deal + carry) + (1 - p) * (down + carry)
+    gross_if_close = (deal + carry) / price - 1
+    exp_ret = ev / price - 1
+    ann = lambda r: (1 + r) ** (1 / yrs) - 1 if yrs > 0 and r > -1 else None
+    breakeven = (price - down - carry) / (deal - down) if deal != down else None
+    out = {"return_if_closes_pct": _r(gross_if_close * 100, 2), "annualised_if_closes_pct": _r(ann(gross_if_close) * 100, 1),
+           "expected_return_pct": _r(exp_ret * 100, 2), "expected_annualised_pct": _r(ann(exp_ret) * 100, 1) if ann(exp_ret) is not None else None,
+           "loss_if_breaks_pct": _r(((down + carry) / price - 1) * 100, 1),
+           "breakeven_probability_pct": _r(breakeven * 100, 1) if breakeven is not None else None}
+    out["note"] = ("Buffett's workouts earned 10–20% a year largely independent of the market. Ask what upsets the "
+                   "applecart (regulators, financing, votes) and whether your probability beats the break-even.")
+    return out
+
+
+def position_sizing(inp: dict) -> dict:
+    """Buffett (Jan 1966): size so one position's bad case can't make the whole portfolio > X points worse than the index."""
+    limit = inp.get("max_portfolio_shortfall_pts", 10.0)
+    rows, exp_total = [], 0.0
+    for pos in inp["positions"]:
+        w = pos["weight_pct"] / 100
+        e, bad, pb = pos["expected_excess_pct"], pos["bad_case_excess_pct"], pos.get("bad_case_probability_pct", 5.0)
+        hit = w * bad
+        max_w = limit / abs(bad) * 100 if bad < 0 else 100.0
+        exp_total += w * e
+        rows.append({"name": pos.get("name", "?"), "weight_pct": pos["weight_pct"], "expected_contribution_pts": _r(w * e, 2),
+                     "bad_case_portfolio_hit_pts": _r(hit, 1), "bad_case_probability_pct": pb,
+                     "max_weight_for_limit_pct": _r(min(max_w, 40.0), 1),
+                     "flag": (hit < -limit) or pos["weight_pct"] > 40})
+    out = {"positions": rows, "portfolio_expected_excess_pts": _r(exp_total, 2), "limit_pts": limit,
+           "rule": ("Up to 40% only with a very high probability the facts and reasoning are right and a very low "
+                    "probability anything drastically changes value; treat correlated positions as one.")}
+    return out
+
 TOOL_DEFINITIONS: list[dict] = [
     {
         "name": "scale_economics_shared",
@@ -1081,6 +1124,42 @@ TOOL_DEFINITIONS: list[dict] = [
                 "ebitda": _num, "ebit": _num, "sales": _num,
             },
             "required": ["required_return_pct"],
+        },
+    },
+    {
+        "name": "workout_return",
+        "description": (
+            "Buffett Partnership 'workout' (merger arbitrage, tender, liquidation, spin-off): return if the deal closes, "
+            "probability-weighted expected and annualised return, loss if it breaks, and the break-even probability."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "price": _num, "deal_value": {"type": "number", "description": "Value received per share if the event completes"},
+                "downside_value": {"type": "number", "description": "Likely price if the deal breaks"},
+                "probability_close_pct": _num, "months_to_close": _num,
+                "dividends_or_carry": {"type": "number", "description": "Dividends received less carrying costs, per share"},
+            },
+            "required": ["price", "deal_value", "downside_value"],
+        },
+    },
+    {
+        "name": "position_sizing",
+        "description": (
+            "Buffett's 1966 concentration rule: for each position, the expected excess return contribution and how much "
+            "its bad case would drag the whole portfolio versus the index; flags weights over 40% or a bad case worse "
+            "than the limit (default 10 points)."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "positions": {"type": "array", "items": {"type": "object", "properties": {
+                    "name": {"type": "string"}, "weight_pct": _num, "expected_excess_pct": _num,
+                    "bad_case_excess_pct": {"type": "number", "description": "Return vs index in the bad case (negative)"},
+                    "bad_case_probability_pct": _num}, "required": ["weight_pct", "expected_excess_pct", "bad_case_excess_pct"]}},
+                "max_portfolio_shortfall_pts": _num,
+            },
+            "required": ["positions"],
         },
     },
     {
@@ -1307,6 +1386,8 @@ _DISPATCH: dict[str, Callable[[dict], dict]] = {
     "free_cash_flow": free_cash_flow,
     "multistage_dcf": multistage_dcf,
     "multiples_valuation": multiples_valuation,
+    "workout_return": workout_return,
+    "position_sizing": position_sizing,
 }
 
 _REQUIRED = {t["name"]: t["input_schema"].get("required", []) for t in TOOL_DEFINITIONS}

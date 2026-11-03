@@ -125,6 +125,16 @@ Read `knowledge/cfa/market_multiples_valuation.md`. Multiples are cross-checks o
 - **Pick the right multiple:** P/E for steady earners; EV/EBITDA neutralizes leverage but flatters heavy capex; EV/S for early or loss-making firms; P/B for banks; dividend yield is weak when payout is by buyback.
 - **Exit multiples** in DCFs must match the justified multiple at exit, not just today's market multiple.
 
+## 6d. Buffett Partnership discipline
+
+Read `knowledge/buffett/partnership_letters.md`. In short:
+- **Classify** each idea: a *General* (undervalued vs private-owner value or vs comparables), a *Workout* (an event decides the payoff; use `workout_return`), or a *Control/activist* situation.
+- **State the yardstick and hurdle first** (index return; the user's 15%) and judge over 3–5 years. Never base a decision on a market or macro forecast; use price swings when they get silly.
+- **Margin of safety** against permanent loss, not volatility. Real conservatism comes from knowledge and reasoning, not consensus or blue-chip labels at any multiple.
+- **Concentrate with arithmetic:** up to 40% only when the facts are near-certain and value can't be drastically impaired; size so one position's bad case can't drag the portfolio more than about 10 points below the index (`position_sizing`). A new idea must beat the current best.
+- **Quantitative bargains are the surer money; high-probability qualitative insights are the big money** (Buffett, Oct 1967). That is the bridge to the Nomad/Munger approach.
+- **Circle of competence:** say "too hard" when the decision hinges on technology or credit you can't judge. Don't swap a sound approach for fashion; when there are no first-class ideas, doing nothing is fine.
+
 ## 7. The investor's own errors
 
 - **Omission is the biggest cost**: selling Walmart, IBM or Amazon early costs more than any bankruptcy. Nomad's own worst mistake was selling Stagecoach, not buying Conseco.

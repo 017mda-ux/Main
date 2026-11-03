@@ -246,3 +246,19 @@ def test_multiples_peer_stats_and_ev():
     assert out["peer_stats"]["median"] == 20
     assert out["peer_stats"]["harmonic_mean"] == pytest.approx(3 / (0.1 + 0.05 + 0.025), abs=0.01)
     assert out["enterprise_value"] == 90 and out["ev_to_ebitda"] == 10
+
+
+def test_workout_return_breakeven():
+    out = tools.workout_return({"price": 95, "deal_value": 100, "downside_value": 75, "probability_close_pct": 90, "months_to_close": 6})
+    assert out["return_if_closes_pct"] == pytest.approx(5.26, abs=0.01)
+    assert out["breakeven_probability_pct"] == pytest.approx(80.0)
+    assert out["expected_return_pct"] == pytest.approx((0.9 * 100 + 0.1 * 75) / 95 * 100 - 100, abs=0.01)
+
+
+def test_position_sizing_flags_oversized_bad_case():
+    out = tools.position_sizing({"positions": [
+        {"name": "A", "weight_pct": 40, "expected_excess_pct": 15, "bad_case_excess_pct": -30},
+        {"name": "B", "weight_pct": 10, "expected_excess_pct": 8, "bad_case_excess_pct": -40}]})
+    a, b = out["positions"]
+    assert a["flag"] and a["bad_case_portfolio_hit_pts"] == -12.0 and a["max_weight_for_limit_pct"] == pytest.approx(33.3, abs=0.1)
+    assert not b["flag"]

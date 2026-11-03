@@ -1,4 +1,4 @@
-# Berkshire Hathaway letters (1977–2019): lessons for the agent
+# Berkshire Hathaway letters (1977–2024): lessons for the agent
 
 Our distillation of Warren Buffett's shareholder letters (plus Charlie Munger's 2014 essay). Quotations are exact and
 dated; everything else is paraphrase. The full text is searchable with `search_library` once
@@ -127,6 +127,26 @@ dated; everything else is paraphrase. The full text is searchable with `search_l
   that was sure to work out enormously well. The errors of omission were of much importance." — echoed by Nomad.
 - Buffett "often displayed almost inhuman patience and seldom bought."
 
+## 9. The 2020–2024 letters (from Markdown conversions; quotes near-verbatim — check the PDFs before publishing)
+- **Own your mistakes, with numbers** (2020): the $11 billion write-down "is almost entirely the quantification of a
+  mistake I made in 2016" — Precision Castparts: "I paid too much for the company ... I was simply too optimistic about
+  PCC's normalized profit potential." Lesson: normalized earnings are the most dangerous estimate in a valuation.
+- **Concentration in a few compounders** (2021 "Our Four Giants": insurance, Apple, BNSF, BHE). Most of the value sits
+  in a handful of businesses.
+- **"The Secret Sauce"** (2022): Coca-Cola bought for $1.3 billion by 1994 now pays $704 million a year in dividends.
+  "The weeds wither away in significance as the flowers bloom. Over time, it takes just a few winners to work wonders."
+  — the case for holding great businesses and letting position sizes drift up.
+- **Munger as "architect"** (2023): Charlie "was the 'architect' of the present Berkshire, and I acted as the 'general
+  contractor'" — the shift from cigar butts to wonderful businesses. Realistic goal: "slightly better" than the average
+  American company "with materially less risk of permanent loss of capital. Anything beyond 'slightly better,' though,
+  is wishful thinking." Size caps returns.
+- **Mistakes and "thumb-sucking"** (2024): "The cardinal sin is delaying the correction of mistakes or what Charlie
+  Munger called 'thumb-sucking.' Problems ... cannot be wished away." He counted 16 uses of "mistake" or "error" in
+  2019–23 letters — candor as a test of management.
+- **Businesses over cash** (2024): "Berkshire will never prefer ownership of cash-equivalent assets over the ownership
+  of good businesses ... Paper money can see its value evaporate if fiscal folly prevails." Japan's five trading houses:
+  a rare non-US bet on companies that "operate in a manner somewhat similar to Berkshire itself."
+
 ## Still missing (blocked by the session's network settings)
-- Berkshire letters for 2020–2024, Buffett's November 2025 letter and Greg Abel's first letter (berkshirehathaway.com).
-- Pre-1977 Berkshire letters, annual-meeting transcripts, the Worldly Partners Munger archive and case studies.
+- Buffett's November 2025 letter and Greg Abel's first letter as CEO (berkshirehathaway.com), pre-1977 letters,
+  annual-meeting transcripts, and the Worldly Partners Munger archive and case studies (worldlypartners.com).

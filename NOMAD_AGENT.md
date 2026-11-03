@@ -93,4 +93,4 @@ python scripts/build_letter_libraries.py bpl       buffett-partnership-letters.p
 python scripts/build_letter_libraries.py berkshire All-Berkshire-Hathaway-Letters.pdf
 ```
 
-`search_library` then searches all of them (97 documents) and cites the letter and date.
+Then add Berkshire 2020–2024 with `python scripts/fetch_recent_berkshire.py` (GitHub mirror). `search_library` searches all of them (102 documents) and cites the letter and date.

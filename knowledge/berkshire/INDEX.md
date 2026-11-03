@@ -1,4 +1,4 @@
-# Berkshire Hathaway shareholder letters (1977-2019)
+# Berkshire Hathaway shareholder letters (1977-2024)
 
 Source: All-Berkshire-Hathaway-Letters.pdf (letters as published at berkshirehathaway.com). Text files are generated locally by scripts/build_letter_libraries.py and are not committed.
 
@@ -48,3 +48,8 @@ Source: All-Berkshire-Hathaway-Letters.pdf (letters as published at berkshirehat
 | Berkshire Hathaway shareholder letter 2017 | All-Berkshire-Hathaway-Letters.pdf (letters as published at berkshirehathaway.com) | text/2017.txt |
 | Berkshire Hathaway shareholder letter 2018 | All-Berkshire-Hathaway-Letters.pdf (letters as published at berkshirehathaway.com) | text/2018.txt |
 | Berkshire Hathaway shareholder letter 2019 | All-Berkshire-Hathaway-Letters.pdf (letters as published at berkshirehathaway.com) | text/2019.txt |
+| Berkshire Hathaway shareholder letter 2020 (Markdown conversion; verify quotes) | github.com/ReeceHarding/buffett-letters | text/2020.txt |
+| Berkshire Hathaway shareholder letter 2021 (Markdown conversion; verify quotes) | github.com/ReeceHarding/buffett-letters | text/2021.txt |
+| Berkshire Hathaway shareholder letter 2022 (Markdown conversion; verify quotes) | github.com/ReeceHarding/buffett-letters | text/2022.txt |
+| Berkshire Hathaway shareholder letter 2023 (Markdown conversion; verify quotes) | github.com/ReeceHarding/buffett-letters | text/2023.txt |
+| Berkshire Hathaway shareholder letter 2024 (Markdown conversion; verify quotes) | github.com/ReeceHarding/buffett-letters | text/2024.txt |

@@ -81,3 +81,16 @@ are git-ignored). The Claude Code subagent searches the text with Grep; the Pyth
 Tests: `python -m pytest tests`
 
 Not financial advice.
+
+
+## Letter libraries (full text, searchable)
+
+Build once per machine from PDFs you own (text is git-ignored; INDEX.md files are committed):
+
+```
+python scripts/build_letter_libraries.py nomad     Full_Collection_Nomad_Letters_.pdf
+python scripts/build_letter_libraries.py bpl       buffett-partnership-letters.pdf
+python scripts/build_letter_libraries.py berkshire All-Berkshire-Hathaway-Letters.pdf
+```
+
+`search_library` then searches all of them (97 documents) and cites the letter and date.

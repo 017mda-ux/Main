@@ -25,3 +25,5 @@ knowledge/data_raw/
 
 # Berkshire letters text (generated locally from the PDF; copyright Berkshire Hathaway)
 knowledge/berkshire/text/
+knowledge/nomad/text/
+knowledge/bpl/text/

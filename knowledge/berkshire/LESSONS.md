@@ -78,3 +78,55 @@ dated; everything else is paraphrase. The full text is searchable with `search_l
 4. Price: pay fair prices for great businesses; avoid cheap gruesome ones.
 5. Capital allocation: run the $1 test; check buybacks against intrinsic value; watch for the institutional imperative.
 6. Risk is permanent loss, not volatility; stay in the circle of competence; leverage kills.
+
+## 8. Topics added after the first pass
+
+### Owner-related business principles (1983)
+- "Although our form is corporate, our attitude is partnership." Managers think of shareholders as owner-partners.
+- Retain earnings only if each $1 retained creates at least $1 of market value (five-year rolling test); issue stock
+  only when receiving as much business value as is given; use little debt; report candidly, good and bad.
+
+### Acquisition criteria (1982 onward)
+- Prefer large purchases, "demonstrated consistent earning power (future projections are of little interest to us,
+  nor are 'turn-around' situations)," good returns on equity with little or no debt, management in place, simple
+  businesses, and a stated price.
+
+### Economic vs accounting goodwill (1983 appendix "Goodwill and its Amortization: The Rules and The Realities")
+- Businesses that earn high returns on modest tangible assets have **economic goodwill** far larger than any
+  accounting goodwill; intrinsic value includes it, book value does not. Amortization of purchased goodwill is not a
+  real economic cost; inflation punishes asset-heavy businesses and rewards those with lasting intangibles.
+
+### Inflation (1979–1981)
+- The "investor's misery index" (1979): when inflation plus taxes on the business's returns exceed its return on
+  equity, real capital shrinks even if the investor consumes nothing. Reported earnings in asset-heavy businesses
+  overstate what owners can take out (1980): "We have owned 100% of businesses whose reported earnings were not worth
+  close to 100 cents on the dollar to us."
+
+### Two-column valuation of Berkshire (2007–2008 "Yardsticks")
+- Value = investments per share + a multiple of pre-tax operating earnings per share from non-insurance businesses.
+  A practical template for any conglomerate or holding company (Alphabet's stakes vs operations is the same idea).
+
+### Derivatives and leverage (2002)
+- "Derivatives are financial weapons of mass destruction, carrying dangers that, while now latent, are potentially
+  lethal." Counterparty chains and mark-to-model accounting hide risk until a crisis.
+
+### Mistakes, in his own accounting
+- Dexter Shoe (2007 review): "What I had assessed as durable competitive advantage vanished within a few years," and
+  paying in Berkshire stock turned a ~$400 million error into ~$3.5 billion. Lesson: never pay with undervalued stock;
+  moats in commoditised, import-exposed industries are fragile.
+- Stock-for-stock deals: "the worst deal of all" for the acquirer on tax grounds (1999).
+- US Airways (1997): "a record that is unblemished by success"; airlines are the archetypal gruesome business.
+- Textiles: a "chronically-leaking boat" — "energy devoted to changing vessels is likely to be more productive than
+  energy devoted to patching leaks" (1985).
+
+### Munger, "Vice Chairman's Thoughts – Past and Future" (2014)
+- "The Berkshire system": a diffuse conglomerate "averse only to activities about which it could not make useful
+  predictions," extreme autonomy for subsidiary CEOs, almost nothing at headquarters, centralised capital allocation,
+  little debt, and a reputation as the preferred buyer for family businesses.
+- On mistakes: "almost all huge errors were in not making a purchase, including not purchasing Walmart stock when
+  that was sure to work out enormously well. The errors of omission were of much importance." — echoed by Nomad.
+- Buffett "often displayed almost inhuman patience and seldom bought."
+
+## Still missing (blocked by the session's network settings)
+- Berkshire letters for 2020–2024, Buffett's November 2025 letter and Greg Abel's first letter (berkshirehathaway.com).
+- Pre-1977 Berkshire letters, annual-meeting transcripts, the Worldly Partners Munger archive and case studies.

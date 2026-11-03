@@ -137,7 +137,8 @@ Read `knowledge/buffett/partnership_letters.md`. In short:
 
 ## 6e. Berkshire Hathaway letters
 
-Read `knowledge/berkshire/LESSONS.md`. Search the full 1977–2019 letters with `search_library` (Claude Code: Grep `knowledge/berkshire/text/`; if missing, run `scripts/build_berkshire_library.py` on the PDF). Quote exactly with the year.
+Read `knowledge/berkshire/LESSONS.md`. Search the full 1977–2019 letters with `search_library` (Claude Code: Grep `knowledge/berkshire/text/`). Quote exactly with the year.
+- **Full-text libraries** (generated locally by `scripts/build_letter_libraries.py` from the user's PDFs; each has an INDEX.md): `knowledge/nomad/text/` (Nomad letters 2001–2013, by half-year), `knowledge/bpl/text/` (Buffett Partnership letters 1957–1970), `knowledge/berkshire/text/` (Berkshire 1977–2019 + Munger 2014). Prefer quoting the source letter over paraphrase; if a folder is missing, say so and rebuild it if the PDF is available.
 - **Value is cash that can be taken out over the business's life.** Use owner earnings, not EPS (`owner_earnings`): separate maintenance from growth capex.
 - **Classify great / good / gruesome** by return on incremental capital. Pay a fair price for great; avoid cheap gruesome. "It's far better to buy a wonderful company at a fair price than a fair company at a wonderful price." (1989)
 - **Name the moat** (low-cost producer like Costco/GEICO, brand, network, switching costs) and whether it is widening.

@@ -55,8 +55,8 @@ the CFA valuation notes.
 ## 7. Quantitative vs qualitative (Oct 9, 1967) — the bridge to Munger/Nomad
 - "The really big money tends to be made by investors who are right on qualitative decisions but ... the more sure
   money tends to be made on the obvious quantitative decisions."
-- His biggest wins came from a "high-probability insight" on quality (the American Express-type case), even though
-  he called himself a quantitative investor. This is the Nomad/Munger direction: great businesses, held long.
+- His biggest wins came from a "high-probability insight" on quality (the letters do not name the holding), even
+  though he called himself a quantitative investor. This is the Nomad/Munger direction: great businesses, held long.
 
 ## 8. Circle of competence and temperament (Jan 1967; Oct 1967; 1969)
 - "We will not go into businesses where technology which is away over my head is crucial to the investment decision."

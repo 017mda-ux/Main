@@ -23,7 +23,9 @@ knowledge/worldly/pdfs/
 knowledge/screens/
 knowledge/data_raw/
 
-# Berkshire letters text (generated locally from the PDF; copyright Berkshire Hathaway)
-knowledge/berkshire/text/
+
+# Full texts of the user's uploaded books/letters: local only (copyrighted; not pushed)
 knowledge/nomad/text/
 knowledge/bpl/text/
+knowledge/berkshire/text/
+knowledge/cfa/text/

@@ -274,3 +274,16 @@ def test_owner_earnings_and_buyback_tests():
     b = tools.buyback_check({"price": 80, "intrinsic_value_conservative": 100})
     assert b["buyback_creates_value"] and b["value_gain_per_dollar_spent_pct"] == 25.0
     assert not tools.buyback_check({"price": 95, "intrinsic_value_conservative": 100})["buyback_creates_value"]
+
+
+def test_portfolio_review_flags_and_hurdle():
+    out = tools.portfolio_review({"hurdle_pct": 15, "benchmark_return_pct": 8, "holdings": [
+        {"name": "A", "weight_pct": 45, "expected_return_pct": 12, "bad_case_return_pct": -20, "cluster": "AI"},
+        {"name": "B", "weight_pct": 20, "expected_return_pct": 6, "cluster": "AI"},
+        {"name": "C", "weight_pct": 5, "expected_return_pct": 18}]})
+    assert out["cash_weight_pct"] == 30
+    assert out["portfolio_expected_return_pct"] == pytest.approx(0.45 * 12 + 0.2 * 6 + 0.05 * 18 + 0.3 * 4, abs=0.01)
+    assert not out["meets_hurdle"]
+    assert any("40%" in f for f in out["flags"]) and any("cluster 'AI'" in f for f in out["flags"])
+    acts = {r["name"]: r["action"] for r in out["holdings_ranked"]}
+    assert acts["B"].startswith("trim/exit") and acts["C"].startswith("consider adding")

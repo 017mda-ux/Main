@@ -1003,6 +1003,48 @@ def buyback_check(inp: dict) -> dict:
             "value_gain_per_dollar_spent_pct": _r(gain * 100, 1) if gain is not None else None,
             "note": "Buying above intrinsic value transfers wealth from continuing to departing holders."}
 
+
+# ── Portfolio review (framework Step 8) ───────────────────────────────
+
+def portfolio_review(inp: dict) -> dict:
+    """Whole-portfolio check: expected return vs hurdle, bad-case drag, concentration and correlated clusters."""
+    hurdle = inp.get("hurdle_pct", 15.0)
+    bench = inp.get("benchmark_return_pct", 8.0)
+    hs = inp["holdings"]
+    tot_w = sum(h["weight_pct"] for h in hs)
+    cash_w = max(0.0, 100 - tot_w)
+    cash_r = inp.get("cash_return_pct", 4.0)
+    exp = sum(h["weight_pct"] * h["expected_return_pct"] for h in hs) / 100 + cash_w * cash_r / 100
+    bad = sum(h["weight_pct"] * h.get("bad_case_return_pct", h["expected_return_pct"]) for h in hs) / 100 + cash_w * cash_r / 100
+    clusters: dict = {}
+    for h in hs:
+        key = h.get("cluster", h["name"])
+        clusters[key] = clusters.get(key, 0) + h["weight_pct"]
+    rows, flags = [], []
+    for h in hs:
+        e, w, b = h["expected_return_pct"], h["weight_pct"], h.get("bad_case_return_pct")
+        action = "hold"
+        if e < bench:
+            action = "trim/exit: expected return below the index"
+        elif e < hurdle and w > 15:
+            action = "trim: large weight below hurdle"
+        elif e >= hurdle and w < 10:
+            action = "consider adding: above hurdle but small"
+        if w > 40:
+            flags.append(f"{h['name']}: {w}% exceeds the 40% single-position cap")
+        if b is not None and w * (b - bench) / 100 < -10:
+            flags.append(f"{h['name']}: bad case alone drags the portfolio {w * (b - bench) / 100:.1f} pts below the index")
+        rows.append({"name": h["name"], "weight_pct": w, "expected_return_pct": e, "bad_case_return_pct": b,
+                     "contribution_pts": _r(w * e / 100, 2), "action": action})
+    for c, w in clusters.items():
+        if w > 50 and sum(1 for h in hs if h.get("cluster", h["name"]) == c) > 1:
+            flags.append(f"cluster '{c}' is {w}% of the portfolio: correlated holdings behave as one position")
+    rows.sort(key=lambda r: -r["expected_return_pct"])
+    return {"portfolio_expected_return_pct": _r(exp, 2), "portfolio_bad_case_return_pct": _r(bad, 2),
+            "hurdle_pct": hurdle, "meets_hurdle": exp >= hurdle, "cash_weight_pct": _r(cash_w, 1),
+            "holdings_ranked": rows, "clusters": {k: _r(v, 1) for k, v in clusters.items()}, "flags": flags,
+            "note": "Expected returns should come from each holding's memo (implied expectations vs your scenarios), not hope."}
+
 TOOL_DEFINITIONS: list[dict] = [
     {
         "name": "scale_economics_shared",
@@ -1228,6 +1270,17 @@ TOOL_DEFINITIONS: list[dict] = [
         "input_schema": {"type": "object", "properties": {
             "price": _num, "intrinsic_value_conservative": _num, "ample_funds": {"type": "boolean"}, "material_discount_pct": _num},
             "required": ["price", "intrinsic_value_conservative"]},
+    },
+    {
+        "name": "portfolio_review",
+        "description": "Framework Step 8 on the whole book: weighted expected and bad-case return vs hurdle and index, ranking, add/trim hints, 40% cap, bad-case drag, and correlated clusters.",
+        "input_schema": {"type": "object", "properties": {
+            "holdings": {"type": "array", "items": {"type": "object", "properties": {
+                "name": {"type": "string"}, "weight_pct": _num, "expected_return_pct": _num,
+                "bad_case_return_pct": _num, "cluster": {"type": "string", "description": "Shared driver, e.g. 'AI capex', 'US housing'"}},
+                "required": ["name", "weight_pct", "expected_return_pct"]}},
+            "hurdle_pct": _num, "benchmark_return_pct": _num, "cash_return_pct": _num},
+            "required": ["holdings"]},
     },
     {
         "name": "reverse_valuation",
@@ -1458,6 +1511,7 @@ _DISPATCH: dict[str, Callable[[dict], dict]] = {
     "owner_earnings": owner_earnings,
     "retained_earnings_test": retained_earnings_test,
     "buyback_check": buyback_check,
+    "portfolio_review": portfolio_review,
 }
 
 _REQUIRED = {t["name"]: t["input_schema"].get("required", []) for t in TOOL_DEFINITIONS}

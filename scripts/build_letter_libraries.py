@@ -5,8 +5,11 @@
     python scripts/build_letter_libraries.py bpl      /path/buffett-partnership-letters.pdf
     python scripts/build_letter_libraries.py berkshire /path/All-Berkshire-Hathaway-Letters.pdf
 
-Writes knowledge/<name>/text/*.txt (git-ignored: copyrighted letters) and knowledge/<name>/INDEX.md (committed),
-which search_library reads. Requires pdftotext.
+    python scripts/build_letter_libraries.py cfa       /path/RR_2026_L2V5R3_v1.Free_Cash_Flow_Valuation.pdf
+    python scripts/build_letter_libraries.py cfa       /path/RR_2026_L2V5R4_v1.Market-Based_Valuation...pdf
+
+Writes knowledge/<name>/text/*.txt and knowledge/<name>/INDEX.md, which search_library reads. Personal research
+library built from the user's own files. Requires pdftotext.
 """
 import re
 import subprocess
@@ -26,7 +29,7 @@ def write(name, title, source, docs):
     out = ROOT / name
     (out / "text").mkdir(parents=True, exist_ok=True)
     rows = [f"# {title}", "", f"Source: {source}. Text files are generated locally by "
-            "scripts/build_letter_libraries.py and are not committed.", "", "| Document | Source | File |", "|---|---|---|"]
+            "scripts/build_letter_libraries.py from the user's own files.", "", "| Document | Source | File |", "|---|---|---|"]
     used = Counter()
     for slug, label, body in docs:
         used[slug] += 1
@@ -125,5 +128,24 @@ def berkshire(pdf):
           "All-Berkshire-Hathaway-Letters.pdf (letters as published at berkshirehathaway.com)", docs)
 
 
+def cfa(pdf):
+    """CFA refresher readings: one text file per reading, appended to knowledge/cfa/INDEX.md."""
+    text = "\n".join(pdf_lines(pdf))
+    name = Path(pdf).name
+    slug = "free_cash_flow_valuation" if "Free_Cash_Flow" in name else "market_multiples_valuation" if "Multiples" in name else Path(pdf).stem
+    title = {"free_cash_flow_valuation": "CFA Level II reading: Free Cash Flow Valuation (2026)",
+             "market_multiples_valuation": "CFA Level II reading: Market-Based Valuation - Price and Enterprise Value Multiples (2026)"}.get(slug, name)
+    out = ROOT / "cfa"
+    (out / "text").mkdir(parents=True, exist_ok=True)
+    (out / "text" / f"{slug}.txt").write_text(text, encoding="utf-8")
+    idx = out / "INDEX.md"
+    rows = idx.read_text(encoding="utf-8").splitlines() if idx.exists() else [
+        "# CFA Institute refresher readings (user's copies)", "", "| Document | Source | File |", "|---|---|---|"]
+    if not any(f"text/{slug}.txt" in r for r in rows):
+        rows.append(f"| {title} | {name} (uploaded by the user) | text/{slug}.txt |")
+    idx.write_text("\n".join(rows) + "\n", encoding="utf-8")
+    print(f"cfa: wrote {slug}")
+
+
 if __name__ == "__main__":
-    {"nomad": nomad, "bpl": bpl, "berkshire": berkshire}[sys.argv[1]](sys.argv[2])
+    {"nomad": nomad, "bpl": bpl, "berkshire": berkshire, "cfa": cfa}[sys.argv[1]](sys.argv[2])

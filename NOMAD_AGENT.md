@@ -58,6 +58,7 @@ The Python agent uses web search for current numbers plus ten calculators
 | `owner_earnings` | Net income + D&A − maintenance capex; yield vs market cap; growth vs maintenance capex | Berkshire letters (1986) |
 | `retained_earnings_test` | $1 of market value per $1 retained over five years | Berkshire letters (1983) |
 | `buyback_check` | Buybacks only with ample funds and a material discount to conservative value | Berkshire letters (2011) |
+| `portfolio_review` | Whole-portfolio expected vs hurdle, bad-case drag, add/trim hints, 40% cap, correlated clusters | Framework Step 8 |
 | `dilution_risk` | Value per share if equity must be raised at low prices | MBIA (Jun 2008) |
 | `moat_scorecard` | Weighted 0-100 grade, weakest link, red-flag penalties | |
 
@@ -83,9 +84,13 @@ Tests: `python -m pytest tests`
 Not financial advice.
 
 
+## The framework
+
+`knowledge/FRAMEWORK.md` is the thinking process the agent applies to your ideas and portfolio (steps 0–10, idea memo and portfolio review templates). Sources teach how to think, not what to buy.
+
 ## Letter libraries (full text, searchable)
 
-Build once per machine from PDFs you own (text is git-ignored; INDEX.md files are committed):
+Build once per machine from PDFs you own (full text stays local and git-ignored; INDEX.md files are committed):
 
 ```
 python scripts/build_letter_libraries.py nomad     Full_Collection_Nomad_Letters_.pdf

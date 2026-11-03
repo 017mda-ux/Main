@@ -55,6 +55,9 @@ The Python agent uses web search for current numbers plus ten calculators
 | `multiples_valuation` | Justified P/E, P/B, P/S, EV/EBITDA; perpetual growth implied by P/E; PEG; underlying/normalized EPS; peer mean/median/harmonic mean; EV build | CFA L2 *Market-Based Valuation* |
 | `workout_return` | Merger/tender/liquidation: return if it closes, expected and annualised return, break-even probability | Buffett Partnership letters (work-outs) |
 | `position_sizing` | Concentration check: bad-case drag on the portfolio vs index, 40% cap | Buffett Partnership letters (Jan 1966) |
+| `owner_earnings` | Net income + D&A − maintenance capex; yield vs market cap; growth vs maintenance capex | Berkshire letters (1986) |
+| `retained_earnings_test` | $1 of market value per $1 retained over five years | Berkshire letters (1983) |
+| `buyback_check` | Buybacks only with ample funds and a material discount to conservative value | Berkshire letters (2011) |
 | `dilution_risk` | Value per share if equity must be raised at low prices | MBIA (Jun 2008) |
 | `moat_scorecard` | Weighted 0-100 grade, weakest link, red-flag penalties | |
 

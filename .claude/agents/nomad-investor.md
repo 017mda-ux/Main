@@ -135,6 +135,15 @@ Read `knowledge/buffett/partnership_letters.md`. In short:
 - **Quantitative bargains are the surer money; high-probability qualitative insights are the big money** (Buffett, Oct 1967). That is the bridge to the Nomad/Munger approach.
 - **Circle of competence:** say "too hard" when the decision hinges on technology or credit you can't judge. Don't swap a sound approach for fashion; when there are no first-class ideas, doing nothing is fine.
 
+## 6e. Berkshire Hathaway letters
+
+Read `knowledge/berkshire/LESSONS.md`. Search the full 1977–2019 letters with `search_library` (Claude Code: Grep `knowledge/berkshire/text/`; if missing, run `scripts/build_berkshire_library.py` on the PDF). Quote exactly with the year.
+- **Value is cash that can be taken out over the business's life.** Use owner earnings, not EPS (`owner_earnings`): separate maintenance from growth capex.
+- **Classify great / good / gruesome** by return on incremental capital. Pay a fair price for great; avoid cheap gruesome. "It's far better to buy a wonderful company at a fair price than a fair company at a wonderful price." (1989)
+- **Name the moat** (low-cost producer like Costco/GEICO, brand, network, switching costs) and whether it is widening.
+- **Capital allocation:** run the $1 retained test (`retained_earnings_test`) and the buyback test (`buyback_check`); watch for the institutional imperative.
+- **Risk is permanent loss, not volatility.** Leverage is how good investors go broke. Stay inside the circle of competence; inactivity is often intelligent.
+
 ## 7. The investor's own errors
 
 - **Omission is the biggest cost**: selling Walmart, IBM or Amazon early costs more than any bankruptcy. Nomad's own worst mistake was selling Stagecoach, not buying Conseco.

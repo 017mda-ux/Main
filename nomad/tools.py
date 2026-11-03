@@ -958,6 +958,51 @@ def position_sizing(inp: dict) -> dict:
                     "probability anything drastically changes value; treat correlated positions as one.")}
     return out
 
+
+# ── Berkshire letters tools ────────────────────────────────────────────
+
+def owner_earnings(inp: dict) -> dict:
+    """Buffett 1986: reported earnings + D&A and other non-cash charges - maintenance capex (- extra working capital)."""
+    ni, da = inp["net_income"], inp.get("depreciation_amortization", 0.0)
+    other = inp.get("other_noncash_charges", 0.0)
+    capex = inp.get("total_capex")
+    maint = inp.get("maintenance_capex", da if capex is None else min(capex, da))
+    wc = inp.get("maintenance_working_capital", 0.0)
+    oe = ni + da + other - maint - wc
+    out = {"owner_earnings": _r(oe, 2), "maintenance_capex_used": _r(maint, 2),
+           "assumption": "maintenance capex given" if "maintenance_capex" in inp else "maintenance capex ≈ depreciation (Buffett's caveat: usually it exceeds D&A under inflation)"}
+    if capex is not None:
+        out["growth_capex"] = _r(capex - maint, 2)
+        out["reported_fcf_style"] = _r(ni + da + other - capex - wc, 2)
+    if inp.get("market_cap"):
+        out["owner_earnings_yield_pct"] = _r(oe / inp["market_cap"] * 100, 2)
+        out["price_to_owner_earnings"] = _r(inp["market_cap"] / oe, 1) if oe > 0 else None
+    return out
+
+
+def retained_earnings_test(inp: dict) -> dict:
+    """Buffett's $1 test (1983): over five years, did each $1 retained create >= $1 of market value?"""
+    retained = inp["cumulative_retained_earnings"]
+    gain = inp["market_cap_end"] - inp["market_cap_start"] + inp.get("net_buybacks", 0.0)
+    ratio = gain / retained if retained else None
+    return {"market_value_created_per_dollar_retained": _r(ratio, 2),
+            "passes": bool(ratio is not None and ratio >= 1),
+            "note": "Use a five-year (or longer) window; market values are noisy over shorter periods. "
+                    "Net buybacks are added back so cash returned isn't counted against management."}
+
+
+def buyback_check(inp: dict) -> dict:
+    """Buffett 2011: repurchase only with ample funds and a material discount to conservatively calculated value."""
+    price, value = inp["price"], inp["intrinsic_value_conservative"]
+    discount = 1 - price / value
+    ample = inp.get("ample_funds", True)
+    min_disc = inp.get("material_discount_pct", 15.0) / 100
+    gain = (value / price - 1) if price else None
+    return {"discount_to_value_pct": _r(discount * 100, 1), "ample_funds": ample,
+            "buyback_creates_value": bool(ample and discount >= min_disc),
+            "value_gain_per_dollar_spent_pct": _r(gain * 100, 1) if gain is not None else None,
+            "note": "Buying above intrinsic value transfers wealth from continuing to departing holders."}
+
 TOOL_DEFINITIONS: list[dict] = [
     {
         "name": "scale_economics_shared",
@@ -1161,6 +1206,28 @@ TOOL_DEFINITIONS: list[dict] = [
             },
             "required": ["positions"],
         },
+    },
+    {
+        "name": "owner_earnings",
+        "description": "Buffett's owner earnings (1986): net income + D&A and other non-cash charges − maintenance capex (− extra working capital); yield and multiple vs market cap; splits growth from maintenance capex.",
+        "input_schema": {"type": "object", "properties": {
+            "net_income": _num, "depreciation_amortization": _num, "other_noncash_charges": _num,
+            "total_capex": _num, "maintenance_capex": _num, "maintenance_working_capital": _num, "market_cap": _num},
+            "required": ["net_income"]},
+    },
+    {
+        "name": "retained_earnings_test",
+        "description": "Buffett's $1 test (1983): market value created per dollar of earnings retained over five years (buybacks added back).",
+        "input_schema": {"type": "object", "properties": {
+            "cumulative_retained_earnings": _num, "market_cap_start": _num, "market_cap_end": _num, "net_buybacks": _num},
+            "required": ["cumulative_retained_earnings", "market_cap_start", "market_cap_end"]},
+    },
+    {
+        "name": "buyback_check",
+        "description": "Buffett's buyback test (2011): ample funds and a material discount to conservatively calculated intrinsic value.",
+        "input_schema": {"type": "object", "properties": {
+            "price": _num, "intrinsic_value_conservative": _num, "ample_funds": {"type": "boolean"}, "material_discount_pct": _num},
+            "required": ["price", "intrinsic_value_conservative"]},
     },
     {
         "name": "reverse_valuation",
@@ -1388,6 +1455,9 @@ _DISPATCH: dict[str, Callable[[dict], dict]] = {
     "multiples_valuation": multiples_valuation,
     "workout_return": workout_return,
     "position_sizing": position_sizing,
+    "owner_earnings": owner_earnings,
+    "retained_earnings_test": retained_earnings_test,
+    "buyback_check": buyback_check,
 }
 
 _REQUIRED = {t["name"]: t["input_schema"].get("required", []) for t in TOOL_DEFINITIONS}

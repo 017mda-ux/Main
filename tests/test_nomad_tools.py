@@ -262,3 +262,15 @@ def test_position_sizing_flags_oversized_bad_case():
     a, b = out["positions"]
     assert a["flag"] and a["bad_case_portfolio_hit_pts"] == -12.0 and a["max_weight_for_limit_pct"] == pytest.approx(33.3, abs=0.1)
     assert not b["flag"]
+
+
+def test_owner_earnings_and_buyback_tests():
+    out = tools.owner_earnings({"net_income": 241, "depreciation_amortization": 230, "total_capex": 267,
+                                "maintenance_capex": 100, "market_cap": 4960})
+    assert out["owner_earnings"] == 371 and out["growth_capex"] == 167
+    assert out["owner_earnings_yield_pct"] == pytest.approx(7.48, abs=0.01)
+    assert tools.retained_earnings_test({"cumulative_retained_earnings": 100, "market_cap_start": 1000,
+                                         "market_cap_end": 1080, "net_buybacks": 30})["passes"]
+    b = tools.buyback_check({"price": 80, "intrinsic_value_conservative": 100})
+    assert b["buyback_creates_value"] and b["value_gain_per_dollar_spent_pct"] == 25.0
+    assert not tools.buyback_check({"price": 95, "intrinsic_value_conservative": 100})["buyback_creates_value"]
